@@ -22,7 +22,6 @@ from spinn_front_end_common.abstract_models.abstract_starts_synchronized \
 
 from spinn_machine.utilities.progress_bar import ProgressBar
 
-from enum import Enum
 import numpy
 import random
 

@@ -16,13 +16,11 @@ from spinn_front_end_common.abstract_models\
     import AbstractGeneratesDataSpecification
 from spinn_front_end_common.interface.buffer_management.buffer_models\
     .receives_buffers_to_host_basic_impl import ReceiveBuffersToHostBasicImpl
-from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.abstract_models.abstract_starts_synchronized \
     import AbstractStartsSynchronized
 
 from enum import Enum
 import numpy
-import random
 
 
 class MCMCRegions(Enum):
@@ -62,7 +60,6 @@ class MCMCVertex(
             self._N_PARAMETER_BYTES + self.get_recording_data_size(1) +
             self.get_buffer_state_region_size(1) + self._recording_size
         )
-
 
     @property
     @overrides(MachineVertex.resources_required)
@@ -165,7 +162,7 @@ class MCMCVertex(
         """
 
         # Read the data recorded
-        data_values, missing = buffer_manager.get_data_for_vertex(
+        data_values, _ = buffer_manager.get_data_for_vertex(
             placement, MCMCRegions.RECORDED_DATA.value,
             MCMCRegions.BUFFER_STATE_REGION.value)
         data = data_values.read_all()

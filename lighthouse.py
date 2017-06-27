@@ -65,10 +65,10 @@ degrees_of_freedom = 3.0
 #
 # lighthouse cannot be closer than 0.2 from the shore because of rocks, or
 # further than 2.0 because of shipping lanes
-alpha_min = -3.0;
-alpha_max = 3.0;
-beta_min = 0.2;
-beta_max = 2.0;
+alpha_min = -3.0
+alpha_max = 3.0
+beta_min = 0.2
+beta_max = 2.0
 
 # If the machine is a generated one, set the number of chips to a single
 # 48-node board
