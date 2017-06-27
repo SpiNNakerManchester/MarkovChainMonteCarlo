@@ -16,16 +16,14 @@ from spinn_front_end_common.abstract_models\
     import AbstractGeneratesDataSpecification
 from spinn_front_end_common.interface.buffer_management.buffer_models\
     .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
-from spinn_front_end_common.utilities import constants, helpful_functions
+from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.interface.buffer_management \
     import recording_utilities
-from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities.utility_objs.executable_start_type \
     import ExecutableStartType
 
 from enum import Enum
 import numpy
-import random
 
 
 class MCMCRegions(Enum):
@@ -62,7 +60,6 @@ class MCMCVertex(
             recording_utilities.get_recording_header_size(1)
             )
 
-
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
@@ -94,7 +91,8 @@ class MCMCVertex(
 
         # Reserve and write the recording regions
         spec.reserve_memory_region(
-            MCMCRegions.RECORDING.value, recording_utilities.get_recording_header_size(1))
+            MCMCRegions.RECORDING.value,
+            recording_utilities.get_recording_header_size(1))
         spec.switch_write_focus(MCMCRegions.RECORDING.value)
         ip_tags = tags.get_ip_tags_for_vertex(self) or []
         spec.write_array(recording_utilities.get_recording_header_array(
@@ -159,7 +157,7 @@ class MCMCVertex(
         """
 
         # Read the data recorded
-        data_values, missing = buffer_manager.get_data_for_vertex(placement, 0)
+        data_values, _ = buffer_manager.get_data_for_vertex(placement, 0)
         data = data_values.read_all()
 
         # Convert the data into an array of 2-doubles

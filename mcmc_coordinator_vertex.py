@@ -22,7 +22,6 @@ from spinn_front_end_common.utilities.utility_objs.executable_start_type \
 
 from spinn_machine.utilities.progress_bar import ProgressBar
 
-from enum import Enum
 import numpy
 import random
 
