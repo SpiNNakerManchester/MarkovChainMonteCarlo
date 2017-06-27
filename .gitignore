@@ -3,3 +3,4 @@
 *.aplx
 *.txt
 /build/
+/.pydevproject
