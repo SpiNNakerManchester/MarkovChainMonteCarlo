@@ -3,10 +3,10 @@
 
 # The name of the application to be built (binary will be this with a `.aplx`
 # extension)
-APP = mcmc_coordinator
+APP = mcmc
 
 # Directory to create APLX files in (must include trailing slash)
-APP_OUTPUT_DIR = ./
+APP_OUTPUT_DIR = ../../mcmc/model_binaries/
 
 # Directory to place compilation artefacts (must include trailing slash)
 BUILD_DIR = ./build/
@@ -17,7 +17,7 @@ LFLAGS += -Ofast
 LIBRARIES += -lm
 
 SOURCE_DIRS = .
-SOURCES = mcmc_coordinator.c
+SOURCES = mcmc.c
 
 # The spinnaker_tools standard makefile
 include $(SPINN_DIRS)/make/Makefile.SpiNNFrontEndCommon

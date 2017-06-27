@@ -1,7 +1,8 @@
 import spinnaker_graph_front_end as g
 
-from mcmc_vertex import MCMCVertex
-from mcmc_coordinator_vertex import MCMCCoordinatorVertex
+from mcmc.mcmc_vertex import MCMCVertex
+from mcmc.mcmc_coordinator_vertex import MCMCCoordinatorVertex
+from mcmc import model_binaries
 
 from pacman.model.constraints.placer_constraints\
     .placer_chip_and_core_constraint import PlacerChipAndCoreConstraint
@@ -77,7 +78,7 @@ if g.is_allocated_machine:
     n_chips_required = 2  # 528  # 1104 (1104 is too big at the moment)
 
 # Set up the simulation
-g.setup(n_chips_required=n_chips_required)
+g.setup(n_chips_required=n_chips_required, model_binary_module=model_binaries)
 
 # Get the number of cores available for use
 n_cores = 0
