@@ -1,4 +1,4 @@
-from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
+from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
@@ -15,10 +15,13 @@ from spinn_front_end_common.abstract_models\
     .abstract_generates_data_specification \
     import AbstractGeneratesDataSpecification
 from spinn_front_end_common.interface.buffer_management.buffer_models\
-    .receives_buffers_to_host_basic_impl import ReceiveBuffersToHostBasicImpl
-from spinn_front_end_common.utilities import helpful_functions
-from spinn_front_end_common.abstract_models.abstract_starts_synchronized \
-    import AbstractStartsSynchronized
+    .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
+from spinn_front_end_common.utilities import constants, helpful_functions
+from spinn_front_end_common.interface.buffer_management \
+    import recording_utilities
+from spinn_front_end_common.interface.simulation import simulation_utilities
+from spinn_front_end_common.utilities.utility_objs.executable_start_type \
+    import ExecutableStartType
 
 from enum import Enum
 import numpy
@@ -30,14 +33,11 @@ class MCMCRegions(Enum):
     """
     RECORDING = 0
     PARAMETERS = 1
-    BUFFER_STATE_REGION = 2
-    RECORDED_DATA = 3
 
 
 class MCMCVertex(
         MachineVertex, AbstractHasAssociatedBinary,
-        AbstractGeneratesDataSpecification, ReceiveBuffersToHostBasicImpl,
-        AbstractStartsSynchronized):
+        AbstractGeneratesDataSpecification, AbstractReceiveBuffersToHost):
     """ A vertex that runs the MCMC algorithm
     """
 
@@ -53,15 +53,14 @@ class MCMCVertex(
         :param coordinator: The coordinator vertex
         """
 
-        MachineVertex.__init__(self, None, label="MCMC Node")
-        ReceiveBuffersToHostBasicImpl.__init__(self)
+        MachineVertex.__init__(self, label="MCMC Node", constraints=None)
         self._coordinator = coordinator
         self._coordinator.register_processor(self)
         self._recording_size = self._coordinator.n_samples * self._SAMPLE_SIZE
         self._sdram_usage = (
-            self._N_PARAMETER_BYTES + self.get_recording_data_size(1) +
-            self.get_buffer_state_region_size(1) + self._recording_size
-        )
+            self._N_PARAMETER_BYTES + self._recording_size +
+            recording_utilities.get_recording_header_size(1)
+            )
 
 
     @property
@@ -73,14 +72,15 @@ class MCMCVertex(
             sdram=SDRAMResource(self._sdram_usage),
             cpu_cycles=CPUCyclesPerTickResource(0),
             iptags=[], reverse_iptags=[])
-        recording_resources = self.get_extra_resources(
-            buffering_ip_address="0.0.0.0", buffering_port=12345)
-        resources.extend(recording_resources)
         return resources
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         return "mcmc.aplx"
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
+    def get_binary_start_type(self):
+        return ExecutableStartType.SYNC
 
     @inject_items({
         "routing_info": "MemoryRoutingInfos",
@@ -92,19 +92,13 @@ class MCMCVertex(
     def generate_data_specification(
             self, spec, placement, routing_info, tags):
 
-        self.activate_buffering_output(
-            buffering_ip_address="0.0.0.0", buffering_port=12345)
-
         # Reserve and write the recording regions
         spec.reserve_memory_region(
-            MCMCRegions.RECORDING.value, self.get_recording_data_size(1))
+            MCMCRegions.RECORDING.value, recording_utilities.get_recording_header_size(1))
         spec.switch_write_focus(MCMCRegions.RECORDING.value)
         ip_tags = tags.get_ip_tags_for_vertex(self) or []
-        self.write_recording_data(
-            spec, ip_tags, [self._recording_size], self._recording_size + 256)
-        self.reserve_buffer_regions(
-            spec, MCMCRegions.BUFFER_STATE_REGION.value,
-            [MCMCRegions.RECORDED_DATA.value], [self._recording_size])
+        spec.write_array(recording_utilities.get_recording_header_array(
+            [self._recording_size], ip_tags=ip_tags))
 
         # Reserve and write the parameters region
         spec.reserve_memory_region(
@@ -165,9 +159,7 @@ class MCMCVertex(
         """
 
         # Read the data recorded
-        data_values, missing = buffer_manager.get_data_for_vertex(
-            placement, MCMCRegions.RECORDED_DATA.value,
-            MCMCRegions.BUFFER_STATE_REGION.value)
+        data_values, missing = buffer_manager.get_data_for_vertex(placement, 0)
         data = data_values.read_all()
 
         # Convert the data into an array of 2-doubles
@@ -175,3 +167,17 @@ class MCMCVertex(
             data, dtype=numpy.uint8).view([
                 ("alpha", numpy.float64),
                 ("beta", numpy.float64)])
+
+    def get_minimum_buffer_sdram_usage(self):
+        return 1024
+
+    def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
+        return recording_utilities.get_n_timesteps_in_buffer_space(
+            buffer_space, 4)
+
+    def get_recorded_region_ids(self):
+        return [0]
+
+    def get_recording_region_base_address(self, txrx, placement):
+        return helpful_functions.locate_memory_region_for_placement(
+            placement, MCMCRegions.RECORDING.value, txrx)

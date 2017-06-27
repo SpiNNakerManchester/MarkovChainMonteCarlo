@@ -1,4 +1,4 @@
-from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
+from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
@@ -17,8 +17,8 @@ from spinn_front_end_common.abstract_models\
 from spinn_front_end_common.abstract_models\
     .abstract_provides_n_keys_for_partition \
     import AbstractProvidesNKeysForPartition
-from spinn_front_end_common.abstract_models.abstract_starts_synchronized \
-    import AbstractStartsSynchronized
+from spinn_front_end_common.utilities.utility_objs.executable_start_type \
+    import ExecutableStartType
 
 from spinn_machine.utilities.progress_bar import ProgressBar
 
@@ -30,8 +30,7 @@ import random
 class MCMCCoordinatorVertex(
         MachineVertex, AbstractHasAssociatedBinary,
         AbstractGeneratesDataSpecification,
-        AbstractProvidesNKeysForPartition,
-        AbstractStartsSynchronized):
+        AbstractProvidesNKeysForPartition):
     """ A vertex that runs the MCMC algorithm
     """
 
@@ -80,7 +79,7 @@ class MCMCCoordinatorVertex(
             The number of degrees of freedom to jump around with
         """
 
-        MachineVertex.__init__(self, None, label="MCMC Node")
+        MachineVertex.__init__(self, label="MCMC Node", constraints=None)
         self._data = data
         self._n_samples = n_samples
         self._burn_in = burn_in
@@ -225,6 +224,10 @@ class MCMCCoordinatorVertex(
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         return "mcmc_coordinator.aplx"
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
+    def get_binary_start_type(self):
+        return ExecutableStartType.SYNC
 
     @inject_items({
         "placements": "MemoryPlacements",

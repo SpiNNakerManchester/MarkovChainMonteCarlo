@@ -5,9 +5,9 @@ from mcmc_coordinator_vertex import MCMCCoordinatorVertex
 
 from pacman.model.constraints.placer_constraints\
     .placer_chip_and_core_constraint import PlacerChipAndCoreConstraint
-from pacman.model.graphs.machine.impl.machine_edge import MachineEdge
+from pacman.model.graphs.machine import MachineEdge
 
-from spinnman.model.cpu_state import CPUState
+from spinnman.model.enums.cpu_state import CPUState
 
 import numpy
 import logging
@@ -16,24 +16,25 @@ from spinn_front_end_common.utilities import helpful_functions
 
 logger = logging.getLogger(__name__)
 
-data_points = [
-    2.37706, 4.51142, 0.406605, 0.909418, 0.642899,
-    1.21925, 1.47647, -2.95771, -0.801802, -1.86529,
-    -75.6865, -1.94398, 1.57055, 2.53382, 0.783884,
-    1.16725, 1.16995, 0.367477, -1.24639, -2.29897,
-    0.461939, -0.126669, 0.0965992, 1.56107, 0.747027,
-    66.7057, 1.07821, -0.125864, -0.693059, 7.48744,
-    1.94184, -0.439164, 3.64695, -63.2296, 0.783037,
-    2.26351, 1.30222, 0.542981, 3.78199, -37.1692,
-    1.54959, 0.485336, 1.02509, -0.204211, 0.164426,
-    -13.1977, 0.650243, 0.671339, 2.93511, 0.788114
-]
-
-# The data to use
+# Data to use for 50 data points
 # data_points = [
 #     2.37706, 4.51142, 0.406605, 0.909418, 0.642899,
-#     1.21925, 1.47647, -2.95771, -0.801802, -1.86529
+#     1.21925, 1.47647, -2.95771, -0.801802, -1.86529,
+#     -75.6865, -1.94398, 1.57055, 2.53382, 0.783884,
+#     1.16725, 1.16995, 0.367477, -1.24639, -2.29897,
+#     0.461939, -0.126669, 0.0965992, 1.56107, 0.747027,
+#     66.7057, 1.07821, -0.125864, -0.693059, 7.48744,
+#     1.94184, -0.439164, 3.64695, -63.2296, 0.783037,
+#     2.26351, 1.30222, 0.542981, 3.78199, -37.1692,
+#     1.54959, 0.485336, 1.02509, -0.204211, 0.164426,
+#     -13.1977, 0.650243, 0.671339, 2.93511, 0.788114
 # ]
+
+# Data to use for 10 data points
+data_points = [
+    2.37706, 4.51142, 0.406605, 0.909418, 0.642899,
+    1.21925, 1.47647, -2.95771, -0.801802, -1.86529
+]
 
 seed = [
     123456789, 234567891, 345678912, 456789123, 0
@@ -74,7 +75,7 @@ beta_max = 2.0;
 # 48-node board
 n_chips_required = None
 if g.is_allocated_machine:
-    n_chips_required = 1104
+    n_chips_required = 2  # 528  # 1104 (1104 is too big at the moment)
 
 # Set up the simulation
 g.setup(n_chips_required=n_chips_required)

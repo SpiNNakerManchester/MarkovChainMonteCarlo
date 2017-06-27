@@ -34,36 +34,28 @@
 typedef uint32_t uniform_seed[5];
 
 enum regions {
-    RECORDING = 0,
-    PARAMETERS,
-    BUFFER_STATE_REGION,
-    RECORDED_DATA
+    RECORDING,
+    PARAMETERS
 };
 
 struct parameters {
-
-    // Generic MCMC
     uint32_t burn_in;
     uint32_t thinning;
     uint32_t n_samples;
     uint32_t n_data_points;
-    double degrees_of_freedom;
-    uniform_seed seed;
-
-    // SpiNNaker Data Loading
     uint32_t data_window_size;
     uint32_t sequence_mask;
     uint32_t acknowledge_key;
     uint32_t data_tag;
     uint32_t timer;
-
-    // Problem specific
     double alpha_jump_scale;
     double beta_jump_scale;
     double alpha_min;
     double alpha_max;
     double beta_min;
     double beta_max;
+    double degrees_of_freedom;
+    uniform_seed seed;
 };
 
 // definition of Pi for use in likelihood
@@ -201,7 +193,6 @@ double t_deviate(const double df, uniform_seed seed) {
 
  see accompanying documents and Sivia book for more detail
  */
-// Problem Specific
 double likelihood(double x, double alpha, double beta) {
     return beta / (pi * ( SQR( beta ) + SQR(x - alpha)));
 }
@@ -211,7 +202,6 @@ double likelihood(double x, double alpha, double beta) {
 
  impossible that they are outside ranges, otherwise uniform
  */
-// Problem Specific
 double prior_prob(
         double alpha, double beta, double alpha_min, double alpha_max,
         double beta_min, double beta_max) {
@@ -250,7 +240,6 @@ bool MH_MCMC_keep_new_point(double old_pt_posterior_prob,
  generate jumps from MH transition distribution which is uncorrelated bivariate
  t with degrees_freedom degrees of freedom
  */
-// Problem Specific (t_deviate could be passed in?)
 void transition_jump(double alpha, double beta, double *new_alpha,
         double *new_beta, double degrees_freedom, uniform_seed seed,
         double alpha_jump_scale, double beta_jump_scale) {
@@ -274,8 +263,6 @@ void do_transfer(double *dataptr, uint bytes) {
  **** for product (or sum if using log-likelihoods)
 
  */
-// Not Problem Specific in general - only because it uses alpha and beta in
-// this case
 double full_data_set_likelihood(double alpha, double beta) {
     double l = ONE;
     if (!dma_likelihood) {
@@ -341,13 +328,10 @@ void run(uint unused0, uint unused1) {
     use(unused0);
     use(unused1);
 
-    // Parameterise these with a struct
     double current_alpha = 0.0;
     double current_beta = 1.0;
     double new_alpha;
     double new_beta;
-
-    // Generic
     double current_posterior;
     double new_posterior;
     unsigned int i;
@@ -522,11 +506,8 @@ void c_main() {
     // Setup recording
     address_t recording_address = data_specification_get_region(
         RECORDING, data_address);
-    uint8_t region_ids[1] = {RECORDED_DATA};
     uint32_t recording_flags = 0;
-    if (!recording_initialize(
-            1, region_ids, recording_address, BUFFER_STATE_REGION,
-            &recording_flags)) {
+    if (!recording_initialize(recording_address, &recording_flags)) {
         rt_error(RTE_SWERR);
     }
 
