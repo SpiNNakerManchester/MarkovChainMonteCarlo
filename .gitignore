@@ -4,3 +4,7 @@
 *.txt
 /build/
 /.pydevproject
+/application_generated_data_files/
+/reports/
+**/*.pyc
+results.*
