@@ -50,8 +50,6 @@ class MCMCCoordinatorVertex(
 
     def __init__(
             self, data, n_samples, burn_in, thinning,
-            alpha_jump_scale, alpha_min, alpha_max,
-            beta_jump_scale, beta_min, beta_max,
             degrees_of_freedom, seed=None,
             send_timer=1000, receive_timer=1000, window_size=1024,
             n_sequences=2048, data_partition_name="MCMCData",
@@ -65,17 +63,9 @@ class MCMCCoordinatorVertex(
             generating inference samples
         :param thinning:\
             sampling rate i.e. 5 = 1 sample for 5 generated steps
-        :param alpha_jump_scale:\
-            scaling of t transition distribution for MH jumps in alpha\
-            direction
-        :param alpha_min: The minimum value of alpha
-        :param alpha_max: The maximum value of alpha
-        :param beta_jump_scale:\
-            scaling of t transition distribution for MH jumps in beta direction
-        :param beta_min: The minimum value of beta
-        :param beta_max: The maximum value of beta
         :param degrees_of_freedom:\
             The number of degrees of freedom to jump around with
+        :param seed: The random seed to use
         """
 
         MachineVertex.__init__(self, label="MCMC Node", constraints=None)
@@ -83,12 +73,6 @@ class MCMCCoordinatorVertex(
         self._n_samples = n_samples
         self._burn_in = burn_in
         self._thinning = thinning
-        self._alpha_jump_scale = alpha_jump_scale
-        self._alpha_min = alpha_min
-        self._alpha_max = alpha_max
-        self._beta_jump_scale = beta_jump_scale
-        self._beta_min = beta_min
-        self._beta_max = beta_max
         self._degrees_of_freedom = degrees_of_freedom
         self._seed = seed
         self._send_timer = send_timer
@@ -125,30 +109,6 @@ class MCMCCoordinatorVertex(
     @property
     def thinning(self):
         return self._thinning
-
-    @property
-    def alpha_jump_scale(self):
-        return self._alpha_jump_scale
-
-    @property
-    def beta_jump_scale(self):
-        return self._beta_jump_scale
-
-    @property
-    def alpha_min(self):
-        return self._alpha_min
-
-    @property
-    def alpha_max(self):
-        return self._alpha_max
-
-    @property
-    def beta_min(self):
-        return self._beta_min
-
-    @property
-    def beta_max(self):
-        return self._beta_max
 
     @property
     def degrees_of_freedom(self):

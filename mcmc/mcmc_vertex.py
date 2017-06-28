@@ -31,6 +31,8 @@ class MCMCRegions(Enum):
     """
     RECORDING = 0
     PARAMETERS = 1
+    MODEL_PARAMS = 2
+    MODEL_STATE = 3
 
 
 class MCMCVertex(
@@ -40,25 +42,47 @@ class MCMCVertex(
     """
 
     # The number of bytes for the parameters
-    _N_PARAMETER_BYTES = 116
+    _N_PARAMETER_BYTES = (9 * 4) + (5 * 4) + (8 * 1)
 
-    # The size of each sample in bytes (2 doubles)
-    _SAMPLE_SIZE = (8 * 2)
-
-    def __init__(self, coordinator):
+    def __init__(self, coordinator, model):
         """
 
         :param coordinator: The coordinator vertex
+        :param model: The model being simulated
         """
 
         MachineVertex.__init__(self, label="MCMC Node", constraints=None)
         self._coordinator = coordinator
+        self._model = model
         self._coordinator.register_processor(self)
-        self._recording_size = self._coordinator.n_samples * self._SAMPLE_SIZE
+
+        state = self._get_model_state_array()
+        self._recording_size = self._coordinator.n_samples * len(state) * 4
+
+        params = self._get_model_parameters_array()
         self._sdram_usage = (
             self._N_PARAMETER_BYTES + self._recording_size +
-            recording_utilities.get_recording_header_size(1)
+            recording_utilities.get_recording_header_size(1) +
+            (len(params) * 4)
             )
+
+    def _get_model_parameters_array(self):
+        parameters = self._model.get_parameters()
+        numpy_format = list()
+        numpy_values = list()
+        for i, param in enumerate(parameters):
+            numpy_format.append(('f{}'.format(i), param.data_type))
+            numpy_values.append(param.value)
+        return numpy.array(numpy_values, dtype=numpy_format).view("uint32")
+
+    def _get_model_state_array(self):
+        state = self._model.get_state_variables()
+        numpy_format = list()
+        numpy_values = list()
+        for i, param in enumerate(state):
+            numpy_format.append(('f{}'.format(i), param.data_type))
+            numpy_values.append(param.value)
+        return numpy.array(numpy_values, dtype=numpy_format).view("uint32")
 
     @property
     @overrides(MachineVertex.resources_required)
@@ -73,7 +97,7 @@ class MCMCVertex(
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        return "mcmc.aplx"
+        return self._model.get_binary_file_name()
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):
@@ -133,21 +157,24 @@ class MCMCVertex(
         # Write the timer value
         spec.write_value(self._coordinator.acknowledge_timer)
 
-        # Write a padding word
-        spec.write_value(0, data_type=DataType.UINT32)
-
-        # Write the alpha and beta jump scales, ranges and degrees of freedom
-        values = numpy.array(
-            [self._coordinator.alpha_jump_scale,
-             self._coordinator.beta_jump_scale,
-             self._coordinator.alpha_min, self._coordinator.alpha_max,
-             self._coordinator.beta_min, self._coordinator.beta_max,
-             self._coordinator.degrees_of_freedom],
-            dtype=numpy.float64).view(numpy.uint32)
-        spec.write_array(values)
-
         # Write the seed = 5 32-bit random numbers
         spec.write_array(self._coordinator.seed)
+
+        # Write the degrees of freedom
+        spec.write_value(
+            self._coordinator.degrees_of_freedom, dataType=DataType.FLOAT_64)
+
+        # Reserve and write the model parameters
+        params = self._get_model_parameters_array()
+        spec.reserve_memory_region(MCMCRegions.MODEL_PARAMS, len(params) * 4)
+        spec.switch_write_focus(MCMCRegions.MODEL_PARAMS)
+        spec.write_array(params)
+
+        # Reserve and write the model state
+        state = self._get_model_state_array()
+        spec.reserve_memory_region(MCMCRegions.MODEL_STATE, len(state) * 4)
+        spec.switch_write_focus(MCMCRegions.MODEL_STATE)
+        spec.write_array(state)
 
         # End the specification
         spec.end_specification()
@@ -160,11 +187,12 @@ class MCMCVertex(
         data_values, _ = buffer_manager.get_data_for_vertex(placement, 0)
         data = data_values.read_all()
 
-        # Convert the data into an array of 2-doubles
-        return numpy.array(
-            data, dtype=numpy.uint8).view([
-                ("alpha", numpy.float64),
-                ("beta", numpy.float64)])
+        numpy_format = list()
+        for var in self._model.get_state_variables():
+            numpy_format.append((var.name, var.data_type))
+
+        # Convert the data into an array of state variables
+        return numpy.array(data, dtype=numpy.uint8).view(numpy_format)
 
     def get_minimum_buffer_sdram_usage(self):
         return 1024

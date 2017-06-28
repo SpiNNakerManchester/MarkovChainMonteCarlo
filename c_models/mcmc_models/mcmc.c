@@ -29,64 +29,69 @@
 #include <data_specification.h>
 #include <simulation.h>
 #include <recording.h>
+#include "mcmc_model.h"
 
 // The type of the seed
 typedef uint32_t uniform_seed[5];
 
 enum regions {
     RECORDING,
-    PARAMETERS
+    PARAMETERS,
+    MODEL_PARAMETERS,
+    MODEL_STATE
 };
 
 struct parameters {
-    uint32_t burn_in;
-    uint32_t thinning;
-    uint32_t n_samples;
-    uint32_t n_data_points;
-    uint32_t data_window_size;
-    uint32_t sequence_mask;
-    uint32_t acknowledge_key;
-    uint32_t data_tag;
-    uint32_t timer;
-    double alpha_jump_scale;
-    double beta_jump_scale;
-    double alpha_min;
-    double alpha_max;
-    double beta_min;
-    double beta_max;
-    double degrees_of_freedom;
-    uniform_seed seed;
-};
 
-// definition of Pi for use in likelihood
-double pi = 3.141592653589793;
+    // no of MCMC transitions to reach apparent equilibrium before generating
+    // inference samples
+    uint32_t burn_in;
+
+    // subsequent MCMC samples are correlated, so thin the chain to avoid this
+    uint32_t thinning;
+
+    // number of posterior samples required
+    uint32_t n_samples;
+
+    // number of data points
+    uint32_t n_data_points;
+
+    // data receive window size - 0 if not a receiver
+    uint32_t data_window_size;
+
+    // Sequence mask for data reception - 0 if not a receiver
+    uint32_t sequence_mask;
+
+    // Acknowledge key for data reception - 0 if not a receiver
+    uint32_t acknowledge_key;
+
+    // Tag which is allocated for the data
+    uint32_t data_tag;
+
+    // Timer for data acknowledgement - 0 if not receiver
+    uint32_t timer;
+
+    // The random seed
+    uniform_seed seed;
+
+    // The number of degrees of freedom to jump around with
+    double degrees_of_freedom;
+};
 
 // 1
 double ONE = 1.00000000000000;
 
-// macro to define square( x ) = x^2
-#define SQR( x ) (( x ) * ( x ))
-
 // setup variables for uniform PRNG
 double uint_max_scale = 1.0 / UINT_MAX;
 
-// The parameters
-uint32_t burn_in;
-uint32_t thinning;
-uint32_t n_samples;
-uint32_t n_data_points;
-uint32_t data_window_size;
-uint32_t sequence_mask;
-uint32_t acknowledge_key;
-uint32_t data_tag;
-double alpha_jump_scale;
-double beta_jump_scale;
-double alpha_min;
-double alpha_max;
-double beta_min;
-double beta_max;
-double degrees_of_freedom;
-uniform_seed seed;
+// The general parameters
+struct parameters parameters;
+
+// The model-specific parameters
+mcmc_params_pointer_t params;
+
+// The model-specific state
+mcmc_state_pointer_t state;
 
 // Pointer to receive the data with
 uint32_t *data_receive_ptr;
@@ -99,9 +104,6 @@ uint32_t next_sequence = 0;
 
 // The last sequence number seen
 uint32_t last_sequence = 0xFFFFFFFF;
-
-// The timer value
-uint32_t timer;
 
 // Do the DMA likelihood or not
 uint dma_likelihood = 0;
@@ -160,57 +162,29 @@ double uniform(uniform_seed seed) {
 }
 
 // Returns a standard t-distributed deviate - from Ripley
-double t_deviate(const double df, uniform_seed seed) {
-    double u, u1, x, v;
+double t_deviate() {
+    double x;
+    double v;
+    double df = parameters.degrees_of_freedom;
 
-    again: u = uniform(seed);
-    u1 = uniform(seed);
+    do {
+        double u = uniform(parameters.seed);
+        double u1 = uniform(parameters.seed);
 
-    if (u < 0.5) {
-        x = ONE / (4.0 * u - ONE);
-        v = (ONE / SQR(x)) * u1;
-    } else {
-        x = 4.0 * u - 3.0;
-        v = u1;
-    }
+        if (u < 0.5) {
+            x = ONE / (4.0 * u - ONE);
+            v = (ONE / SQR(x)) * u1;
+        } else {
+            x = 4.0 * u - 3.0;
+            v = u1;
+        }
 
-    if (v < (ONE - 0.5 * fabs(x)))
-        return x;
+        if (v < (ONE - 0.5 * fabs(x)))
+            return x;
 
-    if (v >= pow((ONE + SQR( x ) / df), -(df + ONE) / 2.0))
-        goto again;
+    } while (v >= pow((ONE + SQR( x ) / df), -(df + ONE) / 2.0));
 
     return x;
-}
-
-/*
- likelihood of a single data point x given the two parameters alpha and beta
- that describe the position of the lighthouse = P( X | ALPHA, BETA )
-
- - alpha defines distance along the shoreline from reference zero point
-
- - beta defines distance from the shoreline
-
- see accompanying documents and Sivia book for more detail
- */
-double likelihood(double x, double alpha, double beta) {
-    return beta / (pi * ( SQR( beta ) + SQR(x - alpha)));
-}
-
-/*
- prior probability for the two parameters alpha and beta = P( ALPHA, BETA )
-
- impossible that they are outside ranges, otherwise uniform
- */
-double prior_prob(
-        double alpha, double beta, double alpha_min, double alpha_max,
-        double beta_min, double beta_max) {
-    if (alpha < alpha_min || alpha > alpha_max ||
-            beta < beta_min || beta > beta_max) {
-        return 0.0;
-    } else {
-        return 1.0;
-    }
 }
 
 /*
@@ -235,18 +209,6 @@ bool MH_MCMC_keep_new_point(double old_pt_posterior_prob,
         return false;
 }
 
-
-/*
- generate jumps from MH transition distribution which is uncorrelated bivariate
- t with degrees_freedom degrees of freedom
- */
-void transition_jump(double alpha, double beta, double *new_alpha,
-        double *new_beta, double degrees_freedom, uniform_seed seed,
-        double alpha_jump_scale, double beta_jump_scale) {
-    *new_alpha = alpha + t_deviate(degrees_freedom, seed) * alpha_jump_scale;
-    *new_beta = beta + t_deviate(degrees_freedom, seed) * beta_jump_scale;
-}
-
 void do_transfer(double *dataptr, uint bytes) {
     likelihood_done = 0;
     dma_read_buffer = (dma_read_buffer + 1) & 1;
@@ -263,20 +225,20 @@ void do_transfer(double *dataptr, uint bytes) {
  **** for product (or sum if using log-likelihoods)
 
  */
-double full_data_set_likelihood(double alpha, double beta) {
+double full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
     double l = ONE;
     if (!dma_likelihood) {
 
         // distribute these data points across cores?
-        for (unsigned int i = 0; i < n_data_points; i++) {
-            l *= likelihood(data[i], alpha, beta);
+        for (unsigned int i = 0; i < parameters.n_data_points; i++) {
+            l *= mcmc_model_likelihood(data[i], params, state_to_use);
         }
         return l;
     }
 
     // Keep a count of the points to be processed
-    uint points_to_process = n_data_points;
-    uint bytes_to_get = n_data_points * 8;
+    uint points_to_process = parameters.n_data_points;
+    uint bytes_to_get = parameters.n_data_points * 8;
     uint bytes = DMA_BUFFER_SIZE;
     double *dataptr = data;
 
@@ -310,7 +272,8 @@ double full_data_set_likelihood(double alpha, double beta) {
 
         // Process the points in the buffer
         for (uint i = 0; i < points; i++) {
-            l *= likelihood(dma_buffers[dma_process_buffer][i], alpha, beta);
+            l *= mcmc_model_likelihood(
+                    dma_buffers[dma_process_buffer][i], params, state_to_use);
         }
 
         points_to_process -= points;
@@ -328,10 +291,15 @@ void run(uint unused0, uint unused1) {
     use(unused0);
     use(unused1);
 
-    double current_alpha = 0.0;
-    double current_beta = 1.0;
-    double new_alpha;
-    double new_beta;
+    // Create a new state pointer
+    uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
+    mcmc_state_pointer_t new_state = (mcmc_state_pointer_t) spin1_malloc(
+        state_n_bytes);
+    if (new_state == NULL) {
+        log_error("Could not allocate space for new state");
+        rt_error(RTE_SWERR);
+    }
+
     double current_posterior;
     double new_posterior;
     unsigned int i;
@@ -340,16 +308,17 @@ void run(uint unused0, uint unused1) {
     unsigned int likelihood_calls = 0;
 
     // Try to copy data in to DTCM
-    double *data_ptr = (double *) sark_tag_ptr(data_tag, sark_app_id());
-    data = (double *) spin1_malloc(n_data_points * sizeof(double));
+    double *data_ptr = (double *) sark_tag_ptr(
+        parameters.data_tag, sark_app_id());
+    data = (double *) spin1_malloc(parameters.n_data_points * sizeof(double));
     if (data != NULL) {
-        spin1_memcpy(data, data_ptr, n_data_points * sizeof(double));
+        spin1_memcpy(data, data_ptr, parameters.n_data_points * sizeof(double));
         dma_likelihood = 0;
     } else {
         uint space = sark_heap_max(sark.heap, 0);
         log_warning(
             "Could not allocate data of size %d to DTCM (%d bytes free)"
-            "- using DMAs", n_data_points * sizeof(double), space);
+            "- using DMAs", parameters.n_data_points * sizeof(double), space);
         data = data_ptr;
 
         // Allocate the buffers
@@ -365,92 +334,61 @@ void run(uint unused0, uint unused1) {
     }
 
     // first posterior calculated at initialisation values of alpha and beta
-    current_posterior = full_data_set_likelihood(current_alpha, current_beta) *
-        prior_prob(
-            current_alpha, current_beta, alpha_min, alpha_max,
-            beta_min, beta_max);
+    current_posterior =
+        full_data_set_likelihood(state) * mcmc_model_prior_prob(params, state);
 
     // update likelihood function counter for diagnostics
     likelihood_calls++;
 
-    // burn-in phase
-    for (i = 0; i < burn_in; i++) {
+    uint samples_to_go = parameters.thinning - 1;
+    bool burn_in = true;
+
+    do {
 
         // make a jump around parameter space using bivariate t distribution
         // with 3 degrees of freedom
-        transition_jump(
-            current_alpha, current_beta, &new_alpha, &new_beta,
-            degrees_of_freedom, seed, alpha_jump_scale, beta_jump_scale);
+        mcmc_model_transition_jump(t_deviate, params, state, new_state);
 
         // update likelihood function counter for diagnostics
         likelihood_calls++;
 
         // calculate joint probability at this point
-        new_posterior = full_data_set_likelihood(new_alpha, new_beta) *
-            prior_prob(
-                new_alpha, new_beta, alpha_min, alpha_max,
-                beta_min, beta_max);
+        new_posterior =
+            full_data_set_likelihood(new_state) *
+            mcmc_model_prior_prob(params, new_state);
 
         // if accepted, update current state, otherwise leave it as is
-        if (MH_MCMC_keep_new_point(current_posterior, new_posterior, seed)) {
+        if (MH_MCMC_keep_new_point(
+                current_posterior, new_posterior, parameters.seed)) {
 
             current_posterior = new_posterior;
-            current_alpha = new_alpha;
-            current_beta = new_beta;
+            spin1_memcpy(state, new_state, state_n_bytes);
 
             // update acceptance count
             accepted++;
         };
 
-    }
+        if (burn_in) {
+            if (likelihood_calls == parameters.burn_in) {
+                log_info(
+                    "Burn-in accepted %d of %d", accepted, likelihood_calls);
 
-    log_info("Burn-in accepted %d of %d", accepted, likelihood_calls);
-
-    // reset diagnostic statistics
-    accepted = likelihood_calls = 0;
-
-    uint samples_to_go = thinning - 1;
-
-    // now burnt in, start to collect inference sample output
-    do {
-
-        // **** this is the other massive parallelisation opportunities
-        // i.e. multiple parallel chains ****
-
-        // make a jump around parameter space
-        transition_jump(
-            current_alpha, current_beta, &new_alpha, &new_beta,
-            degrees_of_freedom, seed, alpha_jump_scale, beta_jump_scale);
-
-        likelihood_calls++; // update likelihood function counter for diagnostics
-
-         // calculate joint probability at this point
-        new_posterior = full_data_set_likelihood(new_alpha, new_beta) *
-            prior_prob(
-                new_alpha, new_beta, alpha_min, alpha_max,
-                beta_min, beta_max);
-
-        // if accepted, update current state, otherwise leave it as is
-        if (MH_MCMC_keep_new_point(current_posterior, new_posterior, seed)) {
-            current_posterior = new_posterior;
-            current_alpha = new_alpha;
-            current_beta = new_beta;
-
-            // update acceptance count
-            accepted++;
-        };
-
-        // output every THINNING samples
-        if (samples_to_go == 0) {
-            recording_record(0, &current_alpha, 8);
-            recording_record(0, &current_beta, 8);
-            sample_count++;
-            samples_to_go = thinning;
+                // reset diagnostic statistics
+                accepted = 0;
+                likelihood_calls = 0;
+                burn_in = false;
+            }
+        } else {
+            // output every THINNING samples
+            if (samples_to_go == 0) {
+                recording_record(0, state, state_n_bytes);
+                sample_count++;
+                samples_to_go = parameters.thinning;
+            }
+            samples_to_go--;
         }
-        samples_to_go--;
 
-    // until you have enough posterior samples
-    } while (sample_count < n_samples);
+    } while (sample_count < parameters.n_samples);
 
     recording_finalise();
 
@@ -459,20 +397,21 @@ void run(uint unused0, uint unused1) {
 }
 
 void multicast_callback(uint key, uint payload) {
-    uint sequence = key & sequence_mask;
+    uint sequence = key & parameters.sequence_mask;
     if (sequence == next_sequence) {
         data_receive_ptr[0] = payload;
         data_receive_ptr++;
         last_sequence = sequence;
-        next_sequence = (sequence + 1) & sequence_mask;
+        next_sequence = (sequence + 1) & parameters.sequence_mask;
     }
 }
 
 void timer_callback(uint time, uint unused) {
-    spin1_delay_us(timer >> 1);
+    spin1_delay_us(parameters.timer >> 1);
     use(time);
     use(unused);
-    spin1_send_mc_packet(acknowledge_key, last_sequence, WITH_PAYLOAD);
+    spin1_send_mc_packet(
+        parameters.acknowledge_key, last_sequence, WITH_PAYLOAD);
 }
 
 void empty_multicast_callback(uint key, uint payload) {
@@ -514,90 +453,55 @@ void c_main() {
     // Read the parameters
     address_t parameters_address = data_specification_get_region(
         PARAMETERS, data_address);
-    struct parameters *params = (struct parameters *) parameters_address;
+    struct parameters *sdram_params = (struct parameters *) parameters_address;
+    spin1_memcpy(&parameters, sdram_params, sizeof(struct parameters));
 
-    // MCMC setup definitions
-    // no of MCMC transitions to reach apparent equilibrium before generating
-    // inference samples
-    burn_in = params->burn_in;
-    log_info("Burn in = %d", burn_in);
+    // Set the last sequence to the one "before" 0
+    last_sequence = parameters.sequence_mask;
 
-    // subsequent MCMC samples are correlated, so thin the chain to avoid this
-    thinning = params->thinning;
-    log_info("Thinning = %d", thinning);
+    // Read the model parameters
+    address_t model_params_address = data_specification_get_region(
+        MODEL_PARAMETERS, data_address);
+    uint32_t params_n_bytes = mcmc_model_get_params_n_bytes();
+    params = (mcmc_params_pointer_t) spin1_malloc(params_n_bytes);
+    if (params == NULL) {
+        log_error("Could not allocate model parameters");
+        rt_error(RTE_SWERR);
+    }
+    spin1_memcpy(params, model_params_address, params_n_bytes);
 
-    // number of posterior samples required
-    n_samples = params->n_samples;
-    log_info("N Samples = %d", n_samples);
+    // Read the model state
+    address_t model_state_address = data_specification_get_region(
+        MODEL_STATE, data_address);
+    uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
+    state = (mcmc_state_pointer_t) spin1_malloc(state_n_bytes);
+    if (state == NULL) {
+        log_error("Could not allocate model state");
+        rt_error(RTE_SWERR);
+    }
+    spin1_memcpy(state, model_state_address, state_n_bytes);
 
-    // number of data points
-    n_data_points = params->n_data_points;
-    log_info("N Data Points = %d", n_data_points);
-
-    // data receive window size - 0 if not a receiver
-    data_window_size = params->data_window_size;
-    log_info("Data Window Size = %d", data_window_size);
-
-    // Sequence mask for data reception - 0 if not a receiver
-    sequence_mask = params->sequence_mask;
-    last_sequence = sequence_mask;
-    log_info("Sequence mask = 0x%08x", sequence_mask);
-
-    // Acknowledge key for data reception - 0 if not a receiver
-    acknowledge_key = params->acknowledge_key;
-    log_info("Acknowledge key = 0x%08x", acknowledge_key);
-
-    // Tag which is allocated for the data
-    data_tag = params->data_tag;
-    log_info("Data tag = %d", data_tag);
-
-    // Timer for data acknowledgement - 0 if not receiver
-    timer = params->timer;
-    log_info("Timer = %d", timer);
-
-    // scaling of t transition distribution for MH jumps in alpha direction
-    alpha_jump_scale = params->alpha_jump_scale;
-    print_value(alpha_jump_scale, buffer);
-    log_info("Alpha jump scale = %s", buffer);
-
-    // scaling of t transition distribution for MH jumps in beta direction
-    beta_jump_scale = params->beta_jump_scale;
-    print_value(beta_jump_scale, buffer);
-    log_info("Beta jump scale = %s", buffer);
-
-    // Alpha range
-    alpha_min = params->alpha_min;
-    print_value(alpha_min, buffer);
-    log_info("Alpha min = %s", buffer);
-    alpha_max = params->alpha_max;
-    print_value(alpha_max, buffer);
-    log_info("Alpha max = %s", buffer);
-
-    // Beta range
-    beta_min = params->beta_min;
-    print_value(beta_min, buffer);
-    log_info("Beta min = %s", buffer);
-    beta_max = params->beta_max;
-    print_value(beta_max, buffer);
-    log_info("Beta max = %s", buffer);
-
-    // The number of degrees of freedom to jump around with
-    degrees_of_freedom = params->degrees_of_freedom;
-    print_value(degrees_of_freedom, buffer);
+    log_info("Burn in = %d", parameters.burn_in);
+    log_info("Thinning = %d", parameters.thinning);
+    log_info("N Samples = %d", parameters.n_samples);
+    log_info("N Data Points = %d", parameters.n_data_points);
+    log_info("Data Window Size = %d", parameters.data_window_size);
+    log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
+    log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
+    log_info("Data tag = %d", parameters.data_tag);
+    log_info("Timer = %d", parameters.timer);
+    print_value(parameters.degrees_of_freedom, buffer);
     log_info("Degrees of freedom = %s", buffer);
 
-    // The random seed
-    sark_word_cpy(seed, params->seed, sizeof(uniform_seed));
-
     // Allocate the data receive space if this is the nominated receiver
-    if (data_window_size > 0) {
+    if (parameters.data_window_size > 0) {
         data_receive_ptr = (uint32_t *) sark_xalloc(
-            sv->sdram_heap, n_data_points * sizeof(double),
-            data_tag, ALLOC_LOCK);
+            sv->sdram_heap, parameters.n_data_points * sizeof(double),
+            parameters.data_tag, ALLOC_LOCK);
         if (data_receive_ptr == NULL) {
             log_error(
                 "Could not allocate data array of size %d in SDRAM",
-                n_data_points * sizeof(double));
+                parameters.n_data_points * sizeof(double));
             rt_error(RTE_SWERR);
         }
 
@@ -605,7 +509,7 @@ void c_main() {
         spin1_callback_on(MCPL_PACKET_RECEIVED, multicast_callback, -1);
 
         // Set up the timer for acknowledgement
-        spin1_set_timer_tick(timer);
+        spin1_set_timer_tick(parameters.timer);
         spin1_callback_on(TIMER_TICK, timer_callback, 0);
     } else {
         spin1_callback_on(MCPL_PACKET_RECEIVED, empty_multicast_callback, -1);
