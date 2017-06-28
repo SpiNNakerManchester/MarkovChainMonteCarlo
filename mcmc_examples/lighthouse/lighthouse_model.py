@@ -33,6 +33,10 @@ class LightHouseModel(MCMCModel):
         self._beta_min = beta_min
         self._beta_max = beta_max
 
+    @overrides(MCMCModel.get_binary_name)
+    def get_binary_name(self):
+        return "lighthouse.aplx"
+
     @overrides(MCMCModel.get_parameters)
     def get_parameters(self):
         return [
@@ -47,6 +51,6 @@ class LightHouseModel(MCMCModel):
     @overrides(MCMCModel.get_state_variables)
     def get_state_variables(self):
         return [
-            MCMCStateVariable("alpha", numpy.float64),
-            MCMCStateVariable("beta", numpy.float64)
+            MCMCStateVariable("alpha", 0.0, numpy.float64),
+            MCMCStateVariable("beta", 1.0, numpy.float64)
         ]

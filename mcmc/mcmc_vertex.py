@@ -73,7 +73,8 @@ class MCMCVertex(
         for i, param in enumerate(parameters):
             numpy_format.append(('f{}'.format(i), param.data_type))
             numpy_values.append(param.value)
-        return numpy.array(numpy_values, dtype=numpy_format).view("uint32")
+        return numpy.array(
+            [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
     def _get_model_state_array(self):
         state = self._model.get_state_variables()
@@ -81,8 +82,9 @@ class MCMCVertex(
         numpy_values = list()
         for i, param in enumerate(state):
             numpy_format.append(('f{}'.format(i), param.data_type))
-            numpy_values.append(param.value)
-        return numpy.array(numpy_values, dtype=numpy_format).view("uint32")
+            numpy_values.append(param.initial_value)
+        return numpy.array(
+            [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
     @property
     @overrides(MachineVertex.resources_required)
@@ -97,7 +99,7 @@ class MCMCVertex(
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        return self._model.get_binary_file_name()
+        return self._model.get_binary_name()
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):
@@ -162,18 +164,20 @@ class MCMCVertex(
 
         # Write the degrees of freedom
         spec.write_value(
-            self._coordinator.degrees_of_freedom, dataType=DataType.FLOAT_64)
+            self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_64)
 
         # Reserve and write the model parameters
         params = self._get_model_parameters_array()
-        spec.reserve_memory_region(MCMCRegions.MODEL_PARAMS, len(params) * 4)
-        spec.switch_write_focus(MCMCRegions.MODEL_PARAMS)
+        spec.reserve_memory_region(
+            MCMCRegions.MODEL_PARAMS.value, len(params) * 4)
+        spec.switch_write_focus(MCMCRegions.MODEL_PARAMS.value)
         spec.write_array(params)
 
         # Reserve and write the model state
         state = self._get_model_state_array()
-        spec.reserve_memory_region(MCMCRegions.MODEL_STATE, len(state) * 4)
-        spec.switch_write_focus(MCMCRegions.MODEL_STATE)
+        spec.reserve_memory_region(
+            MCMCRegions.MODEL_STATE.value, len(state) * 4)
+        spec.switch_write_focus(MCMCRegions.MODEL_STATE.value)
         spec.write_array(state)
 
         # End the specification

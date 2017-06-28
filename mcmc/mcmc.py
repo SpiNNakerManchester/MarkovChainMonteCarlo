@@ -1,8 +1,8 @@
 import spinnaker_graph_front_end as g
 
-from mcmc.mcmc_vertex import MCMCVertex
-from mcmc.mcmc_coordinator_vertex import MCMCCoordinatorVertex
-from mcmc import model_binaries
+from .mcmc_vertex import MCMCVertex
+from .mcmc_coordinator_vertex import MCMCCoordinatorVertex
+from . import model_binaries
 
 from pacman.model.constraints.placer_constraints\
     .placer_chip_and_core_constraint import PlacerChipAndCoreConstraint
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def run_mcmc(
-        self, model, data, n_samples, burn_in=2000, thinning=5,
+        model, data, n_samples, burn_in=2000, thinning=5,
         degrees_of_freedom=3.0, seed=None, n_chips=None):
     """ Executes an MCMC model, returning the received samples
 
