@@ -1,9 +1,10 @@
-/.project
-/.settings
+**/.project
+**/.settings
+**/.cproject
 *.aplx
 *.txt
 **/build/
-/.pydevproject
+**/.pydevproject
 **/application_generated_data_files/
 **/reports/
 **/*.pyc
