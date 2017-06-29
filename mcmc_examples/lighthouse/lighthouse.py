@@ -1,5 +1,5 @@
 import numpy
-from mcmc import mcmc
+from mcmc import mcmc_framework
 from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
 
 # Data to use for 50 data points
@@ -61,7 +61,7 @@ beta_max = 2.0
 model = LightHouseModel(
     alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
     beta_max)
-samples = mcmc.run_mcmc(
+samples = mcmc_framework.run_mcmc(
     model, data_points, n_samples, burn_in, thinning, degrees_of_freedom, seed,
     n_chips=23*48)
 

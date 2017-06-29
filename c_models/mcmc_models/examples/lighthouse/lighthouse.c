@@ -46,7 +46,7 @@ double mcmc_model_prior_prob(
  generate jumps from MH transition distribution which is uncorrelated bivariate
  t with degrees_freedom degrees of freedom
  */
-mcmc_model_transition_jump(
+void mcmc_model_transition_jump(
         t_deviate_function_t t_deviate, mcmc_params_pointer_t params,
         mcmc_state_pointer_t state, mcmc_state_pointer_t new_state) {
     new_state->alpha = mcmc_model_next_transition_jump(

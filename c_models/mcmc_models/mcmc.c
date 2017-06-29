@@ -302,7 +302,6 @@ void run(uint unused0, uint unused1) {
 
     double current_posterior;
     double new_posterior;
-    unsigned int i;
     unsigned int sample_count = 0;
     unsigned int accepted = 0;
     unsigned int likelihood_calls = 0;
@@ -340,7 +339,7 @@ void run(uint unused0, uint unused1) {
     // update likelihood function counter for diagnostics
     likelihood_calls++;
 
-    uint samples_to_go = parameters.thinning - 1;
+    uint samples_to_go = parameters.thinning;
     bool burn_in = true;
 
     do {
@@ -379,6 +378,7 @@ void run(uint unused0, uint unused1) {
                 burn_in = false;
             }
         } else {
+
             // output every THINNING samples
             if (samples_to_go == 0) {
                 recording_record(0, state, state_n_bytes);
