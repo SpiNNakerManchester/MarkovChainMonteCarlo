@@ -26,13 +26,6 @@ seed = [
     123456789, 234567891, 345678912, 456789123, 0
 ]
 
-# no of MCMC transitions to reach apparent equilibrium before generating
-# inference samples
-burn_in = 2000
-
-# subsequent MCMC samples are correlated, so thin the chain to avoid this
-thinning = 5
-
 # number of posterior samples required per core
 n_samples = 100
 
@@ -41,9 +34,6 @@ alpha_jump_scale = 0.8
 
 # scaling of t transition distribution for MH jumps in beta direction
 beta_jump_scale = 0.25
-
-# The number of degrees of freedom to jump around with
-degrees_of_freedom = 3.0
 
 # specification of prior knowledge about lighthouse position
 #
@@ -62,8 +52,7 @@ model = LightHouseModel(
     alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
     beta_max)
 samples = mcmc_framework.run_mcmc(
-    model, data_points, n_samples, burn_in, thinning, degrees_of_freedom, seed,
-    n_chips=23*48)
+    model, data_points, n_samples, seed=seed, n_chips=23*48)
 
 # Save the results
 numpy.save("results.npy", samples)
