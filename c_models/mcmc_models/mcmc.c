@@ -31,6 +31,9 @@
 #include <recording.h>
 #include "mcmc_model.h"
 
+// Define spin1_wfi
+extern void spin1_wfi();
+
 // The type of the seed
 typedef uint32_t uniform_seed[5];
 
@@ -346,7 +349,7 @@ void run(uint unused0, uint unused1) {
 
         // make a jump around parameter space using bivariate t distribution
         // with 3 degrees of freedom
-        mcmc_model_transition_jump(t_deviate, params, state, new_state);
+        mcmc_model_transition_jump(params, state, new_state);
 
         // update likelihood function counter for diagnostics
         likelihood_calls++;

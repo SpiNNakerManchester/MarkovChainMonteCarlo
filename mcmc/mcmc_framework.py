@@ -41,18 +41,8 @@ def run_mcmc(
     :rtype: A numpy array with fields for each model state variable
     """
 
-    # If the machine is a generated one, set the number of chips to a single
-    # 48-node board
-    n_chips_required = None
-    if g.is_allocated_machine:
-        if n_chips is None:
-            raise Exception(
-                "n_chips must be specified to use an allocated machine")
-        n_chips_required = n_chips
-
     # Set up the simulation
-    g.setup(
-        n_chips_required=n_chips_required, model_binary_module=model_binaries)
+    g.setup(n_chips_required=n_chips, model_binary_module=model_binaries)
 
     # Get the number of cores available for use
     n_cores = 0

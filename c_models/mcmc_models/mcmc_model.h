@@ -2,26 +2,27 @@
 
 typedef struct mcmc_params* mcmc_params_pointer_t;
 typedef struct mcmc_state* mcmc_state_pointer_t;
-typedef double (*t_deviate_function_t)();
+
+extern double t_deviate();
 
 // macro to define square( x ) = x^2
 #define SQR( x ) (( x ) * ( x ))
 
+// !\brief Get the number of bytes in the params struct (usually just sizeof)
 uint32_t mcmc_model_get_params_n_bytes();
 
+// !\brief Get the number of bytes in the state struct (usually just sizeof)
 uint32_t mcmc_model_get_state_n_bytes();
 
+// !\brief Given a value x, calculate the likelihood of the value
 double mcmc_model_likelihood(
     double x, mcmc_params_pointer_t params, mcmc_state_pointer_t state);
 
+// !\brief Get the prior probability of a given state
 double mcmc_model_prior_prob(
     mcmc_params_pointer_t params, mcmc_state_pointer_t state);
 
+// !\brief Jump to a new state from the current state
 void mcmc_model_transition_jump(
-    t_deviate_function_t t_deviate, mcmc_params_pointer_t params,
-    mcmc_state_pointer_t state, mcmc_state_pointer_t new_state);
-
-static inline double mcmc_model_next_transition_jump(
-        double value, t_deviate_function_t t_deviate, double jump_scale) {
-    return value + (t_deviate() * jump_scale);
-}
+    mcmc_params_pointer_t params, mcmc_state_pointer_t state,
+    mcmc_state_pointer_t new_state);

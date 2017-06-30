@@ -47,10 +47,8 @@ double mcmc_model_prior_prob(
  t with degrees_freedom degrees of freedom
  */
 void mcmc_model_transition_jump(
-        t_deviate_function_t t_deviate, mcmc_params_pointer_t params,
-        mcmc_state_pointer_t state, mcmc_state_pointer_t new_state) {
-    new_state->alpha = mcmc_model_next_transition_jump(
-        state->alpha, t_deviate, params->alpha_jump_scale);
-    new_state->beta = mcmc_model_next_transition_jump(
-        state->beta, t_deviate, params->beta_jump_scale);
+        mcmc_params_pointer_t params, mcmc_state_pointer_t state,
+        mcmc_state_pointer_t new_state) {
+    new_state->alpha = state->alpha + (t_deviate() * params->alpha_jump_scale);
+    new_state->beta = state->beta + (t_deviate() * params->beta_jump_scale);
 }
