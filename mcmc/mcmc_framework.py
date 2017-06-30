@@ -8,13 +8,8 @@ from pacman.model.constraints.placer_constraints\
     .placer_chip_and_core_constraint import PlacerChipAndCoreConstraint
 from pacman.model.graphs.machine import MachineEdge
 
-from spinnman.model.enums.cpu_state import CPUState
-
-from spinn_front_end_common.utilities import globals_variables
-
 import numpy
 import logging
-import time
 
 logger = logging.getLogger(__name__)
 
@@ -105,23 +100,7 @@ def run_mcmc(
                 coordinator.acknowledge_partition_name)
 
     # Run the simulation
-    g.run(None)
-
-    # Wait for the application to finish
-    txrx = g.transceiver()
-    app_id = globals_variables.get_simulator()._app_id
-    logger.info("Running {} worker cores".format(n_workers))
-    logger.info("Waiting for application to finish...")
-    running = txrx.get_core_state_count(app_id, CPUState.RUNNING)
-    while running > 0:
-        time.sleep(0.5)
-        error = txrx.get_core_state_count(app_id, CPUState.RUN_TIME_EXCEPTION)
-        watchdog = txrx.get_core_state_count(app_id, CPUState.WATCHDOG)
-        if error > 0 or watchdog > 0:
-            error_msg = "Some cores have failed ({} RTE, {} WDOG)".format(
-                error, watchdog)
-            raise Exception(error_msg)
-        running = txrx.get_core_state_count(30, CPUState.RUNNING)
+    g.run_until_complete()
 
     # Get the data back
     samples = list()
