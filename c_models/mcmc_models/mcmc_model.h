@@ -1,5 +1,8 @@
 #include <stdint.h>
 
+#define CALC_TYPE double
+//#define VALUE accum
+
 typedef struct mcmc_params* mcmc_params_pointer_t;
 typedef struct mcmc_state* mcmc_state_pointer_t;
 
@@ -15,11 +18,11 @@ uint32_t mcmc_model_get_params_n_bytes();
 uint32_t mcmc_model_get_state_n_bytes();
 
 // !\brief Given a value x, calculate the likelihood of the value
-double mcmc_model_likelihood(
-    double x, mcmc_params_pointer_t params, mcmc_state_pointer_t state);
+CALC_TYPE mcmc_model_likelihood(
+    CALC_TYPE x, mcmc_params_pointer_t params, mcmc_state_pointer_t state);
 
 // !\brief Get the prior probability of a given state
-double mcmc_model_prior_prob(
+CALC_TYPE mcmc_model_prior_prob(
     mcmc_params_pointer_t params, mcmc_state_pointer_t state);
 
 // !\brief Jump to a new state from the current state

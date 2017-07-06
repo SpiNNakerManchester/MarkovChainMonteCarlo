@@ -78,14 +78,14 @@ struct parameters {
     uniform_seed seed;
 
     // The number of degrees of freedom to jump around with
-    double degrees_of_freedom;
+    CALC_TYPE degrees_of_freedom;
 };
 
 // 1
-double ONE = 1.00000000000000;
+CALC_TYPE ONE = 1.00000000000000;
 
 // setup variables for uniform PRNG
-double uint_max_scale = 1.0 / UINT_MAX;
+CALC_TYPE uint_max_scale = 1.0 / UINT_MAX;
 
 // The general parameters
 struct parameters parameters;
@@ -100,7 +100,7 @@ mcmc_state_pointer_t state;
 uint32_t *data_receive_ptr;
 
 // The data to process
-double *data;
+CALC_TYPE *data;
 
 // The next sequence number expected
 uint32_t next_sequence = 0;
@@ -118,7 +118,7 @@ uint dma_likelihood = 0;
 #define DMA_BUFFER_SIZE (N_BUFFER_POINTS << 3)
 
 // The local data buffers
-double *dma_buffers[2];
+CALC_TYPE *dma_buffers[2];
 
 // The current data buffer being read
 uint32_t dma_read_buffer = 0;
@@ -132,11 +132,11 @@ struct double_uint {
 };
 
 union double_to_ints {
-    double double_value;
+    CALC_TYPE double_value;
     struct double_uint int_values;
 };
 
-void print_value(double d_value, char *buffer) {
+void print_value(CALC_TYPE d_value, char *buffer) {
     union double_to_ints converter;
     converter.double_value = d_value;
     io_printf(
@@ -146,7 +146,7 @@ void print_value(double d_value, char *buffer) {
 
 // returns a high-quality Uniform[0,1] random variate -
 // Marsaglia KISS32 algorithm
-double uniform(uniform_seed seed) {
+CALC_TYPE uniform(uniform_seed seed) {
 
     int t;
 
@@ -160,19 +160,19 @@ double uniform(uniform_seed seed) {
     seed[3] = t & 2147483647;
     seed[0] += 1411392427;
 
-    return (double)
+    return (CALC_TYPE)
         ((unsigned int) seed[0] + seed[1] + seed[3]) * uint_max_scale;
 }
 
 // Returns a standard t-distributed deviate - from Ripley
-double t_deviate() {
-    double x;
-    double v;
-    double df = parameters.degrees_of_freedom;
+CALC_TYPE t_deviate() {
+    CALC_TYPE x;
+    CALC_TYPE v;
+    CALC_TYPE df = parameters.degrees_of_freedom;
 
     do {
-        double u = uniform(parameters.seed);
-        double u1 = uniform(parameters.seed);
+        CALC_TYPE u = uniform(parameters.seed);
+        CALC_TYPE u1 = uniform(parameters.seed);
 
         if (u < 0.5) {
             x = ONE / (4.0 * u - ONE);
@@ -202,8 +202,8 @@ double t_deviate() {
      keep old point
 
  */
-bool MH_MCMC_keep_new_point(double old_pt_posterior_prob,
-        double new_pt_posterior_prob, uniform_seed seed) {
+bool MH_MCMC_keep_new_point(CALC_TYPE old_pt_posterior_prob,
+        CALC_TYPE new_pt_posterior_prob, uniform_seed seed) {
     if (new_pt_posterior_prob > old_pt_posterior_prob)
         return true;
     else if ((new_pt_posterior_prob / old_pt_posterior_prob) > uniform(seed))
@@ -212,7 +212,7 @@ bool MH_MCMC_keep_new_point(double old_pt_posterior_prob,
         return false;
 }
 
-void do_transfer(double *dataptr, uint bytes) {
+void do_transfer(CALC_TYPE *dataptr, uint bytes) {
     likelihood_done = 0;
     dma_read_buffer = (dma_read_buffer + 1) & 1;
     spin1_dma_transfer(
@@ -228,8 +228,8 @@ void do_transfer(double *dataptr, uint bytes) {
  **** for product (or sum if using log-likelihoods)
 
  */
-double full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
-    double l = ONE;
+CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
+    CALC_TYPE l = ONE;
     if (!dma_likelihood) {
 
         // distribute these data points across cores?
@@ -243,7 +243,7 @@ double full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
     uint points_to_process = parameters.n_data_points;
     uint bytes_to_get = parameters.n_data_points * 8;
     uint bytes = DMA_BUFFER_SIZE;
-    double *dataptr = data;
+    CALC_TYPE *dataptr = data;
 
     // Continue until all the points have been processed
     while (points_to_process > 0) {
@@ -303,29 +303,31 @@ void run(uint unused0, uint unused1) {
         rt_error(RTE_SWERR);
     }
 
-    double current_posterior;
-    double new_posterior;
+    CALC_TYPE current_posterior;
+    CALC_TYPE new_posterior;
     unsigned int sample_count = 0;
     unsigned int accepted = 0;
     unsigned int likelihood_calls = 0;
 
     // Try to copy data in to DTCM
-    double *data_ptr = (double *) sark_tag_ptr(
+    CALC_TYPE *data_ptr = (CALC_TYPE *) sark_tag_ptr(
         parameters.data_tag, sark_app_id());
-    data = (double *) spin1_malloc(parameters.n_data_points * sizeof(double));
+    data = (CALC_TYPE *) spin1_malloc(
+    		parameters.n_data_points*sizeof(CALC_TYPE));
     if (data != NULL) {
-        spin1_memcpy(data, data_ptr, parameters.n_data_points * sizeof(double));
+        spin1_memcpy(data, data_ptr,
+        		parameters.n_data_points*sizeof(CALC_TYPE));
         dma_likelihood = 0;
     } else {
         uint space = sark_heap_max(sark.heap, 0);
         log_warning(
             "Could not allocate data of size %d to DTCM (%d bytes free)"
-            "- using DMAs", parameters.n_data_points * sizeof(double), space);
+            "- using DMAs", parameters.n_data_points*sizeof(CALC_TYPE), space);
         data = data_ptr;
 
         // Allocate the buffers
-        dma_buffers[0] = (double *) spin1_malloc(DMA_BUFFER_SIZE);
-        dma_buffers[1] = (double *) spin1_malloc(DMA_BUFFER_SIZE);
+        dma_buffers[0] = (CALC_TYPE *) spin1_malloc(DMA_BUFFER_SIZE);
+        dma_buffers[1] = (CALC_TYPE *) spin1_malloc(DMA_BUFFER_SIZE);
 
         // Set up the callback handler
         spin1_callback_on(DMA_TRANSFER_DONE, dma_callback, 0);
@@ -499,12 +501,12 @@ void c_main() {
     // Allocate the data receive space if this is the nominated receiver
     if (parameters.data_window_size > 0) {
         data_receive_ptr = (uint32_t *) sark_xalloc(
-            sv->sdram_heap, parameters.n_data_points * sizeof(double),
+            sv->sdram_heap, parameters.n_data_points * sizeof(CALC_TYPE),
             parameters.data_tag, ALLOC_LOCK);
         if (data_receive_ptr == NULL) {
             log_error(
                 "Could not allocate data array of size %d in SDRAM",
-                parameters.n_data_points * sizeof(double));
+                parameters.n_data_points * sizeof(CALC_TYPE));
             rt_error(RTE_SWERR);
         }
 

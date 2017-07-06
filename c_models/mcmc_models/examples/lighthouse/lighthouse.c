@@ -2,7 +2,7 @@
 #include "lighthouse.h"
 
 // definition of Pi for use in likelihood
-double pi = 3.141592653589793;
+CALC_TYPE pi = 3.141592653589793;
 
 uint32_t mcmc_model_get_params_n_bytes() {
     return sizeof(struct mcmc_params);
@@ -22,8 +22,8 @@ uint32_t mcmc_model_get_state_n_bytes() {
 
  see accompanying documents and Sivia book for more detail
  */
-double mcmc_model_likelihood(
-        double x, mcmc_params_pointer_t params, mcmc_state_pointer_t state) {
+CALC_TYPE mcmc_model_likelihood(
+        CALC_TYPE x, mcmc_params_pointer_t params, mcmc_state_pointer_t state) {
     return state->beta / (pi * ( SQR( state->beta ) + SQR(x - state->alpha)));
 }
 
@@ -32,7 +32,7 @@ double mcmc_model_likelihood(
 
  impossible that they are outside ranges, otherwise uniform
  */
-double mcmc_model_prior_prob(
+CALC_TYPE mcmc_model_prior_prob(
         mcmc_params_pointer_t params, mcmc_state_pointer_t state) {
     if (state->alpha < params->alpha_min || state->alpha > params->alpha_max ||
             state->beta < params->beta_min || state->beta > params->beta_max) {
