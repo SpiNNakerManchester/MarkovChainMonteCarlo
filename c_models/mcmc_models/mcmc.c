@@ -29,7 +29,9 @@
 #include <data_specification.h>
 #include <simulation.h>
 #include <recording.h>
+#include <stdfix-exp.h>
 #include "mcmc_model.h"
+#include "examples/lighthouse/lighthouse.h"
 
 // Define spin1_wfi
 extern void spin1_wfi();
@@ -82,10 +84,11 @@ struct parameters {
 };
 
 // 1
-CALC_TYPE ONE = 1.00000000000000;
+//CALC_TYPE ONE = 1.00000000000000;
+CALC_TYPE ONE = 1.000000k;
 
 // setup variables for uniform PRNG
-CALC_TYPE uint_max_scale = 1.0 / UINT_MAX;
+//CALC_TYPE uint_max_scale = 1.0k / 65535.0k;  // UINT_MAX;
 
 // The general parameters
 struct parameters parameters;
@@ -126,23 +129,23 @@ uint32_t dma_read_buffer = 0;
 // Flag to indicate when likelihood data transfer has been done
 uint likelihood_done = 0;
 
-struct double_uint {
-    uint first_word;
-    uint second_word;
-};
-
-union double_to_ints {
-    CALC_TYPE double_value;
-    struct double_uint int_values;
-};
-
-void print_value(CALC_TYPE d_value, char *buffer) {
-    union double_to_ints converter;
-    converter.double_value = d_value;
-    io_printf(
-        buffer, "0x%08x%08x",
-        converter.int_values.second_word, converter.int_values.first_word);
-}
+//struct double_uint {
+//    uint first_word;
+//    uint second_word;
+//};
+//
+//union double_to_ints {
+//    CALC_TYPE double_value;
+//    struct double_uint int_values;
+//};
+//
+//void print_value(CALC_TYPE d_value, char *buffer) {
+//    union double_to_ints converter;
+//    converter.double_value = d_value;
+//    io_printf(
+//        buffer, "0x%08x%08x",
+//        converter.int_values.second_word, converter.int_values.first_word);
+//}
 
 // returns a high-quality Uniform[0,1] random variate -
 // Marsaglia KISS32 algorithm
@@ -160,8 +163,12 @@ CALC_TYPE uniform(uniform_seed seed) {
     seed[3] = t & 2147483647;
     seed[0] += 1411392427;
 
-    return (CALC_TYPE)
-        ((unsigned int) seed[0] + seed[1] + seed[3]) * uint_max_scale;
+//    log_info("uniform, uint_max_scale = %.10k", uint_max_scale);
+//    log_info("uniform, 0.000015k = %.10k", 0.000015k);
+
+    uint int_value = seed[0] + seed[1] + seed[3];
+
+    return (CALC_TYPE) ulrbits(int_value);
 }
 
 // Returns a standard t-distributed deviate - from Ripley
@@ -174,18 +181,22 @@ CALC_TYPE t_deviate() {
         CALC_TYPE u = uniform(parameters.seed);
         CALC_TYPE u1 = uniform(parameters.seed);
 
-        if (u < 0.5) {
-            x = ONE / (4.0 * u - ONE);
-            v = (ONE / SQR(x)) * u1;
-        } else {
-            x = 4.0 * u - 3.0;
-            v = u1;
-        }
+//        log_info("t_deviate, do 0.25*2048 = %k", 0.25k*2048.0k);
 
-        if (v < (ONE - 0.5 * fabs(x)))
+        if (u < 0.5k) {
+        	x = ONE / (4.0k * u - ONE);
+        	v = (ONE / SQR(x)) * u1;
+        } else {
+        	x = 4.0k * u - 3.0k;
+        	v = u1;
+        }
+//        print_value(x, buffer);
+//        log_info("t_deviate(), x = %k", x);
+
+        if (v < (ONE - 0.5k * fabs(x)))
             return x;
 
-    } while (v >= pow((ONE + SQR( x ) / df), -(df + ONE) / 2.0));
+    } while (v >= pow((ONE + SQR( x ) / df), -(df + ONE) / 2.0k));
 
     return x;
 }
@@ -204,7 +215,10 @@ CALC_TYPE t_deviate() {
  */
 bool MH_MCMC_keep_new_point(CALC_TYPE old_pt_posterior_prob,
         CALC_TYPE new_pt_posterior_prob, uniform_seed seed) {
-    if (new_pt_posterior_prob > old_pt_posterior_prob)
+//	if (new_pt_posterior_prob == 0)  // (this happens when alpha or beta
+		                             //  are outside their specified ranges)
+//		return false;
+	if (new_pt_posterior_prob > old_pt_posterior_prob)
         return true;
     else if ((new_pt_posterior_prob / old_pt_posterior_prob) > uniform(seed))
         return true;
@@ -229,12 +243,17 @@ void do_transfer(CALC_TYPE *dataptr, uint bytes) {
 
  */
 CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
-    CALC_TYPE l = ONE;
+//	char buffer[1024];
+//    CALC_TYPE l = ONE;
+//	log_info("state_to_use->beta = %k, state_to_use->alpha = %k",
+//			state_to_use->beta, state_to_use->alpha);
+    CALC_TYPE l = 0;
     if (!dma_likelihood) {
 
         // distribute these data points across cores?
         for (unsigned int i = 0; i < parameters.n_data_points; i++) {
-            l *= mcmc_model_likelihood(data[i], params, state_to_use);
+//            l *= mcmc_model_likelihood(data[i], params, state_to_use);
+            l += mcmc_model_likelihood(data[i], params, state_to_use);
         }
         return l;
     }
@@ -275,7 +294,8 @@ CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
 
         // Process the points in the buffer
         for (uint i = 0; i < points; i++) {
-            l *= mcmc_model_likelihood(
+//            l *= mcmc_model_likelihood(
+        	l += mcmc_model_likelihood(
                     dma_buffers[dma_process_buffer][i], params, state_to_use);
         }
 
@@ -303,6 +323,8 @@ void run(uint unused0, uint unused1) {
         rt_error(RTE_SWERR);
     }
 
+//    CALC_TYPE log_likelihood;
+//    CALC_TYPE likelihood;
     CALC_TYPE current_posterior;
     CALC_TYPE new_posterior;
     unsigned int sample_count = 0;
@@ -337,9 +359,17 @@ void run(uint unused0, uint unused1) {
         do_transfer(data, DMA_BUFFER_SIZE);
     }
 
-    // first posterior calculated at initialisation values of alpha and beta
-    current_posterior =
+    // exponential to get likelihood back from log likelihood
+//    log_likelihood = full_data_set_likelihood(state);
+//    likelihood = expk(log_likelihood);
+//
+//    log_info("log_likelihood = %k, likelihood = %k",
+//    		log_likelihood, likelihood);
+
+    // first posterior calculated at initial state values
+    current_posterior = //likelihood * mcmc_model_prior_prob(params, state);
         full_data_set_likelihood(state) * mcmc_model_prior_prob(params, state);
+
 
     // update likelihood function counter for diagnostics
     likelihood_calls++;
@@ -356,10 +386,18 @@ void run(uint unused0, uint unused1) {
         // update likelihood function counter for diagnostics
         likelihood_calls++;
 
+        // get likelihood from log likelihood
+//        likelihood = expk(full_data_set_likelihood(new_state));
+
         // calculate joint probability at this point
-        new_posterior =
+        new_posterior = //likelihood * mcmc_model_prior_prob(params, new_state);
             full_data_set_likelihood(new_state) *
             mcmc_model_prior_prob(params, new_state);
+
+//        if (!burn_in) {
+//        	log_info("current_posterior = %k, new_posterior = %k",
+//        		current_posterior, new_posterior);
+//        }
 
         // if accepted, update current state, otherwise leave it as is
         if (MH_MCMC_keep_new_point(
@@ -384,8 +422,12 @@ void run(uint unused0, uint unused1) {
             }
         } else {
 
+//        	log_info("starting sampling, sample_count = %d, to_go = %d",
+//        			sample_count, samples_to_go);
             // output every THINNING samples
             if (samples_to_go == 0) {
+//                log_info("recording: state->beta = %k, state->alpha = %k",
+//                		state->beta, state->alpha);
                 recording_record(0, state, state_n_bytes);
                 sample_count++;
                 samples_to_go = parameters.thinning;
@@ -439,7 +481,7 @@ void trigger_run(uint unused0, uint unused1) {
  P( ALPHA, BETA | X ) ~= P( ALPHA, BETA ) * P( X | ALPHA, BETA )
  */
 void c_main() {
-    char buffer[1024];
+    //char buffer[1024];
 
     // Read the data specification header
     address_t data_address = data_specification_get_data_address();
@@ -489,14 +531,15 @@ void c_main() {
     log_info("Burn in = %d", parameters.burn_in);
     log_info("Thinning = %d", parameters.thinning);
     log_info("N Samples = %d", parameters.n_samples);
-    log_info("N Data Points = %d", parameters.n_data_points);
-    log_info("Data Window Size = %d", parameters.data_window_size);
-    log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
-    log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
-    log_info("Data tag = %d", parameters.data_tag);
-    log_info("Timer = %d", parameters.timer);
-    print_value(parameters.degrees_of_freedom, buffer);
-    log_info("Degrees of freedom = %s", buffer);
+//    log_info("N Data Points = %d", parameters.n_data_points);
+//    log_info("Data Window Size = %d", parameters.data_window_size);
+//    log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
+//    log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
+//    log_info("Data tag = %d", parameters.data_tag);
+//    log_info("Timer = %d", parameters.timer);
+//    print_value(parameters.degrees_of_freedom, buffer);
+//    log_info("Degrees of freedom = %s", buffer);
+    log_info("Degrees of freedom = %k", parameters.degrees_of_freedom);
 
     // Allocate the data receive space if this is the nominated receiver
     if (parameters.data_window_size > 0) {

@@ -5,7 +5,7 @@ from .mcmc_coordinator_vertex import MCMCCoordinatorVertex
 from . import model_binaries
 
 from pacman.model.constraints.placer_constraints\
-    .placer_chip_and_core_constraint import PlacerChipAndCoreConstraint
+    .chip_and_core_constraint import ChipAndCoreConstraint
 from pacman.model.graphs.machine import MachineEdge
 
 from spinnman.model.enums.cpu_state import CPUState
@@ -60,7 +60,7 @@ def run_mcmc(
         g.add_machine_vertex_instance(coordinator)
 
         # Put the coordinator on the Ethernet chip
-        coordinator.add_constraint(PlacerChipAndCoreConstraint(chip.x, chip.y))
+        coordinator.add_constraint(ChipAndCoreConstraint(chip.x, chip.y))
         coordinators[chip.x, chip.y] = coordinator
         boards[chip.x, chip.y] = chip.ip_address
 
@@ -91,7 +91,7 @@ def run_mcmc(
             g.add_machine_vertex_instance(vertex)
 
             # Put the vertex on the same board as the coordinator
-            vertex.add_constraint(PlacerChipAndCoreConstraint(chip.x, chip.y))
+            vertex.add_constraint(ChipAndCoreConstraint(chip.x, chip.y))
 
             # Add an edge from the coordinator to the vertex, to send the data
             g.add_machine_edge_instance(
@@ -121,7 +121,7 @@ def run_mcmc(
             error_msg = "Some cores have failed ({} RTE, {} WDOG)".format(
                 error, watchdog)
             raise Exception(error_msg)
-        running = txrx.get_core_state_count(30, CPUState.RUNNING)
+        running = txrx.get_core_state_count(app_id, CPUState.RUNNING)
 
     # Get the data back
     samples = list()

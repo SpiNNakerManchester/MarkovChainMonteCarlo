@@ -1,6 +1,12 @@
 import numpy
 from mcmc import mcmc_framework
-from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
+#from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
+from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
+     import LightHouseFixedPointModel
+
+# scale value to use (double 1.0 / fixed point 65536)
+#scale_value = 1.0
+# scale_value = 32768
 
 # Data to use for 50 data points
 # data_points = [
@@ -22,18 +28,22 @@ data_points = [
     1.21925, 1.47647, -2.95771, -0.801802, -1.86529
 ]
 
+# data_points[:] = [int(x * scale_value) for x in data_points]
+
 seed = [
     123456789, 234567891, 345678912, 456789123, 0
 ]
+
+# seed[:] = [int(x * scale_value) for x in seed]
 
 # number of posterior samples required per core
 n_samples = 100
 
 # scaling of t transition distribution for MH jumps in alpha direction
-alpha_jump_scale = 0.8
+alpha_jump_scale = 0.8  # int(0.8 * scale_value)
 
 # scaling of t transition distribution for MH jumps in beta direction
-beta_jump_scale = 0.25
+beta_jump_scale = 0.25  # int(0.25 * scale_value)
 
 # specification of prior knowledge about lighthouse position
 #
@@ -42,17 +52,21 @@ beta_jump_scale = 0.25
 #
 # lighthouse cannot be closer than 0.2 from the shore because of rocks, or
 # further than 2.0 because of shipping lanes
-alpha_min = -3.0
-alpha_max = 3.0
-beta_min = 0.2
-beta_max = 2.0
+alpha_min = -3.0  # int(-3.0 * scale_value)
+alpha_max = 3.0  # int(3.0 * scale_value)
+beta_min = 0.2  # int(0.2 * scale_value)
+beta_max = 2.0  # int(2.0 * scale_value)
 
 # Run and get the samples
-model = LightHouseModel(
+#model = LightHouseModel(
+#    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
+#    beta_max)
+model = LightHouseFixedPointModel(
     alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
     beta_max)
 samples = mcmc_framework.run_mcmc(
-    model, data_points, n_samples, seed=seed, n_chips=23*48)
+    model, data_points, n_samples,
+    degrees_of_freedom=3.0, seed=seed, n_chips=2)  # n_chips=23*48)
 
 # Save the results
 numpy.save("results.npy", samples)

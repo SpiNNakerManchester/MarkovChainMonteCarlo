@@ -40,10 +40,12 @@ class MCMCCoordinatorVertex(
     _DATA_COUNT_TYPE = DataType.UINT32
 
     # The data type of each data element
-    _DATA_ELEMENT_TYPE = DataType.FLOAT_64
+    _DATA_ELEMENT_TYPE = DataType.S1615
+#    _DATA_ELEMENT_TYPE = DataType.FLOAT_64
 
     # The numpy data type of each data element
-    _NUMPY_DATA_ELEMENT_TYPE = numpy.double
+    _NUMPY_DATA_ELEMENT_TYPE = numpy.uint32
+#    _NUMPY_DATA_ELEMENT_TYPE = numpy.double
 
     # The data type of the keys
     _KEY_ELEMENT_TYPE = DataType.UINT32
@@ -239,7 +241,10 @@ class MCMCCoordinatorVertex(
         spec.write_value(self._send_timer, data_type=DataType.UINT32)
 
         # Write the data - Arrays must be 32-bit values, so convert
-        data = numpy.array(self._data, dtype=self._NUMPY_DATA_ELEMENT_TYPE)
+        # would need an if here for different model data types
+#        data_convert = self._data  # (float64)
+        data_convert = [int(x * 32768) for x in self._data]  # (S1615)
+        data = numpy.array(data_convert, dtype=self._NUMPY_DATA_ELEMENT_TYPE)
         spec.write_array(data.view(numpy.uint32))
 
         # Write the keys

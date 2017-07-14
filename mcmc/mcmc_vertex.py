@@ -71,8 +71,15 @@ class MCMCVertex(
         numpy_format = list()
         numpy_values = list()
         for i, param in enumerate(parameters):
-            numpy_format.append(('f{}'.format(i), param.data_type))
-            numpy_values.append(param.value)
+            if (param.data_type is numpy.float64):
+                numpy_format.append(('f{}'.format(i), param.data_type))
+                numpy_values.append(param.value)
+            elif (param.data_type is DataType.S1615):
+                numpy_format.append(('f{}'.format(i), numpy.uint32))
+                numpy_values.append(int(param.value * 32768))
+            else:
+                # throw exception for unknown data type
+                print("Error")
         return numpy.array(
             [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
@@ -81,8 +88,15 @@ class MCMCVertex(
         numpy_format = list()
         numpy_values = list()
         for i, param in enumerate(state):
-            numpy_format.append(('f{}'.format(i), param.data_type))
-            numpy_values.append(param.initial_value)
+            if (param.data_type is numpy.float64):
+                numpy_format.append(('f{}'.format(i), param.data_type))
+                numpy_values.append(param.initial_value)
+            elif (param.data_type is DataType.S1615):
+                numpy_format.append(('f{}'.format(i), numpy.uint32))
+                numpy_values.append(int(param.initial_value * 32768))
+            else:
+                # throw exception for unknown data type
+                print("Error")
         return numpy.array(
             [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
@@ -160,11 +174,18 @@ class MCMCVertex(
         spec.write_value(self._coordinator.acknowledge_timer)
 
         # Write the seed = 5 32-bit random numbers
-        spec.write_array(self._coordinator.seed)
+        seed = [int(x * 32768) for x in self._coordinator.seed]
+        spec.write_array(seed)
+#        spec.write_array(self._coordinator.seed)
 
         # Write the degrees of freedom
-        spec.write_value(
-            self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_64)
+#        spec.write_value(
+#            self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_64)
+        # this is the problem here - convert d.o.f. to unit32 for transfer?
+        # do we need an if statement to switch between float_64 and uint32
+        # that depends upon the datatype specified in the model?
+        degrees_of_freedom = int(self._coordinator.degrees_of_freedom * 32768)
+        spec.write_value(degrees_of_freedom, data_type=DataType.UINT32)
 
         # Reserve and write the model parameters
         params = self._get_model_parameters_array()
@@ -191,12 +212,23 @@ class MCMCVertex(
         data_values, _ = buffer_manager.get_data_for_vertex(placement, 0)
         data = data_values.read_all()
 
+        print "read_samples data ", data[0], data[1], data[2]
+
+        data_out = [float(x)/32768.0 for x in data]
+
+        print "read_samples data now ", data_out[0], data_out[1], data_out[2]
+
         numpy_format = list()
         for var in self._model.get_state_variables():
-            numpy_format.append((var.name, var.data_type))
+            if (var.data_type is DataType.S1615):
+#                data[:] = [(x / 32768) for x in data]
+                numpy_format.append((var.name, numpy.float64))
+            else:
+                numpy_format.append((var.name, var.data_type))
 
         # Convert the data into an array of state variables
-        return numpy.array(data, dtype=numpy.uint8).view(numpy_format)
+#        return numpy.array(data, dtype=numpy.uint8).view(numpy_format)
+        return numpy.array(data_out, dtype=numpy.float64).view(numpy_format)
 
     def get_minimum_buffer_sdram_usage(self):
         return 1024

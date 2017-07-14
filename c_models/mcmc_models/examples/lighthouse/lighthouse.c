@@ -1,5 +1,7 @@
 #include "../../mcmc_model.h"
 #include "lighthouse.h"
+#include <debug.h>
+#include <log.h>
 
 // definition of Pi for use in likelihood
 CALC_TYPE pi = 3.141592653589793;
@@ -24,7 +26,10 @@ uint32_t mcmc_model_get_state_n_bytes() {
  */
 CALC_TYPE mcmc_model_likelihood(
         CALC_TYPE x, mcmc_params_pointer_t params, mcmc_state_pointer_t state) {
-    return state->beta / (pi * ( SQR( state->beta ) + SQR(x - state->alpha)));
+//    return state->beta / (pi * ( SQR( state->beta ) + SQR(x - state->alpha)));
+	CALC_TYPE beta = state->beta;
+	CALC_TYPE value = pi*(SQR(state->beta)+SQR(x-state->alpha));
+	return logk(beta/value);
 }
 
 /*
