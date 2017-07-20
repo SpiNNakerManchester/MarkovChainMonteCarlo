@@ -1,14 +1,14 @@
 from spinn_utilities.overrides import overrides
 
-from data_specification.enums.data_type import DataType
-
 from mcmc.mcmc_model import MCMCModel
 from mcmc.mcmc_parameter import MCMCParameter
 from mcmc.mcmc_state_variable import MCMCStateVariable
 
+import numpy
 
-class LightHouseFixedPointModel(MCMCModel):
-    """ MCMC Model for the lighthouse problem, using fixed point
+
+class LightHouseFloatModel(MCMCModel):
+    """ MCMC Model for the lighthouse problem, using float(32)
     """
 
     def __init__(
@@ -40,17 +40,17 @@ class LightHouseFixedPointModel(MCMCModel):
     @overrides(MCMCModel.get_parameters)
     def get_parameters(self):
         return [
-            MCMCParameter(self._alpha_jump_scale, DataType.S1615),
-            MCMCParameter(self._beta_jump_scale, DataType.S1615),
-            MCMCParameter(self._alpha_min, DataType.S1615),
-            MCMCParameter(self._alpha_max, DataType.S1615),
-            MCMCParameter(self._beta_min, DataType.S1615),
-            MCMCParameter(self._beta_max, DataType.S1615)
+            MCMCParameter(self._alpha_jump_scale, numpy.float32),
+            MCMCParameter(self._beta_jump_scale, numpy.float32),
+            MCMCParameter(self._alpha_min, numpy.float32),
+            MCMCParameter(self._alpha_max, numpy.float32),
+            MCMCParameter(self._beta_min, numpy.float32),
+            MCMCParameter(self._beta_max, numpy.float32)
         ]
 
     @overrides(MCMCModel.get_state_variables)
     def get_state_variables(self):
         return [
-            MCMCStateVariable("alpha", 0.0, DataType.S1615),
-            MCMCStateVariable("beta", 1.0, DataType.S1615)
+            MCMCStateVariable("alpha", 0.0, numpy.float32),
+            MCMCStateVariable("beta", 1.0, numpy.float32)
         ]

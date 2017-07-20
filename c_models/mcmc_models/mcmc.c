@@ -22,14 +22,15 @@
 
  */
 
+#define TYPE_SELECT 2 // 0 - double, 1 - float, 2 - accum (as set in mcmc_model.h)
+
 #include <limits.h>
-#include <math.h>
+//#include <math.h>
 #include <spin1_api.h>
 #include <debug.h>
 #include <data_specification.h>
 #include <simulation.h>
 #include <recording.h>
-#include <stdfix-exp.h>
 #include "mcmc_model.h"
 #include "examples/lighthouse/lighthouse.h"
 
@@ -83,12 +84,13 @@ struct parameters {
     CALC_TYPE degrees_of_freedom;
 };
 
-// 1
-//CALC_TYPE ONE = 1.00000000000000;
-CALC_TYPE ONE = 1.000000k;
-
 // setup variables for uniform PRNG
-//CALC_TYPE uint_max_scale = 1.0k / 65535.0k;  // UINT_MAX;
+#if TYPE_SELECT == 0
+CALC_TYPE uint_max_scale = 1.0 / UINT_MAX;
+#elif TYPE_SELECT == 1
+CALC_TYPE uint_max_scale = 1.0f / UINT_MAX;
+#endif
+// Don't need max_scale for fixed-point
 
 // The general parameters
 struct parameters parameters;
@@ -129,23 +131,29 @@ uint32_t dma_read_buffer = 0;
 // Flag to indicate when likelihood data transfer has been done
 uint likelihood_done = 0;
 
-//struct double_uint {
-//    uint first_word;
-//    uint second_word;
-//};
-//
-//union double_to_ints {
-//    CALC_TYPE double_value;
-//    struct double_uint int_values;
-//};
-//
-//void print_value(CALC_TYPE d_value, char *buffer) {
-//    union double_to_ints converter;
-//    converter.double_value = d_value;
-//    io_printf(
-//        buffer, "0x%08x%08x",
-//        converter.int_values.second_word, converter.int_values.first_word);
-//}
+//#ifdef USE_FP
+// No print_value function required for fixed-point
+//#else
+#if TYPE_SELECT != 2
+struct double_uint {
+    uint first_word;
+    uint second_word;
+};
+
+union double_to_ints {
+    CALC_TYPE double_value;
+    struct double_uint int_values;
+};
+
+void print_value(CALC_TYPE d_value, char *buffer) {
+    union double_to_ints converter;
+    converter.double_value = d_value;
+    io_printf(
+        buffer, "0x%08x%08x",
+        converter.int_values.second_word, converter.int_values.first_word);
+}
+#endif
+//#endif
 
 // returns a high-quality Uniform[0,1] random variate -
 // Marsaglia KISS32 algorithm
@@ -163,41 +171,71 @@ CALC_TYPE uniform(uniform_seed seed) {
     seed[3] = t & 2147483647;
     seed[0] += 1411392427;
 
-//    log_info("uniform, uint_max_scale = %.10k", uint_max_scale);
 //    log_info("uniform, 0.000015k = %.10k", 0.000015k);
 
     uint int_value = seed[0] + seed[1] + seed[3];
 
+#if TYPE_SELECT == 2
     return (CALC_TYPE) ulrbits(int_value);
+#else
+    return (CALC_TYPE) int_value * uint_max_scale; // float?
+#endif
 }
 
 // Returns a standard t-distributed deviate - from Ripley
 CALC_TYPE t_deviate() {
+//	char buffer[1024];
     CALC_TYPE x;
     CALC_TYPE v;
     CALC_TYPE df = parameters.degrees_of_freedom;
+#if TYPE_SELECT == 2
+    CALC_TYPE rhs;
+#endif
 
     do {
         CALC_TYPE u = uniform(parameters.seed);
         CALC_TYPE u1 = uniform(parameters.seed);
 
 //        log_info("t_deviate, do 0.25*2048 = %k", 0.25k*2048.0k);
-
-        if (u < 0.5k) {
-        	x = ONE / (4.0k * u - ONE);
+        if (u < HALF) {
+#if TYPE_SELECT == 2
+        	if (ABS(FOUR * u - ONE) < 0.002k) {
+        		log_info("t_deviate(), abs(FOUR*u-ONE) = %k, u = %k",
+        				ABS(FOUR * u - ONE), u);
+        		x = 1000.0k; // or some large number...
+        	} else {
+#endif
+        	x = ONE / (FOUR * u - ONE);
+#if TYPE_SELECT == 2
+        	}
+#endif
         	v = (ONE / SQR(x)) * u1;
         } else {
-        	x = 4.0k * u - 3.0k;
+        	x = FOUR * u - THREE;
         	v = u1;
         }
 //        print_value(x, buffer);
-//        log_info("t_deviate(), x = %k", x);
+//        log_info("t_deviate(), x = %s", buffer);
 
-        if (v < (ONE - 0.5k * fabs(x)))
+        if (v < (ONE - HALF * ABS(x))) {
+//            print_value(x, buffer);
+//            log_info("t_deviate(), x = %s", buffer);
             return x;
+        }
 
-    } while (v >= pow((ONE + SQR( x ) / df), -(df + ONE) / 2.0k));
+#if TYPE_SELECT == 2
+        if (df == THREE) {
+        	rhs = ONE / SQR( ONE + SQR( x ) / THREE );
+        } /*else {
+        	rhs = POW((ONE + SQR( x ) / df), -(df + ONE) / TWO);
+        }*/
+    } while (v >= rhs);
+#else
+    } while (v >= POW((ONE + SQR( x ) / df), -(df + ONE) / TWO));
+#endif
 
+//    print_value(x, buffer);
+//    log_info("t_deviate(), x = %s", buffer);
     return x;
 }
 
@@ -215,12 +253,25 @@ CALC_TYPE t_deviate() {
  */
 bool MH_MCMC_keep_new_point(CALC_TYPE old_pt_posterior_prob,
         CALC_TYPE new_pt_posterior_prob, uniform_seed seed) {
-//	if (new_pt_posterior_prob == 0)  // (this happens when alpha or beta
-		                             //  are outside their specified ranges)
-//		return false;
+	// Now we are taking log-likelihood, new_pt > old_pt when new_pt is zero
+	// - to follow the same earlier logic with likelihood we need to call
+	// the uniform(seed) function but always return false
+	if (new_pt_posterior_prob == ZERO) {
+		CALC_TYPE dummy = uniform(seed);
+		return false;
+	}
+
+	// If old_pt is zero, then return true!
+	if (old_pt_posterior_prob == ZERO)
+		return true;
+
+	// Now do actual tests if required
+	// we have taken logs, but if
 	if (new_pt_posterior_prob > old_pt_posterior_prob)
         return true;
-    else if ((new_pt_posterior_prob / old_pt_posterior_prob) > uniform(seed))
+	// log-domain, so can turn division into subtraction and use EXP
+    else if (EXP(new_pt_posterior_prob-old_pt_posterior_prob) > uniform(seed))
+//    else if ((new_pt_posterior_prob/old_pt_posterior_prob) > uniform(seed))
         return true;
     else
         return false;
@@ -245,11 +296,8 @@ void do_transfer(CALC_TYPE *dataptr, uint bytes) {
 CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
 //	char buffer[1024];
 //    CALC_TYPE l = ONE;
-//	log_info("state_to_use->beta = %k, state_to_use->alpha = %k",
-//			state_to_use->beta, state_to_use->alpha);
-    CALC_TYPE l = 0;
+    CALC_TYPE l = ZERO;
     if (!dma_likelihood) {
-
         // distribute these data points across cores?
         for (unsigned int i = 0; i < parameters.n_data_points; i++) {
 //            l *= mcmc_model_likelihood(data[i], params, state_to_use);
@@ -311,8 +359,11 @@ void dma_callback(uint unused0, uint unused1) {
 }
 
 void run(uint unused0, uint unused1) {
+//	char buffer[1024];
     use(unused0);
     use(unused1);
+
+//    log_info("UINT_MAX is %u", UINT_MAX);
 
     // Create a new state pointer
     uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
@@ -367,8 +418,9 @@ void run(uint unused0, uint unused1) {
 //    		log_likelihood, likelihood);
 
     // first posterior calculated at initial state values
-    current_posterior = //likelihood * mcmc_model_prior_prob(params, state);
-        full_data_set_likelihood(state) * mcmc_model_prior_prob(params, state);
+    current_posterior = full_data_set_likelihood(state) *
+    		mcmc_model_prior_prob(params, state);
+//            full_data_set_likelihood(state) * mcmc_model_prior_prob(params, state);
 
 
     // update likelihood function counter for diagnostics
@@ -383,6 +435,13 @@ void run(uint unused0, uint unused1) {
         // with 3 degrees of freedom
         mcmc_model_transition_jump(params, state, new_state);
 
+//        log_info("state->beta = %k, new_state->beta = %k",
+//        		state->beta, new_state->beta);
+//        print_value(new_state->alpha, buffer);
+//        log_info("new_state->alpha = %s", buffer);
+//        print_value(new_state->beta, buffer);
+//        log_info("new_state->beta = %s", buffer);
+
         // update likelihood function counter for diagnostics
         likelihood_calls++;
 
@@ -390,21 +449,27 @@ void run(uint unused0, uint unused1) {
 //        likelihood = expk(full_data_set_likelihood(new_state));
 
         // calculate joint probability at this point
-        new_posterior = //likelihood * mcmc_model_prior_prob(params, new_state);
-            full_data_set_likelihood(new_state) *
-            mcmc_model_prior_prob(params, new_state);
+        new_posterior = full_data_set_likelihood(new_state) *
+				mcmc_model_prior_prob(params, new_state);
 
 //        if (!burn_in) {
-//        	log_info("current_posterior = %k, new_posterior = %k",
-//        		current_posterior, new_posterior);
+//#if TYPE_SELECT == 2
+//        	log_info("new_posterior = %k, current_posterior = %k",
+//        			new_posterior, current_posterior);
+//#endif
 //        }
 
+//        log_info("seed is %d %d %d %d %d", parameters.seed[0], parameters.seed[1],
+//        		parameters.seed[2], parameters.seed[3], parameters.seed[4]);
         // if accepted, update current state, otherwise leave it as is
         if (MH_MCMC_keep_new_point(
                 current_posterior, new_posterior, parameters.seed)) {
 
             current_posterior = new_posterior;
             spin1_memcpy(state, new_state, state_n_bytes);
+
+//            print_value(EXP(2.00000), buffer);
+//            log_info("point accepted %d", accepted);
 
             // update acceptance count
             accepted++;
@@ -481,7 +546,9 @@ void trigger_run(uint unused0, uint unused1) {
  P( ALPHA, BETA | X ) ~= P( ALPHA, BETA ) * P( X | ALPHA, BETA )
  */
 void c_main() {
-    //char buffer[1024];
+#if TYPE_SELECT != 2
+    char buffer[1024];
+#endif
 
     // Read the data specification header
     address_t data_address = data_specification_get_data_address();
@@ -529,17 +596,20 @@ void c_main() {
     spin1_memcpy(state, model_state_address, state_n_bytes);
 
     log_info("Burn in = %d", parameters.burn_in);
-    log_info("Thinning = %d", parameters.thinning);
-    log_info("N Samples = %d", parameters.n_samples);
+//    log_info("Thinning = %d", parameters.thinning);
+//    log_info("N Samples = %d", parameters.n_samples);
 //    log_info("N Data Points = %d", parameters.n_data_points);
 //    log_info("Data Window Size = %d", parameters.data_window_size);
 //    log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
 //    log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
 //    log_info("Data tag = %d", parameters.data_tag);
 //    log_info("Timer = %d", parameters.timer);
-//    print_value(parameters.degrees_of_freedom, buffer);
-//    log_info("Degrees of freedom = %s", buffer);
+#if TYPE_SELECT == 2
     log_info("Degrees of freedom = %k", parameters.degrees_of_freedom);
+#else
+    print_value(parameters.degrees_of_freedom, buffer);
+    log_info("Degrees of freedom = %s", buffer);
+#endif
 
     // Allocate the data receive space if this is the nominated receiver
     if (parameters.data_window_size > 0) {

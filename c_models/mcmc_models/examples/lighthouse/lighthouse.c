@@ -1,10 +1,15 @@
 #include "../../mcmc_model.h"
 #include "lighthouse.h"
-#include <debug.h>
-#include <log.h>
+//#include <debug.h>
 
 // definition of Pi for use in likelihood
-CALC_TYPE pi = 3.141592653589793;
+//#if CALC_TYPE == double
+//CALC_TYPE PI = 3.141592653589793;
+//#elif CALC_TYPE == float
+//CALC_TYPE pi = 3.1415927
+//#elif CALC_TYPE == accum
+//CALC_TYPE pi = 3.141592k
+//#endif
 
 uint32_t mcmc_model_get_params_n_bytes() {
     return sizeof(struct mcmc_params);
@@ -26,10 +31,18 @@ uint32_t mcmc_model_get_state_n_bytes() {
  */
 CALC_TYPE mcmc_model_likelihood(
         CALC_TYPE x, mcmc_params_pointer_t params, mcmc_state_pointer_t state) {
-//    return state->beta / (pi * ( SQR( state->beta ) + SQR(x - state->alpha)));
+//    log_info("mcmc_model_likelihood");
+//	return state->beta / (PI * ( SQR( state->beta ) + SQR(x - state->alpha)));
 	CALC_TYPE beta = state->beta;
-	CALC_TYPE value = pi*(SQR(state->beta)+SQR(x-state->alpha));
-	return logk(beta/value);
+	CALC_TYPE value = PI*(SQR(state->beta)+SQR(x-state->alpha));
+//	CALC_TYPE logbeta = log_test(beta);
+//	CALC_TYPE logvalue = log_test(value);
+//	return logbeta - logvalue;
+#if TYPE_SELECT == 2
+	return LN(beta/value);
+#else
+	return LN(beta) - LN(value);
+#endif
 }
 
 /*
@@ -41,9 +54,9 @@ CALC_TYPE mcmc_model_prior_prob(
         mcmc_params_pointer_t params, mcmc_state_pointer_t state) {
     if (state->alpha < params->alpha_min || state->alpha > params->alpha_max ||
             state->beta < params->beta_min || state->beta > params->beta_max) {
-        return 0.0;
+        return ZERO;
     }
-    return 1.0;
+    return ONE;
 }
 
 
