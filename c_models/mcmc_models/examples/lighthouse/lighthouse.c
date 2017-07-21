@@ -40,6 +40,7 @@ CALC_TYPE mcmc_model_likelihood(
 //	return logbeta - logvalue;
 #if TYPE_SELECT == 2
 	return LN(beta/value);
+//	return LN(beta) - LN(value);
 #else
 	return LN(beta) - LN(value);
 #endif

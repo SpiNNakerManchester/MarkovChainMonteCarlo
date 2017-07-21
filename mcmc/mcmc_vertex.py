@@ -222,22 +222,31 @@ class MCMCVertex(
         data_values, _ = buffer_manager.get_data_for_vertex(placement, 0)
         data = data_values.read_all()
 
-#        print "read_samples data ", data[0], data[1], data[2]
-#
-        data_out = [float(x)/32768.0 for x in data]
-#
-#        print "read_samples data now ", data_out[0], data_out[1], data_out[2]
-
         numpy_format = list()
+        output_format = list()
+        divisor = list()
         for var in self._model.get_state_variables():
             if (var.data_type is DataType.S1615):
-                numpy_format.append((var.name, numpy.float32))  # ??
+                numpy_format.append((var.name, numpy.uint32))
+                output_format.append((var.name, float))
+                divisor.append(32768.0)
             else:
                 numpy_format.append((var.name, var.data_type))
 
         # Convert the data into an array of state variables
+#        return numpy.true_divide(
+#            numpy.array(data, dtype=numpy.uint8).view(numpy_format),32768.0)
+
+        test = numpy.array(data, dtype=numpy.uint8).view(numpy_format)
+#        y = y / 32768.0
+#        y[:] = test / divisor
+#        test2 = test.view(numpy.float32)
+#        test.dtype = numpy.float32
+
+        return test #/ 32768.0
+#        return numpy.array(data, dtype=numpy.uint8).view(numpy_format).astype(numpy.float32)/32768.0
+
 #        return numpy.array(data, dtype=numpy.uint8).view(numpy_format)
-        return numpy.array(data_out, dtype=numpy.float32).view(numpy_format)
 
     def get_minimum_buffer_sdram_usage(self):
         return 1024
