@@ -20,7 +20,6 @@
 #define TWO 2.00000000000000000
 #define THREE 3.00000000000000000
 #define FOUR 4.00000000000000000
-#define TWOFIVESIX 256.00000000000000000
 #define PI 3.141592653589793
 
 #elif TYPE_SELECT == 1
@@ -41,7 +40,6 @@
 #define TWO 2.0000000f
 #define THREE 3.0000000f
 #define FOUR 4.0000000f
-#define TWOFIVESIX 256.0000000f
 #define PI 3.141593f
 
 #elif TYPE_SELECT == 2
@@ -51,6 +49,7 @@
 #include <stdfix.h>
 #include <stdfix-exp.h>
 #include <log.h>
+#include <math.h>
 
 #define LN( x ) logk(x)
 #define EXP( x ) expk(x)
@@ -64,11 +63,9 @@
 #define TWO 2.000000k
 #define THREE 3.000000k
 #define FOUR 4.000000k
-#define TWOFIVESIX 256.000000k
 #define PI 3.141593k
 
 #endif
-
 
 typedef struct mcmc_params* mcmc_params_pointer_t;
 typedef struct mcmc_state* mcmc_state_pointer_t;
@@ -77,9 +74,6 @@ extern CALC_TYPE t_deviate();
 
 // macro to define square( x ) = x^2
 #define SQR( x ) (( x ) * ( x ))
-
-// macro for log (from s1615)
-//#define LOG( x ) logk(x)
 
 // !\brief Get the number of bytes in the params struct (usually just sizeof)
 uint32_t mcmc_model_get_params_n_bytes();
@@ -99,9 +93,4 @@ CALC_TYPE mcmc_model_prior_prob(
 void mcmc_model_transition_jump(
     mcmc_params_pointer_t params, mcmc_state_pointer_t state,
     mcmc_state_pointer_t new_state);
-
-//CALC_TYPE log_test(CALC_TYPE value)
-//{
-//	return LN(value);
-//}
 

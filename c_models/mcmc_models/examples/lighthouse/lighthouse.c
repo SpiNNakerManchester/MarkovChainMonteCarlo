@@ -1,15 +1,5 @@
 #include "../../mcmc_model.h"
 #include "lighthouse.h"
-//#include <debug.h>
-
-// definition of Pi for use in likelihood
-//#if CALC_TYPE == double
-//CALC_TYPE PI = 3.141592653589793;
-//#elif CALC_TYPE == float
-//CALC_TYPE pi = 3.1415927
-//#elif CALC_TYPE == accum
-//CALC_TYPE pi = 3.141592k
-//#endif
 
 uint32_t mcmc_model_get_params_n_bytes() {
     return sizeof(struct mcmc_params);
@@ -31,16 +21,14 @@ uint32_t mcmc_model_get_state_n_bytes() {
  */
 CALC_TYPE mcmc_model_likelihood(
         CALC_TYPE x, mcmc_params_pointer_t params, mcmc_state_pointer_t state) {
-//    log_info("mcmc_model_likelihood");
-//	return state->beta / (PI * ( SQR( state->beta ) + SQR(x - state->alpha)));
 	CALC_TYPE beta = state->beta;
 	CALC_TYPE value = PI*(SQR(state->beta)+SQR(x-state->alpha));
-//	CALC_TYPE logbeta = log_test(beta);
-//	CALC_TYPE logvalue = log_test(value);
-//	return logbeta - logvalue;
 #if TYPE_SELECT == 2
-	return LN(beta/value);
-//	return LN(beta) - LN(value);
+//	return LN(beta/value);
+	return LN(beta) - LN(value); // note this only works with version 5.0+
+	                             // of arm-none-eabi-gcc; if you have an earlier
+	                             // version install the new one or comment out
+	                             // and use the line above instead
 #else
 	return LN(beta) - LN(value);
 #endif

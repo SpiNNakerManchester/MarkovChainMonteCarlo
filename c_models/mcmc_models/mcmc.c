@@ -22,10 +22,7 @@
 
  */
 
-#define TYPE_SELECT 2 // 0 - double, 1 - float, 2 - accum (as set in mcmc_model.h)
-
 #include <limits.h>
-//#include <math.h>
 #include <spin1_api.h>
 #include <debug.h>
 #include <data_specification.h>
@@ -131,9 +128,7 @@ uint32_t dma_read_buffer = 0;
 // Flag to indicate when likelihood data transfer has been done
 uint likelihood_done = 0;
 
-//#ifdef USE_FP
-// No print_value function required for fixed-point
-//#else
+// Set up print_value if we're not using fixed-point datatype
 #if TYPE_SELECT != 2
 struct double_uint {
     uint first_word;
@@ -153,7 +148,6 @@ void print_value(CALC_TYPE d_value, char *buffer) {
         converter.int_values.second_word, converter.int_values.first_word);
 }
 #endif
-//#endif
 
 // returns a high-quality Uniform[0,1] random variate -
 // Marsaglia KISS32 algorithm
@@ -171,8 +165,6 @@ CALC_TYPE uniform(uniform_seed seed) {
     seed[3] = t & 2147483647;
     seed[0] += 1411392427;
 
-//    log_info("uniform, 0.000015k = %.10k", 0.000015k);
-
     uint int_value = seed[0] + seed[1] + seed[3];
 
 #if TYPE_SELECT == 2
@@ -184,7 +176,6 @@ CALC_TYPE uniform(uniform_seed seed) {
 
 // Returns a standard t-distributed deviate - from Ripley
 CALC_TYPE t_deviate() {
-//	char buffer[1024];
     CALC_TYPE x;
     CALC_TYPE v;
     CALC_TYPE df = parameters.degrees_of_freedom;
@@ -196,12 +187,13 @@ CALC_TYPE t_deviate() {
         CALC_TYPE u = uniform(parameters.seed);
         CALC_TYPE u1 = uniform(parameters.seed);
 
-//        log_info("t_deviate, do 0.25*2048 = %k", 0.25k*2048.0k);
         if (u < HALF) {
 #if TYPE_SELECT == 2
+        	// Could allow the user to choose a tolerance level here
+        	// dependent upon the data type they are using
         	if (ABS(FOUR * u - ONE) < 0.002k) {
-        		log_info("t_deviate(), abs(FOUR*u-ONE) = %k, u = %k",
-        				ABS(FOUR * u - ONE), u);
+//        		log_info("t_deviate(), abs(FOUR*u-ONE) = %k, u = %k",
+//        				ABS(FOUR * u - ONE), u);
         		x = 1000.0k; // or some large number...
         	} else {
 #endif
@@ -214,28 +206,24 @@ CALC_TYPE t_deviate() {
         	x = FOUR * u - THREE;
         	v = u1;
         }
-//        print_value(x, buffer);
-//        log_info("t_deviate(), x = %s", buffer);
 
         if (v < (ONE - HALF * ABS(x))) {
-//            print_value(x, buffer);
-//            log_info("t_deviate(), x = %s", buffer);
             return x;
         }
 
 #if TYPE_SELECT == 2
         if (df == THREE) {
         	rhs = ONE / SQR( ONE + SQR( x ) / THREE );
-        } /*else {
+        } else {
+        	// There's an issue here if df is not 3.0 for fixed-point:
+        	// we don't currently have a fixed-point version of pow
         	rhs = POW((ONE + SQR( x ) / df), -(df + ONE) / TWO);
-        }*/
+        }
     } while (v >= rhs);
 #else
     } while (v >= POW((ONE + SQR( x ) / df), -(df + ONE) / TWO));
 #endif
 
-//    print_value(x, buffer);
-//    log_info("t_deviate(), x = %s", buffer);
     return x;
 }
 
@@ -254,8 +242,11 @@ CALC_TYPE t_deviate() {
 bool MH_MCMC_keep_new_point(CALC_TYPE old_pt_posterior_prob,
         CALC_TYPE new_pt_posterior_prob, uniform_seed seed) {
 	// Now we are taking log-likelihood, new_pt > old_pt when new_pt is zero
-	// - to follow the same earlier logic with likelihood we need to call
+	// - to follow the same earlier logic used with likelihood we need to call
 	// the uniform(seed) function but always return false
+	// This may of course be completely unnecessary but it was done in order
+	// to test that the log-likelihood implementation was returning the same
+	// value as the likelihood implementation.
 	if (new_pt_posterior_prob == ZERO) {
 		CALC_TYPE dummy = uniform(seed);
 		return false;
@@ -271,7 +262,6 @@ bool MH_MCMC_keep_new_point(CALC_TYPE old_pt_posterior_prob,
         return true;
 	// log-domain, so can turn division into subtraction and use EXP
     else if (EXP(new_pt_posterior_prob-old_pt_posterior_prob) > uniform(seed))
-//    else if ((new_pt_posterior_prob/old_pt_posterior_prob) > uniform(seed))
         return true;
     else
         return false;
@@ -294,13 +284,10 @@ void do_transfer(CALC_TYPE *dataptr, uint bytes) {
 
  */
 CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
-//	char buffer[1024];
-//    CALC_TYPE l = ONE;
     CALC_TYPE l = ZERO;
     if (!dma_likelihood) {
         // distribute these data points across cores?
         for (unsigned int i = 0; i < parameters.n_data_points; i++) {
-//            l *= mcmc_model_likelihood(data[i], params, state_to_use);
             l += mcmc_model_likelihood(data[i], params, state_to_use);
         }
         return l;
@@ -342,7 +329,6 @@ CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
 
         // Process the points in the buffer
         for (uint i = 0; i < points; i++) {
-//            l *= mcmc_model_likelihood(
         	l += mcmc_model_likelihood(
                     dma_buffers[dma_process_buffer][i], params, state_to_use);
         }
@@ -359,11 +345,8 @@ void dma_callback(uint unused0, uint unused1) {
 }
 
 void run(uint unused0, uint unused1) {
-//	char buffer[1024];
     use(unused0);
     use(unused1);
-
-//    log_info("UINT_MAX is %u", UINT_MAX);
 
     // Create a new state pointer
     uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
@@ -374,8 +357,6 @@ void run(uint unused0, uint unused1) {
         rt_error(RTE_SWERR);
     }
 
-//    CALC_TYPE log_likelihood;
-//    CALC_TYPE likelihood;
     CALC_TYPE current_posterior;
     CALC_TYPE new_posterior;
     unsigned int sample_count = 0;
@@ -411,17 +392,8 @@ void run(uint unused0, uint unused1) {
     }
 
     // exponential to get likelihood back from log likelihood
-//    log_likelihood = full_data_set_likelihood(state);
-//    likelihood = expk(log_likelihood);
-//
-//    log_info("log_likelihood = %k, likelihood = %k",
-//    		log_likelihood, likelihood);
-
-    // first posterior calculated at initial state values
     current_posterior = full_data_set_likelihood(state) *
     		mcmc_model_prior_prob(params, state);
-//            full_data_set_likelihood(state) * mcmc_model_prior_prob(params, state);
-
 
     // update likelihood function counter for diagnostics
     likelihood_calls++;
@@ -435,41 +407,19 @@ void run(uint unused0, uint unused1) {
         // with 3 degrees of freedom
         mcmc_model_transition_jump(params, state, new_state);
 
-//        log_info("state->beta = %k, new_state->beta = %k",
-//        		state->beta, new_state->beta);
-//        print_value(new_state->alpha, buffer);
-//        log_info("new_state->alpha = %s", buffer);
-//        print_value(new_state->beta, buffer);
-//        log_info("new_state->beta = %s", buffer);
-
         // update likelihood function counter for diagnostics
         likelihood_calls++;
-
-        // get likelihood from log likelihood
-//        likelihood = expk(full_data_set_likelihood(new_state));
 
         // calculate joint probability at this point
         new_posterior = full_data_set_likelihood(new_state) *
 				mcmc_model_prior_prob(params, new_state);
 
-//        if (!burn_in) {
-//#if TYPE_SELECT == 2
-//        	log_info("new_posterior = %k, current_posterior = %k",
-//        			new_posterior, current_posterior);
-//#endif
-//        }
-
-//        log_info("seed is %d %d %d %d %d", parameters.seed[0], parameters.seed[1],
-//        		parameters.seed[2], parameters.seed[3], parameters.seed[4]);
         // if accepted, update current state, otherwise leave it as is
         if (MH_MCMC_keep_new_point(
                 current_posterior, new_posterior, parameters.seed)) {
 
             current_posterior = new_posterior;
             spin1_memcpy(state, new_state, state_n_bytes);
-
-//            print_value(EXP(2.00000), buffer);
-//            log_info("point accepted %d", accepted);
 
             // update acceptance count
             accepted++;
@@ -487,12 +437,8 @@ void run(uint unused0, uint unused1) {
             }
         } else {
 
-//        	log_info("starting sampling, sample_count = %d, to_go = %d",
-//        			sample_count, samples_to_go);
             // output every THINNING samples
             if (samples_to_go == 0) {
-//                log_info("recording: state->beta = %k, state->alpha = %k",
-//                		state->beta, state->alpha);
                 recording_record(0, state, state_n_bytes);
                 sample_count++;
                 samples_to_go = parameters.thinning;
@@ -595,7 +541,7 @@ void c_main() {
     }
     spin1_memcpy(state, model_state_address, state_n_bytes);
 
-    log_info("Burn in = %d", parameters.burn_in);
+//    log_info("Burn in = %d", parameters.burn_in);
 //    log_info("Thinning = %d", parameters.thinning);
 //    log_info("N Samples = %d", parameters.n_samples);
 //    log_info("N Data Points = %d", parameters.n_data_points);

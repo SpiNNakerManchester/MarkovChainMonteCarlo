@@ -40,15 +40,15 @@ class MCMCCoordinatorVertex(
     # The data type of the data count
     _DATA_COUNT_TYPE = DataType.UINT32
 
-    # The data type of each data element
-    _DATA_ELEMENT_TYPE = DataType.S1615
-#    _DATA_ELEMENT_TYPE = DataType.FLOAT_64
-#    _DATA_ELEMENT_TYPE = DataType.FLOAT_32
+    # The data type of each data element - edit as appropriate
+    _DATA_ELEMENT_TYPE = DataType.S1615   # fixed-point
+#    _DATA_ELEMENT_TYPE = DataType.FLOAT_64  # double precision float
+#    _DATA_ELEMENT_TYPE = DataType.FLOAT_32  # single precision float
 
-    # The numpy data type of each data element
-    _NUMPY_DATA_ELEMENT_TYPE = numpy.uint32
-#    _NUMPY_DATA_ELEMENT_TYPE = numpy.float64
-#    _NUMPY_DATA_ELEMENT_TYPE = numpy.float32
+    # The numpy data type of each data element - edit as appropriate
+    _NUMPY_DATA_ELEMENT_TYPE = numpy.uint32  # fixed-point
+#    _NUMPY_DATA_ELEMENT_TYPE = numpy.float64  # double precision float
+#    _NUMPY_DATA_ELEMENT_TYPE = numpy.float32  # single precision float
 
     # The data type of the keys
     _KEY_ELEMENT_TYPE = DataType.UINT32
@@ -245,8 +245,10 @@ class MCMCCoordinatorVertex(
 
         # Write the data - Arrays must be 32-bit values, so convert
         # would need an if here for different model data types
-#        data_convert = self._data  # (float64, float32)
-        data_convert = [int(x * 32768) for x in self._data]  # (S1615)
+        # Next line for float64, float32
+#        data_convert = self._data
+        # Next three lines for S1615
+        data_convert = [int(x * 32768) for x in self._data]
         data = numpy.array(data_convert, dtype=self._NUMPY_DATA_ELEMENT_TYPE)
         spec.write_array(data.view(numpy.uint32))
 

@@ -2,6 +2,9 @@ from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
+from platform import _ver_output
+from asyncore import read
+from numpy.lib.format import read_array
 from pacman.model.resources.cpu_cycles_per_tick_resource \
     import CPUCyclesPerTickResource
 from pacman.model.decorators.overrides import overrides
@@ -182,20 +185,20 @@ class MCMCVertex(
         spec.write_value(self._coordinator.acknowledge_timer)
 
         # Write the seed = 5 32-bit random numbers
+        # uncomment relevant section for data type
         seed = [int(x * 32768) for x in self._coordinator.seed]
-        spec.write_array(seed)
-#        spec.write_array(self._coordinator.seed)
+        spec.write_array(seed)  # these two lines for S1615
+#        spec.write_array(self._coordinator.seed)  # this line for double, float
 
         # Write the degrees of freedom
-#        spec.write_value(
+        # uncomment relevant section for data type
+#        spec.write_value(  # these two lines for float64
 #            self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_64)
-#        spec.write_value(
+#        spec.write_value(  # these two lines for float32
 #            self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_32)
-        # this is the problem here - convert d.o.f. to unit32 for transfer?
-        # do we need an if statement to switch between float_64 and uint32
-        # that depends upon the datatype specified in the model?
         degrees_of_freedom = int(self._coordinator.degrees_of_freedom * 32768)
         spec.write_value(degrees_of_freedom, data_type=DataType.UINT32)
+        # above two lines for S1615
 
         # Reserve and write the model parameters
         params = self._get_model_parameters_array()
@@ -224,28 +227,28 @@ class MCMCVertex(
 
         numpy_format = list()
         output_format = list()
-        divisor = list()
         for var in self._model.get_state_variables():
             if (var.data_type is DataType.S1615):
-                numpy_format.append((var.name, numpy.uint32))
-                output_format.append((var.name, float))
-                divisor.append(32768.0)
+                numpy_format.append((var.name, numpy.int32))
+                output_format.append((var.name, numpy.float32))
             else:
                 numpy_format.append((var.name, var.data_type))
 
+# IF (fixed_point i.e. DataType is S1615) then keep this:
         # Convert the data into an array of state variables
-#        return numpy.true_divide(
-#            numpy.array(data, dtype=numpy.uint8).view(numpy_format),32768.0)
+        data_view = numpy.array(data, dtype=numpy.uint8).view(numpy_format)
+        convert = numpy.zeros_like(
+            data_view, dtype=numpy.float64).view(output_format)
 
-        test = numpy.array(data, dtype=numpy.uint8).view(numpy_format)
-#        y = y / 32768.0
-#        y[:] = test / divisor
-#        test2 = test.view(numpy.float32)
-#        test.dtype = numpy.float32
+        for i in xrange(data_view.size):
+#            thing[i] = [float(j)/32768.0 for j in test[i]]
+            for j in xrange(len(numpy_format)):
+                convert[i][j] = float(data_view[i][j])/32768.0
 
-        return test #/ 32768.0
-#        return numpy.array(data, dtype=numpy.uint8).view(numpy_format).astype(numpy.float32)/32768.0
+        return convert
 
+# ELSE (double, float32, etc.) use this:
+#        Uncomment this for double or single floating point
 #        return numpy.array(data, dtype=numpy.uint8).view(numpy_format)
 
     def get_minimum_buffer_sdram_usage(self):
