@@ -179,9 +179,7 @@ CALC_TYPE t_deviate() {
     CALC_TYPE x;
     CALC_TYPE v;
     CALC_TYPE df = parameters.degrees_of_freedom;
-#if TYPE_SELECT == 2
-    CALC_TYPE rhs;
-#endif
+    CALC_TYPE t;
 
     do {
         CALC_TYPE u = uniform(parameters.seed);
@@ -209,18 +207,14 @@ CALC_TYPE t_deviate() {
             return x;
         }
 
-#if TYPE_SELECT == 2
         if (df == THREE) {
-        	rhs = ONE / SQR( ONE + SQR( x ) / THREE );
+        	t = ONE / SQR( ONE + SQR( x ) / THREE );
         } else {
         	// There's an issue here if df is not 3.0 for fixed-point:
-        	// we don't currently have a fixed-point version of pow
-        	rhs = POW((ONE + SQR( x ) / df), -(df + ONE) / TWO);
+        	// we don't currently have a fixed-point version of POW
+        	t = POW((ONE + SQR( x ) / df), -(df + ONE) / TWO);
         }
-    } while (v >= rhs);
-#else
-    } while (v >= POW((ONE + SQR( x ) / df), -(df + ONE) / TWO));
-#endif
+    } while (v >= t);
 
     return x;
 }
