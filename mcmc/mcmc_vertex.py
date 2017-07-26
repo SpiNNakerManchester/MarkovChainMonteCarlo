@@ -47,7 +47,7 @@ class MCMCVertex(
     # The number of bytes for the parameters
     # (9 * uint32) + (5 * seed array) + (1 * d.o.f.)
 #    _N_PARAMETER_BYTES = (9 * 4) + (5 * 4) + (1 * 8)  # (float64)
-    _N_PARAMETER_BYTES = (9 * 4) + (5 * 4) + (1 * 4)  # (float32, S1615)
+#    _N_PARAMETER_BYTES = (9 * 4) + (5 * 4) + (1 * 4)  # (float32, S1615)
 
     def __init__(self, coordinator, model):
         """
@@ -65,8 +65,17 @@ class MCMCVertex(
         self._recording_size = self._coordinator.n_samples * len(state) * 4
 
         params = self._get_model_parameters_array()
+
+        # The number of bytes for the parameters
+        # (9 * uint32) + (5 * seed array) + (1 * d.o.f.)
+        self._n_parameter_bytes = 0
+        if (model.get_parameters()[0].data_type is numpy.float64):
+            self._n_parameter_bytes = (9 * 4) + (5 * 4) + (1 * 8)
+        else:
+            self._n_parameter_bytes = (9 * 4) + (5 * 4) + (1 * 4)
+
         self._sdram_usage = (
-            self._N_PARAMETER_BYTES + self._recording_size +
+            self._n_parameter_bytes + self._recording_size +
             recording_utilities.get_recording_header_size(1) +
             (len(params) * 4)
             )
@@ -151,7 +160,7 @@ class MCMCVertex(
 
         # Reserve and write the parameters region
         spec.reserve_memory_region(
-            MCMCRegions.PARAMETERS.value, self._N_PARAMETER_BYTES)
+            MCMCRegions.PARAMETERS.value, self._n_parameter_bytes)
         spec.switch_write_focus(MCMCRegions.PARAMETERS.value)
 
         # Write the burn-in
@@ -185,20 +194,22 @@ class MCMCVertex(
         spec.write_value(self._coordinator.acknowledge_timer)
 
         # Write the seed = 5 32-bit random numbers
-        # uncomment relevant section for data type
-        seed = [int(x * 32768) for x in self._coordinator.seed]
-        spec.write_array(seed)  # these two lines for S1615
-#        spec.write_array(self._coordinator.seed)  # this line for double, float
+        if (self._model.get_parameters()[0].data_type is DataType.S1615):
+            seed = [int(x * 32768) for x in self._coordinator.seed]
+            spec.write_array(seed)
+        else:
+            spec.write_array(self._coordinator.seed)
 
         # Write the degrees of freedom
-        # uncomment relevant section for data type
-#        spec.write_value(  # these two lines for float64
-#            self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_64)
-#        spec.write_value(  # these two lines for float32
-#            self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_32)
-        degrees_of_freedom = int(self._coordinator.degrees_of_freedom * 32768)
-        spec.write_value(degrees_of_freedom, data_type=DataType.UINT32)
-        # above two lines for S1615
+        if (self._model.get_parameters()[0].data_type is numpy.float64):
+            spec.write_value(
+                self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_64)
+        elif (self._model.get_parameters()[0].data_type is numpy.float32):
+            spec.write_value(
+                self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_32)
+        elif (self._model.get_parameters()[0].data_type is DataType.S1615):
+            degrees_of_freedom = int(self._coordinator.degrees_of_freedom * 32768)
+            spec.write_value(degrees_of_freedom, data_type=DataType.UINT32)
 
         # Reserve and write the model parameters
         params = self._get_model_parameters_array()
@@ -234,22 +245,19 @@ class MCMCVertex(
             else:
                 numpy_format.append((var.name, var.data_type))
 
-# IF (fixed_point i.e. DataType is S1615) then keep this:
         # Convert the data into an array of state variables
-        data_view = numpy.array(data, dtype=numpy.uint8).view(numpy_format)
-        convert = numpy.zeros_like(
-            data_view, dtype=numpy.float64).view(output_format)
-
-        for i in xrange(data_view.size):
+        if (self._model.get_parameters()[0].data_type is DataType.S1615):
+            data_view = numpy.array(data, dtype=numpy.uint8).view(numpy_format)
+            convert = numpy.zeros_like(
+                data_view, dtype=numpy.float64).view(output_format)
+            for i in xrange(data_view.size):
 #            thing[i] = [float(j)/32768.0 for j in test[i]]
-            for j in xrange(len(numpy_format)):
-                convert[i][j] = float(data_view[i][j])/32768.0
+                for j in xrange(len(numpy_format)):
+                    convert[i][j] = float(data_view[i][j])/32768.0
 
-        return convert
-
-# ELSE (double, float32, etc.) use this:
-#        Uncomment this for double or single floating point
-#        return numpy.array(data, dtype=numpy.uint8).view(numpy_format)
+            return convert
+        else:
+            return numpy.array(data, dtype=numpy.uint8).view(numpy_format)
 
     def get_minimum_buffer_sdram_usage(self):
         return 1024

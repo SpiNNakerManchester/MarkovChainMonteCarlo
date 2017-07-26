@@ -40,27 +40,18 @@ class MCMCCoordinatorVertex(
     # The data type of the data count
     _DATA_COUNT_TYPE = DataType.UINT32
 
-    # The data type of each data element - edit as appropriate
-    _DATA_ELEMENT_TYPE = DataType.S1615   # fixed-point
-#    _DATA_ELEMENT_TYPE = DataType.FLOAT_64  # double precision float
-#    _DATA_ELEMENT_TYPE = DataType.FLOAT_32  # single precision float
-
-    # The numpy data type of each data element - edit as appropriate
-    _NUMPY_DATA_ELEMENT_TYPE = numpy.uint32  # fixed-point
-#    _NUMPY_DATA_ELEMENT_TYPE = numpy.float64  # double precision float
-#    _NUMPY_DATA_ELEMENT_TYPE = numpy.float32  # single precision float
-
     # The data type of the keys
     _KEY_ELEMENT_TYPE = DataType.UINT32
 
     def __init__(
-            self, data, n_samples, burn_in, thinning,
+            self, model, data, n_samples, burn_in, thinning,
             degrees_of_freedom, seed=None,
             send_timer=1000, receive_timer=1000, window_size=1024,
             n_sequences=2048, data_partition_name="MCMCData",
             acknowledge_partition_name="MCMCDataAck", data_tag=1):
         """
 
+        :param model: The model being simulated
         :param data: The data to sample
         :param n_samples: The number of samples to generate
         :param burn_in:\
@@ -74,6 +65,7 @@ class MCMCCoordinatorVertex(
         """
 
         MachineVertex.__init__(self, label="MCMC Node", constraints=None)
+        self._model = model
         self._data = data
         self._n_samples = n_samples
         self._burn_in = burn_in
@@ -88,8 +80,24 @@ class MCMCCoordinatorVertex(
         self._acknowledge_partition_name = acknowledge_partition_name
         self._data_tag = data_tag
 
+        # The data type of each data element
+        if (self._model.get_parameters()[0].data_type is numpy.float64):
+            self._data_element_type = DataType.FLOAT_64
+        elif (self._model.get_parameters()[0].data_type is numpy.float32):
+            self._data_element_type = DataType.FLOAT_32
+        elif (self._model.get_parameters()[0].data_type is DataType.S1615):
+            self._data_element_type = DataType.S1615
+
+        # The numpy data type of each data element
+        if (self._model.get_parameters()[0].data_type is numpy.float64):
+            self._numpy_data_element_type = numpy.float64
+        elif (self._model.get_parameters()[0].data_type is numpy.float32):
+            self._numpy_data_element_type = numpy.float32
+        elif (self._model.get_parameters()[0].data_type is DataType.S1615):
+            self._numpy_data_element_type = numpy.uint32
+
         self._data_size = (
-            (len(self._data) * self._DATA_ELEMENT_TYPE.size) +
+            (len(self._data) * self._data_element_type.size) +
             self._DATA_COUNT_TYPE.size
         )
         self._sdram_usage = (
@@ -222,7 +230,7 @@ class MCMCCoordinatorVertex(
 
         # Write the data size in words
         spec.write_value(
-            len(self._data) * (float(self._DATA_ELEMENT_TYPE.size) / 4.0),
+            len(self._data) * (float(self._data_element_type.size) / 4.0),
             data_type=self._DATA_COUNT_TYPE)
 
         # Write the number of chips
@@ -244,12 +252,12 @@ class MCMCCoordinatorVertex(
         spec.write_value(self._send_timer, data_type=DataType.UINT32)
 
         # Write the data - Arrays must be 32-bit values, so convert
-        # would need an if here for different model data types
-        # Next line for float64, float32
-#        data_convert = self._data
-        # Next three lines for S1615
-        data_convert = [int(x * 32768) for x in self._data]
-        data = numpy.array(data_convert, dtype=self._NUMPY_DATA_ELEMENT_TYPE)
+        if (self._model.get_parameters()[0].data_type is DataType.S1615):
+            data_convert = [int(x * 32768) for x in self._data]
+            data = numpy.array(data_convert, dtype=self._numpy_data_element_type)
+        else:
+            data = numpy.array(self._data, dtype=self._numpy_data_element_type)
+
         spec.write_array(data.view(numpy.uint32))
 
         # Write the keys

@@ -55,7 +55,7 @@ def run_mcmc(
 
         # Create a coordinator
         coordinator = MCMCCoordinatorVertex(
-            data, n_samples, burn_in, thinning,
+            model, data, n_samples, burn_in, thinning,
             degrees_of_freedom, seed)
         g.add_machine_vertex_instance(coordinator)
 
