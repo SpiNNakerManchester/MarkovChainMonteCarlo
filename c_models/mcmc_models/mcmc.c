@@ -170,7 +170,7 @@ CALC_TYPE uniform(uniform_seed seed) {
 #if TYPE_SELECT == 2
     return (CALC_TYPE) ulrbits(int_value);
 #else
-    return (CALC_TYPE) int_value * uint_max_scale; // float?
+    return (CALC_TYPE) int_value * uint_max_scale;
 #endif
 }
 
@@ -189,12 +189,10 @@ CALC_TYPE t_deviate() {
 
         if (u < HALF) {
 #if TYPE_SELECT == 2
-        	// Could allow the user to choose a tolerance level here
+        	// TODO: Could allow the user to choose a tolerance level here
         	// dependent upon the data type they are using
         	if (ABS(FOUR * u - ONE) < 0.002k) {
-//        		log_info("t_deviate(), abs(FOUR*u-ONE) = %k, u = %k",
-//        				ABS(FOUR * u - ONE), u);
-        		x = 1000.0k; // or some large number...
+        		x = 1000.0k; // Some large number which means it will try again
         	} else {
 #endif
         	x = ONE / (FOUR * u - ONE);
@@ -242,11 +240,12 @@ CALC_TYPE t_deviate() {
 bool MH_MCMC_keep_new_point(CALC_TYPE old_pt_posterior_prob,
         CALC_TYPE new_pt_posterior_prob, uniform_seed seed) {
 	// Now we are taking log-likelihood, new_pt > old_pt when new_pt is zero
+	// (i.e. when the prior probability is zero)
 	// - to follow the same earlier logic used with likelihood we need to call
-	// the uniform(seed) function but always return false
+	// the uniform(seed) function but always return false.
 	// This may of course be completely unnecessary but it was done in order
 	// to test that the log-likelihood implementation was returning the same
-	// value as the likelihood implementation.
+	// values as the likelihood implementation.
 	if (new_pt_posterior_prob == ZERO) {
 		CALC_TYPE dummy = uniform(seed);
 		return false;
@@ -257,7 +256,6 @@ bool MH_MCMC_keep_new_point(CALC_TYPE old_pt_posterior_prob,
 		return true;
 
 	// Now do actual tests if required
-	// we have taken logs, but if
 	if (new_pt_posterior_prob > old_pt_posterior_prob)
         return true;
 	// log-domain, so can turn division into subtraction and use EXP
