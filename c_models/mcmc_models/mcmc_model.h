@@ -2,9 +2,14 @@
 
 #define TYPE_SELECT 2 // 0 - double, 1 - float, 2 - accum
 
+// Concatenate to add suffix to type where required
+#define CONCAT_HELPER(a,b) a ## b
+#define CONCAT(a,b) CONCAT_HELPER(a,b)
+
 #if TYPE_SELECT == 0
 
 #define CALC_TYPE double
+#define SUFFIX 00000000000
 
 #include <math.h>
 
@@ -14,17 +19,12 @@
 #define POW( x, p ) pow((x), (p))
 #define ABS( x ) fabs(x)
 
-#define ONE 1.00000000000000000
-#define HALF 0.50000000000000000
-#define ZERO 0.00000000000000000
-#define TWO 2.00000000000000000
-#define THREE 3.00000000000000000
-#define FOUR 4.00000000000000000
 #define PI 3.141592653589793
 
 #elif TYPE_SELECT == 1
 
 #define CALC_TYPE float
+#define SUFFIX f
 
 #include <math.h>
 
@@ -34,17 +34,12 @@
 #define POW( x, p ) powf((x), (p))
 #define ABS( x ) fabs(x)
 
-#define ONE 1.0000000f
-#define HALF 0.5000000f
-#define ZERO 0.0000000f
-#define TWO 2.0000000f
-#define THREE 3.0000000f
-#define FOUR 4.0000000f
 #define PI 3.141593f
 
 #elif TYPE_SELECT == 2
 
 #define CALC_TYPE accum
+#define SUFFIX k
 
 #include <stdfix.h>
 #include <stdfix-exp.h>
@@ -57,15 +52,18 @@
 #define POW( x, p ) pow((x), (p))
 #define ABS( x ) absk(x)
 
-#define ONE 1.000000k
-#define HALF 0.500000k
-#define ZERO 0.000000k
-#define TWO 2.000000k
-#define THREE 3.000000k
-#define FOUR 4.000000k
 #define PI 3.141593k
+#define DEVIATE_TOL 0.002k
 
 #endif
+
+// Define constants by adding defined suffix value at end
+#define ONE CONCAT(1.000000, SUFFIX)
+#define HALF CONCAT(0.500000, SUFFIX)
+#define ZERO CONCAT(0.000000, SUFFIX)
+#define TWO CONCAT(2.000000, SUFFIX)
+#define THREE CONCAT(3.000000, SUFFIX)
+#define FOUR CONCAT(4.000000, SUFFIX)
 
 typedef struct mcmc_params* mcmc_params_pointer_t;
 typedef struct mcmc_state* mcmc_state_pointer_t;

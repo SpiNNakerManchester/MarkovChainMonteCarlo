@@ -83,9 +83,9 @@ struct parameters {
 
 // setup variables for uniform PRNG
 #if TYPE_SELECT == 0
-CALC_TYPE uint_max_scale = 1.0 / UINT_MAX;
+CALC_TYPE uint_max_scale = ONE / UINT_MAX;
 #elif TYPE_SELECT == 1
-CALC_TYPE uint_max_scale = 1.0f / UINT_MAX;
+CALC_TYPE uint_max_scale = ONE / UINT_MAX;
 #endif
 // Don't need max_scale for fixed-point
 
@@ -191,7 +191,7 @@ CALC_TYPE t_deviate() {
 #if TYPE_SELECT == 2
         	// TODO: Could allow the user to choose a tolerance level here
         	// dependent upon the data type they are using
-        	if (ABS(FOUR * u - ONE) < 0.002k) {
+        	if (ABS(FOUR * u - ONE) < DEVIATE_TOL) {
         		x = 1000.0k; // Some large number which means it will try again
         	} else {
 #endif
