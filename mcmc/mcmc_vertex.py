@@ -2,9 +2,6 @@ from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
-from platform import _ver_output
-from asyncore import read
-from numpy.lib.format import read_array
 from pacman.model.resources.cpu_cycles_per_tick_resource \
     import CPUCyclesPerTickResource
 from pacman.model.decorators.overrides import overrides
