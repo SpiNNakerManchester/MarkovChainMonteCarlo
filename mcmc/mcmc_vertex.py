@@ -44,11 +44,6 @@ class MCMCVertex(
     """ A vertex that runs the MCMC algorithm
     """
 
-    # The number of bytes for the parameters
-    # (9 * uint32) + (5 * seed array) + (1 * d.o.f.)
-#    _N_PARAMETER_BYTES = (9 * 4) + (5 * 4) + (1 * 8)  # (float64)
-#    _N_PARAMETER_BYTES = (9 * 4) + (5 * 4) + (1 * 4)  # (float32, S1615)
-
     def __init__(self, coordinator, model):
         """
 
@@ -96,7 +91,7 @@ class MCMCVertex(
                 numpy_values.append(int(param.value * 32768))
             else:
                 # throw exception for unknown data type
-                print("Error: unknown data type")
+                raise Exception("Error: unsupported data type for model params")
         return numpy.array(
             [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
@@ -116,7 +111,7 @@ class MCMCVertex(
                 numpy_values.append(int(param.initial_value * 32768))
             else:
                 # throw exception for unknown data type
-                print("Error: unknown data type")
+                raise Exception("Error: unsupported data type for model state")
         return numpy.array(
             [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
@@ -250,8 +245,8 @@ class MCMCVertex(
             data_view = numpy.array(data, dtype=numpy.uint8).view(numpy_format)
             convert = numpy.zeros_like(
                 data_view, dtype=numpy.float64).view(output_format)
+
             for i in xrange(data_view.size):
-#            thing[i] = [float(j)/32768.0 for j in test[i]]
                 for j in xrange(len(numpy_format)):
                     convert[i][j] = float(data_view[i][j])/32768.0
 

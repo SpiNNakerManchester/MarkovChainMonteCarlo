@@ -16,6 +16,8 @@ import numpy
 import logging
 import time
 
+# timing
+start_time = time.time()
 logger = logging.getLogger(__name__)
 
 
@@ -107,6 +109,8 @@ def run_mcmc(
     # Run the simulation
     g.run(None)
 
+    start_computing_time = time.time()
+
     # Wait for the application to finish
     txrx = g.transceiver()
     app_id = globals_variables.get_simulator()._app_id
@@ -123,6 +127,8 @@ def run_mcmc(
             raise Exception(error_msg)
         running = txrx.get_core_state_count(app_id, CPUState.RUNNING)
 
+    finish_computing_time = time.time()
+
     # Get the data back
     samples = list()
     for coordinator in coordinators.itervalues():
@@ -131,5 +137,14 @@ def run_mcmc(
 
     # Close the machine
     g.stop()
+
+    finish_time = time.time()
+
+    print("Overhead time is %s seconds" % (start_computing_time - start_time))
+    print("Computing time is %s seconds"
+          % (finish_computing_time - start_computing_time))
+    print("Data collecting time is %s seconds"
+          % (finish_time - finish_computing_time))
+    print("Overall running time is %s seconds" % (finish_time - start_time))
 
     return samples

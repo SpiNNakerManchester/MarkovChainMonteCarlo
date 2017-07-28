@@ -26,9 +26,10 @@ data_points = [
     1.21925, 1.47647, -2.95771, -0.801802, -1.86529
 ]
 
-seed = [
-    123456789, 234567891, 345678912, 456789123, 0
-]
+seed = None  # set this if you want to use a different seed on each core
+#seed = [  # use this for the same seed on each core
+#    123456789, 234567891, 345678912, 456789123, 0
+#]
 
 # number of posterior samples required per core
 n_samples = 100
