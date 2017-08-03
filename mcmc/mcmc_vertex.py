@@ -85,10 +85,12 @@ class MCMCVertex(
                 numpy_values.append(param.value)
             elif (param.data_type is DataType.S1615):
                 numpy_format.append(('f{}'.format(i), numpy.uint32))
-                numpy_values.append(int(param.value * 32768))
+                numpy_values.append(
+                    int(param.value * float(DataType.S1615.scale)))
             else:
                 # throw exception for unknown data type
-                raise Exception("Error: unsupported data type for model params")
+                raise Exception(
+                    "Error: unsupported data type used for model parameters")
         return numpy.array(
             [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
@@ -105,10 +107,12 @@ class MCMCVertex(
                 numpy_values.append(param.initial_value)
             elif (param.data_type is DataType.S1615):
                 numpy_format.append(('f{}'.format(i), numpy.uint32))
-                numpy_values.append(int(param.initial_value * 32768))
+                numpy_values.append(
+                    int(param.initial_value * float(DataType.S1615.scale)))
             else:
                 # throw exception for unknown data type
-                raise Exception("Error: unsupported data type for model state")
+                raise Exception(
+                    "Error: unsupported data type for model state params")
         return numpy.array(
             [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
@@ -187,7 +191,8 @@ class MCMCVertex(
 
         # Write the seed = 5 32-bit random numbers
         if (self._model.get_parameters()[0].data_type is DataType.S1615):
-            seed = [int(x * 32768) for x in self._coordinator.seed]
+            seed = [int(x * DataType.S1615.scale)
+                    for x in self._coordinator.seed]
             spec.write_array(seed)
         else:
             spec.write_array(self._coordinator.seed)
@@ -200,7 +205,9 @@ class MCMCVertex(
             spec.write_value(
                 self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_32)
         elif (self._model.get_parameters()[0].data_type is DataType.S1615):
-            degrees_of_freedom = int(self._coordinator.degrees_of_freedom * 32768)
+            degrees_of_freedom = int(
+                self._coordinator.degrees_of_freedom * float(
+                    DataType.S1615.scale))
             spec.write_value(degrees_of_freedom, data_type=DataType.UINT32)
 
         # Reserve and write the model parameters
@@ -245,7 +252,8 @@ class MCMCVertex(
 
             for i in xrange(data_view.size):
                 for j in xrange(len(numpy_format)):
-                    convert[i][j] = float(data_view[i][j])/32768.0
+                    convert[i][j] = float(
+                        data_view[i][j]) / float(DataType.S1615.scale)
 
             return convert
         else:
