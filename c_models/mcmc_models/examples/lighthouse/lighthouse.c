@@ -20,18 +20,25 @@ uint32_t mcmc_model_get_state_n_bytes() {
  see accompanying documents and Sivia book for more detail
  */
 CALC_TYPE mcmc_model_likelihood(
-        CALC_TYPE x, mcmc_params_pointer_t params, mcmc_state_pointer_t state) {
+        CALC_TYPE *data, uint32_t n_pts, mcmc_params_pointer_t params,
+		mcmc_state_pointer_t state) {
 	CALC_TYPE beta = state->beta;
-	CALC_TYPE value = PI*(SQR(state->beta)+SQR(x-state->alpha));
+	// Need to do the loop in here now
+	CALC_TYPE sum = ZERO;
+	for (unsigned int i=0; i < n_pts; i++) {
+		CALC_TYPE value = PI*(SQR(state->beta)+SQR(data[i]-state->alpha));
 #if TYPE_SELECT == 2
 //	return LN(beta/value);
-	return LN(beta) - LN(value); // note this only works with version 5.0+
-	                             // of arm-none-eabi-gcc; if you have an earlier
-	                             // version install the new one or comment out
-	                             // and use the line above instead
+		CALC_TYPE value2 = LN(beta) - LN(value);
+	    sum += value2; // note this only works with version 5.0+
+	                   // of arm-none-eabi-gcc; if you have an earlier
+	                   // version install the new one or comment out
+	                   // and use the line above instead
 #else
-	return LN(beta) - LN(value);
+	    sum += LN(beta) - LN(value);
 #endif
+	}
+	return sum;
 }
 
 /*

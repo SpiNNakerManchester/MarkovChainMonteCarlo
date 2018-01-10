@@ -279,10 +279,13 @@ CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
     CALC_TYPE l = ZERO;
     if (!dma_likelihood) {
         // distribute these data points across cores?
-        for (unsigned int i = 0; i < parameters.n_data_points; i++) {
-            l += mcmc_model_likelihood(data[i], params, state_to_use);
-        }
-        return l;
+//        for (unsigned int i = 0; i < parameters.n_data_points; i++) {
+//            l += mcmc_model_likelihood(data[i], params, state_to_use);
+//        }
+//        return l;
+    	// move the loop inside the model_likelihood function
+    	return mcmc_model_likelihood(
+    			data, parameters.n_data_points, params, state_to_use);
     }
 
     // Keep a count of the points to be processed
@@ -320,10 +323,13 @@ CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
         }
 
         // Process the points in the buffer
-        for (uint i = 0; i < points; i++) {
-        	l += mcmc_model_likelihood(
-                    dma_buffers[dma_process_buffer][i], params, state_to_use);
-        }
+//        for (uint i = 0; i < points; i++) {
+//        	l += mcmc_model_likelihood(
+//                    dma_buffers[dma_process_buffer][i], params, state_to_use);
+//        }
+        // Move the loop inside the model_likelihood function
+        l = mcmc_model_likelihood(
+        		dma_buffers[dma_process_buffer], points, params, state_to_use);
 
         points_to_process -= points;
     }
@@ -537,11 +543,11 @@ void c_main() {
     log_info("Thinning = %d", parameters.thinning);
     log_info("N Samples = %d", parameters.n_samples);
     log_info("N Data Points = %d", parameters.n_data_points);
-    log_info("Data Window Size = %d", parameters.data_window_size);
-    log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
-    log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
-    log_info("Data tag = %d", parameters.data_tag);
-    log_info("Timer = %d", parameters.timer);
+//    log_info("Data Window Size = %d", parameters.data_window_size);
+//    log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
+//    log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
+//    log_info("Data tag = %d", parameters.data_tag);
+//    log_info("Timer = %d", parameters.timer);
 #if TYPE_SELECT == 2
     log_info("Degrees of freedom = %k", parameters.degrees_of_freedom);
 #else

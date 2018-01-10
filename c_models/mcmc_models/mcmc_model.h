@@ -79,9 +79,10 @@ uint32_t mcmc_model_get_params_n_bytes();
 // !\brief Get the number of bytes in the state struct (usually just sizeof)
 uint32_t mcmc_model_get_state_n_bytes();
 
-// !\brief Given a value x, calculate the likelihood of the value
+// !\brief Given an array of values x, calculate the likelihood
 CALC_TYPE mcmc_model_likelihood(
-    CALC_TYPE x, mcmc_params_pointer_t params, mcmc_state_pointer_t state);
+    CALC_TYPE *x, uint32_t n_pts, mcmc_params_pointer_t params,
+	mcmc_state_pointer_t state);
 
 // !\brief Get the prior probability of a given state
 CALC_TYPE mcmc_model_prior_prob(
