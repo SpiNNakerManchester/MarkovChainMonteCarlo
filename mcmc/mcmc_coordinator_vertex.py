@@ -17,8 +17,8 @@ from spinn_front_end_common.abstract_models\
 from spinn_front_end_common.abstract_models\
     .abstract_provides_n_keys_for_partition \
     import AbstractProvidesNKeysForPartition
-from spinn_front_end_common.utilities.utility_objs.executable_start_type \
-    import ExecutableStartType
+from spinn_front_end_common.utilities.utility_objs.executable_type \
+    import ExecutableType
 
 from spinn_machine.utilities.progress_bar import ProgressBar
 
@@ -199,7 +199,7 @@ class MCMCCoordinatorVertex(
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):
-        return ExecutableStartType.SYNC
+        return ExecutableType.SYNC
 
     @inject_items({
         "placements": "MemoryPlacements",
