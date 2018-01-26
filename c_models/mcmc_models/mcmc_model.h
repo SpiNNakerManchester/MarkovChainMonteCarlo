@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#define TYPE_SELECT 2 // 0 - double, 1 - float, 2 - accum
+#define TYPE_SELECT 1 // 0 - double, 1 - float, 2 - accum
 
 // Concatenate to add suffix to type where required
 #define CONCAT_HELPER(a,b) a ## b

@@ -1,4 +1,4 @@
-DIRS = lighthouse
+DIRS = lighthouse arma
 
 all:
 	@for d in $(DIRS); do $(MAKE) -C examples/$$d || exit $$?; done

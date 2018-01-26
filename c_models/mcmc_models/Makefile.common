@@ -1,8 +1,8 @@
 # An example Makefile suitable for use in SpiNNaker applications using the
 # spinnaker_tools libraries and makefiles.
 
-CFLAGS += -Ofast
-LFLAGS += -Ofast
+#CFLAGS += -Ofast
+#LFLAGS += -Ofast
 
 LIBRARIES += -lm
 

@@ -105,6 +105,9 @@ class MCMCVertex(
             elif (param.data_type is numpy.float32):
                 numpy_format.append(('f{}'.format(i), param.data_type))
                 numpy_values.append(param.initial_value)
+            elif (param.data_type is numpy.uint32):
+                numpy_format.append(('f{}'.format(i), param.data_type))
+                numpy_values.append(param.initial_value)
             elif (param.data_type is DataType.S1615):
                 numpy_format.append(('f{}'.format(i), numpy.uint32))
                 numpy_values.append(

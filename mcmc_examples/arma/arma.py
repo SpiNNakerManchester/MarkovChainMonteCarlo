@@ -1,8 +1,8 @@
 import numpy
 from mcmc import mcmc_framework
-#from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
-from mcmc_examples.lighthouse.lighthouse_float_model \
-     import LightHouseFloatModel
+from mcmc_examples.arma.arma_model import ARMAModel
+#from mcmc_examples.lighthouse.lighthouse_float_model \
+#     import LightHouseFloatModel
 #from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #     import LightHouseFixedPointModel
 
@@ -34,37 +34,46 @@ seed = None  # set this if you want to use a different seed on each core
 # number of posterior samples required per core
 n_samples = 100
 
-# scaling of t transition distribution for MH jumps in alpha direction
-alpha_jump_scale = 0.8
+# mu and sigma values
+mu = 0.1
+sigma = 0.08
 
-# scaling of t transition distribution for MH jumps in beta direction
-beta_jump_scale = 0.25
+# size of p and q arrays
+np = 9
+nq = 9
 
-# specification of prior knowledge about lighthouse position
-#
-# you know that the lighthouse is no further than 3.0 units along shore
-# from the reference zero position
-#
-# lighthouse cannot be closer than 0.2 from the shore because of rocks, or
-# further than 2.0 because of shipping lanes
-alpha_min = -3.0
-alpha_max = 3.0
-beta_min = 0.2
-beta_max = 2.0
+# set up parameters array with p polynomial
+# and scaling of t transition distribution for MH jumps in p direction
+parameters = []
+p_jump_scale = []
+for i in range(0,np):
+    parameters.append(0.01)
+    p_jump_scale.append(0.1)
+
+# add q polynomial to parameters array
+# scaling of t transition distribution for MH jumps in q direction
+q_jump_scale = []
+for i in range(0,nq):
+    parameters.append(0.01)
+    q_jump_scale(0.1)
+
+parameters.append(mu)
+parameters.append(sigma)
+
+print 'parameter set:', parameters
 
 # Run and get the samples
-#model = LightHouseModel(
+model = ARMAModel(parameters, p_jump_scale, q_jump_scale)
+#model = LightHouseFloatModel(
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
-model = LightHouseFloatModel(
-    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
-    beta_max)
 #model = LightHouseFixedPointModel(
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
 samples = mcmc_framework.run_mcmc(
     model, data_points, n_samples,
-    degrees_of_freedom=3.0, seed=seed, n_chips=3*44)  # n_chips=23*48)
+    degrees_of_freedom=3.0, seed=seed, n_chips=3*43,
+    root_finder=True)  # n_chips=23*48)
 
 # Save the results
 numpy.save("results.npy", samples)

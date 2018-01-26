@@ -2,10 +2,13 @@ import spinnaker_graph_front_end as g
 
 from .mcmc_vertex import MCMCVertex
 from .mcmc_coordinator_vertex import MCMCCoordinatorVertex
+from .mcmc_root_finder_vertex import MCMCRootFinderVertex
 from . import model_binaries
 
 from pacman.model.constraints.placer_constraints\
     .chip_and_core_constraint import ChipAndCoreConstraint
+from pacman.model.constraints.placer_constraints\
+    .same_chip_as_constraint import SameChipAsConstraint
 from pacman.model.graphs.machine import MachineEdge
 
 from spinnman.model.enums.cpu_state import CPUState
@@ -23,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def run_mcmc(
         model, data, n_samples, burn_in=2000, thinning=5,
-        degrees_of_freedom=3.0, seed=None, n_chips=None):
+        degrees_of_freedom=3.0, seed=None, n_chips=None, root_finder=False):
     """ Executes an MCMC model, returning the received samples
 
     :param model: The MCMCModel to be used
@@ -38,6 +41,7 @@ def run_mcmc(
         The number of degrees of freedom to jump around with
     :param seed: The random seed to use
     :param n_chips: The number of chips to run the model on
+    :param root_finder: Use the root finder
 
     :return: The samples read
     :rtype: A numpy array with fields for each model state variable
@@ -83,6 +87,8 @@ def run_mcmc(
     print 'chip at (0,1) is : ', machine.get_chip_at(0,1)
 
     n_workers = 0
+    if (root_finder):
+        n_root_finders = 0
     for chip in machine.chips:
 
         print 'chip_x, y: ', chip.x, ' ', chip.y
@@ -137,6 +143,26 @@ def run_mcmc(
                 MachineEdge(vertex, coordinator),
                 coordinator.acknowledge_partition_name)
 
+            if (root_finder):
+                # Create a root finder vertex
+                rf_vertex = MCMCRootFinderVertex(model)
+                n_root_finders += 1
+
+                # put it on the same chip as the standard mcmc vertex?
+                # no - put it on a "nearby" chip, however that works
+                rf_vertex.add_constraint(SameChipAsConstraint(vertex))
+
+                # Add an edge from mcmc vertex to root finder vertex,
+                # to "send" the data
+                g.add_machine_edge_instance(
+                    MachineEdge(vertex, rf_vertex),
+                    rf_vertex.parameter_partition)
+
+                # Add edge from root finder vertex back to mcmc vertex
+                g.add_machine_edge_instance(
+                    MachineEdge(rf_vertex, vertex),
+                    rf_vertex.acknowledge_partition_name)
+
     # Run the simulation
     g.run(None)
 
@@ -146,6 +172,8 @@ def run_mcmc(
     txrx = g.transceiver()
     app_id = globals_variables.get_simulator()._app_id
     logger.info("Running {} worker cores".format(n_workers))
+    if (root_finder):
+        logger.info("Running {} root finder cores".format(n_root_finders))
     logger.info("Waiting for application to finish...")
     running = txrx.get_core_state_count(app_id, CPUState.RUNNING)
     # there are now cores doing extra_monitor etc.
