@@ -1,8 +1,8 @@
 import numpy
 from mcmc import mcmc_framework
-#from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
-from mcmc_examples.lighthouse.lighthouse_float_model \
-     import LightHouseFloatModel
+from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
+#from mcmc_examples.lighthouse.lighthouse_float_model \
+#     import LightHouseFloatModel
 #from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #     import LightHouseFixedPointModel
 
@@ -53,12 +53,12 @@ beta_min = 0.2
 beta_max = 2.0
 
 # Run and get the samples
-#model = LightHouseModel(
-#    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
-#    beta_max)
-model = LightHouseFloatModel(
+model = LightHouseModel(
     alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
     beta_max)
+#model = LightHouseFloatModel(
+#    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
+#    beta_max)
 #model = LightHouseFixedPointModel(
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)

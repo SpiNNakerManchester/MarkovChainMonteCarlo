@@ -33,16 +33,23 @@ class ARMAModel(MCMCModel):
     @overrides(MCMCModel.get_parameters)
     def get_parameters(self):
         # It's probably best here to convert the arrays into individual values?
+        return_params = []
+        for i in range(len(self._p_jump_scale)):
+            return_params.append(
+                MCMCParameter(self._p_jump_scale[i], numpy.float64))
+        for i in range(len(self._q_jump_scale)):
+            return_params.append(
+                MCMCParameter(self._q_jump_scale[i], numpy.float64))
 
-        return [
-            MCMCParameter(self._parameters, numpy.float64), # it's an array?
-            MCMCParameter(self._p_jump_scale, numpy.float64),
-            MCMCParameter(self._q_jump_scale, numpy.float64)
-        ]
+        return return_params
 
     @overrides(MCMCModel.get_state_variables)
     def get_state_variables(self):
-        return [
-            MCMCStateVariable("order_p", 9, numpy.uint32), # edit as appropriate
-            MCMCStateVariable("order_q", 9, numpy.uint32)
-        ]
+        # It's probably best here to convert the arrays into individual values?
+        return_state_vars = []
+        for i in range(len(self._parameters)):
+            return_state_vars.append(
+                MCMCStateVariable("param_"+str(i),
+                                  self._parameters[i], numpy.float64))
+
+        return return_state_vars

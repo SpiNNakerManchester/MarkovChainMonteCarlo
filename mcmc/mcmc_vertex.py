@@ -41,7 +41,9 @@ class MCMCVertex(
     """ A vertex that runs the MCMC algorithm
     """
 
-    def __init__(self, coordinator, model):
+    def __init__(self, coordinator, model,
+                 parameter_partition_name="MCMCParameter",
+                 result_partition_name="MCMCResultAck"):
         """
 
         :param coordinator: The coordinator vertex
@@ -51,6 +53,9 @@ class MCMCVertex(
         MachineVertex.__init__(self, label="MCMC Node", constraints=None)
         self._coordinator = coordinator
         self._model = model
+        self._parameter_partition_name = parameter_partition_name
+        self._result_partition_name = result_partition_name
+
         self._coordinator.register_processor(self)
 
         state = self._get_model_state_array()
@@ -59,18 +64,20 @@ class MCMCVertex(
         params = self._get_model_parameters_array()
 
         # The number of bytes for the parameters
-        # (9 * uint32) + (5 * seed array) + (1 * d.o.f.)
+        # (10 * uint32) + (5 * seed array) + (1 * d.o.f.)
         self._n_parameter_bytes = 0
         if (model.get_parameters()[0].data_type is numpy.float64):
-            self._n_parameter_bytes = (9 * 4) + (5 * 4) + (1 * 8)
+            self._n_parameter_bytes = (10 * 4) + (5 * 4) + (1 * 8)
         else:
-            self._n_parameter_bytes = (9 * 4) + (5 * 4) + (1 * 4)
+            self._n_parameter_bytes = (10 * 4) + (5 * 4) + (1 * 4)
 
         self._sdram_usage = (
             self._n_parameter_bytes + self._recording_size +
             recording_utilities.get_recording_header_size(1) +
             (len(params) * 4)
             )
+
+        self._data_receiver = dict()
 
     def _get_model_parameters_array(self):
         parameters = self._model.get_parameters()
@@ -118,6 +125,33 @@ class MCMCVertex(
                     "Error: unsupported data type for model state params")
         return numpy.array(
             [tuple(numpy_values)], dtype=numpy_format).view("uint32")
+
+    def get_result_key(self, placement, routing_info):
+        if self._is_receiver_placement(placement):
+            key = routing_info.get_first_key_from_pre_vertex(
+                placement.vertex, self._result_partition_name)
+            return key
+        return 0
+
+    def _is_receiver_placement(self, placement):
+        x = placement.x
+        y = placement.y
+        if (x, y) not in self._data_receiver:
+            self._data_receiver[x, y] = placement.p
+            return True
+        return self._data_receiver[(x, y)] == placement.p
+
+    @property
+    def coordinator(self):
+        return self._coordinator
+
+    @property
+    def parameter_partition_name(self):
+        return self._parameter_partition_name
+
+    @property
+    def result_partition_name(self):
+        return self._result_partition_name
 
     @property
     @overrides(MachineVertex.resources_required)
@@ -192,6 +226,14 @@ class MCMCVertex(
         # Write the timer value
         spec.write_value(self._coordinator.acknowledge_timer)
 
+        # Write the (first) key for sending parameter data, if needed
+        routing_info = routing_info.get_routing_info_from_pre_vertex(
+            self, self._parameter_partition_name)
+        if (routing_info is not None):
+            spec.write_value(routing_info.first_key, data_type=DataType.UINT32)
+        else:
+            spec.write_value(0, data_type=DataType.UINT32)
+
         # Write the seed = 5 32-bit random numbers
         if (self._model.get_parameters()[0].data_type is DataType.S1615):
             seed = [int(x * DataType.S1615.scale)
@@ -238,6 +280,8 @@ class MCMCVertex(
         data_values, _ = buffer_manager.get_data_for_vertex(placement, 0)
         data = data_values.read_all()
 
+        print 'data: ', data
+
         numpy_format = list()
         output_format = list()
         for var in self._model.get_state_variables():
@@ -260,6 +304,7 @@ class MCMCVertex(
 
             return convert
         else:
+            print 'reading back the data, from a float format '
             return numpy.array(data, dtype=numpy.uint8).view(numpy_format)
 
     def get_minimum_buffer_sdram_usage(self):

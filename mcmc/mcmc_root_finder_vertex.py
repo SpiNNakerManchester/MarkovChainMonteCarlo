@@ -14,183 +14,128 @@ from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
 from spinn_front_end_common.abstract_models\
     .abstract_generates_data_specification \
     import AbstractGeneratesDataSpecification
-from spinn_front_end_common.abstract_models\
-    .abstract_provides_n_keys_for_partition \
-    import AbstractProvidesNKeysForPartition
+from spinn_front_end_common.interface.buffer_management.buffer_models\
+    .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
+# from spinn_front_end_common.abstract_models\
+#     .abstract_provides_n_keys_for_partition \
+#     import AbstractProvidesNKeysForPartition
+from spinn_front_end_common.utilities import helpful_functions
+from spinn_front_end_common.interface.buffer_management \
+    import recording_utilities
 from spinn_front_end_common.utilities.utility_objs.executable_type \
     import ExecutableType
 
 from spinn_machine.utilities.progress_bar import ProgressBar
 
+from enum import Enum
 import numpy
 # import random
+
+class MCMCRootFinderRegions(Enum):
+    """ Regions in the MCMC Data
+    """
+    RECORDING = 0  # not sure this is needed?
+    PARAMETERS = 1
+    MODEL_PARAMS = 2
+    MODEL_STATE = 3
 
 
 class MCMCRootFinderVertex(
         MachineVertex, AbstractHasAssociatedBinary,
-        AbstractGeneratesDataSpecification,
-        AbstractProvidesNKeysForPartition):
-    """ A vertex that runs the MCMC algorithm
+        AbstractGeneratesDataSpecification, AbstractReceiveBuffersToHost):
+#        AbstractProvidesNKeysForPartition):
+    """ A vertex that runs the (MCMC) root finder algorithm
     """
 
-    # The number of bytes for the parameters
-    # (in mcmc_coordinator.c, 6*4 not including data)
-    _N_PARAMETER_BYTES = 24
-
-    # The data type of the data count
-    _DATA_COUNT_TYPE = DataType.UINT32
-
-    # The data type of the keys
-    _KEY_ELEMENT_TYPE = DataType.UINT32
-
     def __init__(
-            self, model,
-    #, parameters, n_samples, burn_in, thinning,
-    #        degrees_of_freedom, seed=None,
-    #        send_timer=1000, receive_timer=1000, window_size=1024,
-    #        n_sequences=2048,
-            parameter_partition_name="MCMCParams",
-            acknowledge_partition_name="MCMCParamsAck", data_tag=1):
+            self, vertex, model):
         """
-
+        :param vertex: The MCMC vertex associated with this vertex
         :param model: The model being simulated
-        :param data: The data to sample
-        :param n_samples: The number of samples to generate
-        :param burn_in:\
-            no of MCMC transitions to reach apparent equilibrium before\
-            generating inference samples
-        :param thinning:\
-            sampling rate i.e. 5 = 1 sample for 5 generated steps
-        :param degrees_of_freedom:\
-            The number of degrees of freedom to jump around with
-        :param seed: The random seed to use
         """
 
         MachineVertex.__init__(self, label="MCMC RF Node", constraints=None)
+        self._vertex = vertex
         self._model = model
-#         self._data = data
-#         self._n_samples = n_samples
-#         self._burn_in = burn_in
-#         self._thinning = thinning
-#         self._degrees_of_freedom = degrees_of_freedom
-#         self._seed = seed
-#         self._send_timer = send_timer
-#         self._receive_timer = receive_timer
-#         self._window_size = window_size
-#         self._n_sequences = n_sequences
-        self._parameter_partition_name = parameter_partition_name
-        self._acknowledge_partition_name = acknowledge_partition_name
-        self._data_tag = data_tag
 
-        # The data type of each data element
-        if (self._model.get_parameters()[0].data_type is numpy.float64):
-            self._data_element_type = DataType.FLOAT_64
-        elif (self._model.get_parameters()[0].data_type is numpy.float32):
-            self._data_element_type = DataType.FLOAT_32
-        elif (self._model.get_parameters()[0].data_type is DataType.S1615):
-            self._data_element_type = DataType.S1615
+        vertex.coordinator.register_processor(self)
 
-        # The numpy data type of each data element
-        if (self._model.get_parameters()[0].data_type is numpy.float64):
-            self._numpy_data_element_type = numpy.float64
-        elif (self._model.get_parameters()[0].data_type is numpy.float32):
-            self._numpy_data_element_type = numpy.float32
-        elif (self._model.get_parameters()[0].data_type is DataType.S1615):
-            self._numpy_data_element_type = numpy.uint32
+        # Do we need these functions in order to work out "recording sizes"?
+        state = self._get_model_state_array()
+        self._recording_size = len(state) * 4  # not really recording size?
+        # params = self._get_model_parameters_array()
 
-        self._data_size = (
-            (len(self._data) * self._data_element_type.size) +
-            self._DATA_COUNT_TYPE.size
-        )
+        # (We definitely need to use the "state" array, that's for sure...)
+        # Other parameters need to be added here
+        self._n_other_params = 1
+
+        self._n_parameter_bytes = self._n_other_params * 4
+
+        # here we use n_other_params, plus 1 d.o.f which is type dependent
+#         if (model.get_parameters()[0].data_type is numpy.float64):
+#             self._n_parameter_bytes = (self._n_other_params * 4) + (1 * 8)
+#         else:
+#             self._n_parameter_bytes = (self._n_other_params + 1) * 4
+
         self._sdram_usage = (
-            self._N_PARAMETER_BYTES + self._data_size
-        )
+            self._n_parameter_bytes + self._recording_size)
 
-        self._mcmc_vertices = list()
-        self._mcmc_placements = list()
-        self._data_receiver = dict()
 
-    def register_processor(self, mcmc_vertex):
-        self._mcmc_vertices.append(mcmc_vertex)
+#     def _get_model_parameters_array(self):
+#         parameters = self._model.get_parameters()
+#         numpy_format = list()
+#         numpy_values = list()
+#         for i, param in enumerate(parameters):
+#             if (param.data_type is numpy.float64):
+#                 numpy_format.append(('f{}'.format(i), param.data_type))
+#                 numpy_values.append(param.value)
+#             elif (param.data_type is numpy.float32):
+#                 numpy_format.append(('f{}'.format(i), param.data_type))
+#                 numpy_values.append(param.value)
+#             elif (param.data_type is DataType.S1615):
+#                 numpy_format.append(('f{}'.format(i), numpy.uint32))
+#                 numpy_values.append(
+#                     int(param.value * float(DataType.S1615.scale)))
+#             else:
+#                 # throw exception for unknown data type
+#                 raise Exception(
+#                     "Error: unsupported data type used for model parameters")
+#         return numpy.array(
+#             [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
-#     @property
-#     def n_samples(self):
-#         return self._n_samples
-#
-#     @property
-#     def burn_in(self):
-#         return self._burn_in
-#
-#     @property
-#     def thinning(self):
-#         return self._thinning
-#
-#     @property
-#     def degrees_of_freedom(self):
-#         return self._degrees_of_freedom
-#
-#     @property
-#     def n_data_points(self):
-#         return len(self._data)
 
-    def _is_receiver_placement(self, placement):
-        x = placement.x
-        y = placement.y
-        if (x, y) not in self._data_receiver:
-            self._data_receiver[x, y] = placement.p
-            return True
-        return self._data_receiver[(x, y)] == placement.p
-
-    def get_data_window_size(self, placement):
-        if self._is_receiver_placement(placement):
-            return self._window_size
-        return 0
-
-    def get_sequence_mask(self, placement, routing_info):
-        if self._is_receiver_placement(placement):
-            mask = routing_info.get_routing_info_from_pre_vertex(
-                self, self._data_partition_name).first_mask
-            return ~mask & 0xFFFFFFFF
-        return 0
-
-    def get_acknowledge_key(self, placement, routing_info):
-        if self._is_receiver_placement(placement):
-            key = routing_info.get_first_key_from_pre_vertex(
-                placement.vertex, self._acknowledge_partition_name)
-            return key
-        return 0
-
-    @property
-    def data_tag(self):
-        return self._data_tag
-
-    @property
-    def acknowledge_timer(self):
-        return self._receive_timer
-
-#     @property
-#     def seed(self):
-#         if self._seed is None:
-#             return [random.randint(0, 0xFFFFFFFF) for _ in range(5)]
-#         return self._seed
-
-    @property
-    def data_partition_name(self):
-        return self._data_partition_name
-
-    @property
-    def acknowledge_partition_name(self):
-        return self._acknowledge_partition_name
+    def _get_model_state_array(self):
+        state = self._model.get_state_variables()
+        numpy_format = list()
+        numpy_values = list()
+        for i, param in enumerate(state):
+            if (param.data_type is numpy.float64):
+                numpy_format.append(('f{}'.format(i), param.data_type))
+                numpy_values.append(param.initial_value)
+            elif (param.data_type is numpy.float32):
+                numpy_format.append(('f{}'.format(i), param.data_type))
+                numpy_values.append(param.initial_value)
+            elif (param.data_type is numpy.uint32):
+                numpy_format.append(('f{}'.format(i), param.data_type))
+                numpy_values.append(param.initial_value)
+            elif (param.data_type is DataType.S1615):
+                numpy_format.append(('f{}'.format(i), numpy.uint32))
+                numpy_values.append(
+                    int(param.initial_value * float(DataType.S1615.scale)))
+            else:
+                # throw exception for unknown data type
+                raise Exception(
+                    "Error: unsupported data type for model state params")
+        return numpy.array(
+            [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
-        sdram = self._N_PARAMETER_BYTES + self._data_size
-        sdram += len(self._mcmc_vertices) * self._KEY_ELEMENT_TYPE.size
 
         resources = ResourceContainer(
             dtcm=DTCMResource(0),
-            sdram=SDRAMResource(sdram),
+            sdram=SDRAMResource(self._sdram_usage),
             cpu_cycles=CPUCyclesPerTickResource(0),
             iptags=[], reverse_iptags=[])
         return resources
@@ -204,87 +149,109 @@ class MCMCRootFinderVertex(
         return ExecutableType.SYNC
 
     @inject_items({
-        "placements": "MemoryPlacements",
         "routing_info": "MemoryRoutingInfos"})
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification,
-        additional_arguments=["placements", "routing_info"])
+        additional_arguments=["routing_info"])
     def generate_data_specification(
-            self, spec, placement, placements, routing_info):
+            self, spec, placement, routing_info):  # , tags):
+
+        # Reserve and write the recording regions
+#         spec.reserve_memory_region(
+#             MCMCRootFinderRegions.RECORDING.value,
+#             recording_utilities.get_recording_header_size(1))
+#         spec.switch_write_focus(MCMCRootFinderRegions.RECORDING.value)
+#         ip_tags = tags.get_ip_tags_for_vertex(self) or []
+#         spec.write_array(recording_utilities.get_recording_header_array(
+#             [self._recording_size], ip_tags=ip_tags))
 
         # Reserve and write the parameters region
-        region_size = self._N_PARAMETER_BYTES + self._data_size
-        region_size += len(self._mcmc_vertices) * self._KEY_ELEMENT_TYPE.size
-        spec.reserve_memory_region(0, region_size)
-        spec.switch_write_focus(0)
+        spec.reserve_memory_region(
+            MCMCRootFinderRegions.PARAMETERS.value, self._n_parameter_bytes)
+        spec.switch_write_focus(MCMCRootFinderRegions.PARAMETERS.value)
 
-        # Get the placement of the vertices and find out how many chips
-        # are needed
-        keys = list()
-        for vertex in self._mcmc_vertices:
-            mcmc_placement = placements.get_placement_of_vertex(vertex)
-            self._mcmc_placements.append(mcmc_placement)
-            if self._is_receiver_placement(mcmc_placement):
-                key = routing_info.get_first_key_from_pre_vertex(
-                    vertex, self._acknowledge_partition_name)
-                keys.append(key)
-        keys.sort()
 
-        # Write the data size in words
-        spec.write_value(
-            len(self._data) * (float(self._data_element_type.size) / 4.0),
-            data_type=self._DATA_COUNT_TYPE)
+        # I think I'm right in saying that everything below isn't needed
+        # for the root finder - it just needs the parameters
+        # (Whether there are parameters required for the root finder itself
+        #  is something we can think about at another time... !)
 
-        # Write the number of chips
-        spec.write_value(len(keys), data_type=DataType.UINT32)
+#         # Write the burn-in
+#         spec.write_value(self._coordinator.burn_in, data_type=DataType.UINT32)
+#
+#         # Write the thinning value
+#         spec.write_value(self._coordinator.thinning, data_type=DataType.UINT32)
+#
+#         # Write the number of samples
+#         spec.write_value(
+#             self._coordinator.n_samples, data_type=DataType.UINT32)
+#
+#         # Write the number of data points
+#         spec.write_value(self._coordinator.n_data_points)
+#
+#         # Write the data window size
+#         spec.write_value(self._coordinator.get_data_window_size(placement))
+#
+#         # Write the sequence mask
+#         spec.write_value(self._coordinator.get_sequence_mask(
+#             placement, routing_info))
+#
+        # Write the acknowledge key
+        spec.write_value(self._vertex.get_result_key(
+            placement, routing_info))
+#
+#         # Write the data tag
+#         spec.write_value(self._coordinator.data_tag)
+#
+#         # Write the timer value
+#         spec.write_value(self._coordinator.acknowledge_timer)
+#
+#         # Write the seed = 5 32-bit random numbers
+#         if (self._model.get_parameters()[0].data_type is DataType.S1615):
+#             seed = [int(x * DataType.S1615.scale)
+#                     for x in self._coordinator.seed]
+#             spec.write_array(seed)
+#         else:
+#             spec.write_array(self._coordinator.seed)
+#
+        # Write the degrees of freedom
+#         if (self._model.get_parameters()[0].data_type is numpy.float64):
+#             spec.write_value(
+#                 self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_64)
+#         elif (self._model.get_parameters()[0].data_type is numpy.float32):
+#             spec.write_value(
+#                 self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_32)
+#         elif (self._model.get_parameters()[0].data_type is DataType.S1615):
+#             degrees_of_freedom = int(
+#                 self._coordinator.degrees_of_freedom * float(
+#                     DataType.S1615.scale))
+#             spec.write_value(degrees_of_freedom, data_type=DataType.UINT32)
 
-        # Write the key
-        routing_info = routing_info.get_routing_info_from_pre_vertex(
-            self, self._data_partition_name)
-        spec.write_value(routing_info.first_key, data_type=DataType.UINT32)
-
-        # Write the window size
-        spec.write_value(self._window_size, data_type=DataType.UINT32)
-
-        # Write the sequence mask
-        spec.write_value(
-            ~routing_info.first_mask & 0xFFFFFFFF, data_type=DataType.UINT32)
-
-        # Write the timer
-        spec.write_value(self._send_timer, data_type=DataType.UINT32)
-
-        # Write the data - Arrays must be 32-bit values, so convert
-        if (self._model.get_parameters()[0].data_type is DataType.S1615):
-            data_convert = [int(x * float(DataType.S1615.scale))
-                            for x in self._data]
-            data = numpy.array(data_convert, dtype=self._numpy_data_element_type)
-        else:
-            data = numpy.array(self._data, dtype=self._numpy_data_element_type)
-
-        spec.write_array(data.view(numpy.uint32))
-
-        # Write the keys
-        spec.write_array(keys)
+        # Reserve and write the model state
+        state = self._get_model_state_array()
+        spec.reserve_memory_region(
+            MCMCRootFinderRegions.MODEL_STATE.value, len(state) * 4)
+        spec.switch_write_focus(MCMCRootFinderRegions.MODEL_STATE.value)
+        spec.write_array(state)
 
         # End the specification
         spec.end_specification()
 
-    @overrides(AbstractProvidesNKeysForPartition.get_n_keys_for_partition)
-    def get_n_keys_for_partition(self, partition, graph_mapper):
-        return self._n_sequences
-
-    def read_samples(self, buffer_manager):
-        """ Read back the samples
+    def read_samples(self, buffer_manager, placement):
+        """ Read back the samples (dummy call)
         """
-        progress = ProgressBar(len(self._mcmc_placements), "Reading results")
-        samples = list()
-        for placement in self._mcmc_placements:
+        print('There are no samples to read back on a root finder vertex')
 
-            # Read the data recorded
-            samples.append(
-                placement.vertex.read_samples(buffer_manager, placement))
-            progress.update()
-        progress.end()
+    def get_minimum_buffer_sdram_usage(self):
+        return 1024
 
-        # Merge all the arrays
-        return numpy.hstack(samples)
+    def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
+        return recording_utilities.get_n_timesteps_in_buffer_space(
+            buffer_space, 4)
+
+    def get_recorded_region_ids(self):
+        return [0]
+
+    def get_recording_region_base_address(self, txrx, placement):
+        return helpful_functions.locate_memory_region_for_placement(
+            placement, MCMCRootFinderRegions.RECORDING.value, txrx)

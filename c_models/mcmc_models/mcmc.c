@@ -74,6 +74,9 @@ struct parameters {
     // Timer for data acknowledgement - 0 if not receiver
     uint32_t timer;
 
+    // Key for sending parameters
+    uint32_t key;
+
     // The random seed
     uniform_seed seed;
 
@@ -543,11 +546,12 @@ void c_main() {
     log_info("Thinning = %d", parameters.thinning);
     log_info("N Samples = %d", parameters.n_samples);
     log_info("N Data Points = %d", parameters.n_data_points);
-//    log_info("Data Window Size = %d", parameters.data_window_size);
-//    log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
-//    log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
-//    log_info("Data tag = %d", parameters.data_tag);
-//    log_info("Timer = %d", parameters.timer);
+    log_info("Data Window Size = %d", parameters.data_window_size);
+    log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
+    log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
+    log_info("Data tag = %d", parameters.data_tag);
+    log_info("Timer = %d", parameters.timer);
+//    log_info("Key = 0x%08x", parameters.key);
 #if TYPE_SELECT == 2
     log_info("Degrees of freedom = %k", parameters.degrees_of_freedom);
 #else

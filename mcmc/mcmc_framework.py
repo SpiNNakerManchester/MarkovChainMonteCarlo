@@ -98,8 +98,14 @@ def run_mcmc(
         n_cores = len([p for p in chip.processors if not p.is_monitor])
         if (chip.x, chip.y) in coordinators:
             n_cores -= 3  # coordinator and extra_monitor_support (2)
+            if (root_finder):
+                n_cores = n_cores / 2
+                print 'coordinator, n_cores: ', n_cores
         else:
             n_cores -= 1  # just extra_monitor_support
+            if (root_finder):
+                n_cores = n_cores / 2
+                print 'non-coordinator, n_cores: ', n_cores
 
 #        print 'n_cores before cheating is: ', n_cores
 #         take_into_account_chip_power_monitor = globals_variables.get_simulator(
@@ -145,23 +151,25 @@ def run_mcmc(
 
             if (root_finder):
                 # Create a root finder vertex
-                rf_vertex = MCMCRootFinderVertex(model)
+                rf_vertex = MCMCRootFinderVertex(vertex, model)
                 n_root_finders += 1
+                g.add_machine_vertex_instance(rf_vertex)
 
                 # put it on the same chip as the standard mcmc vertex?
                 # no - put it on a "nearby" chip, however that works
-                rf_vertex.add_constraint(SameChipAsConstraint(vertex))
+                rf_vertex.add_constraint(ChipAndCoreConstraint(chip.x, chip.y))
 
                 # Add an edge from mcmc vertex to root finder vertex,
-                # to "send" the data
+                # to "send" the data - need to work this out
                 g.add_machine_edge_instance(
                     MachineEdge(vertex, rf_vertex),
-                    rf_vertex.parameter_partition)
+                    vertex.parameter_partition_name)  # key set here!
 
                 # Add edge from root finder vertex back to mcmc vertex
+                # to send acknowledgement / result - need to work this out
                 g.add_machine_edge_instance(
                     MachineEdge(rf_vertex, vertex),
-                    rf_vertex.acknowledge_partition_name)
+                    vertex.result_partition_name)  # "acknowledge key" set here
 
     # Run the simulation
     g.run(None)

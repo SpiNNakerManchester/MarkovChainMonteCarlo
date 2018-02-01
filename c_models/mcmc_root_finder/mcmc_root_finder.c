@@ -3,69 +3,120 @@
 
 #include "mcmc_root_finder.h"
 
+//#include "../mcmc_models/mcmc_model.h"
+#include "../mcmc_models/examples/arma/arma.h"
+
 #include <spin1_api.h>
 #include <stdint.h>
-#include <stdbool.h>
+//#include <stdbool.h>
 #include <debug.h>
 #include <data_specification.h>
 
-#define CALC_TYPE float
+//#define CALC_TYPE float
 #define ROOT_FAIL -100.0
 
-#ifndef use
-#define use(x) do {} while ((x)!=(x))
-#endif
+//#ifndef use
+//#define use(x) do {} while ((x)!=(x))
+//#endif
 
 // Timeout between sending and receiving results in number of timer ticks
-#define TIMEOUT 3
+//#define TIMEOUT 3
 
-// The parameters to be read from memory
-enum params {
-    DATA_SIZE = 0,
-    N_CHIPS,
-    KEY,
-    WINDOW_SIZE,
-    SEQUENCE_MASK,
-    TIMER,
-    DATA
+//// The parameters to be read from memory
+//enum params {
+//    DATA_SIZE = 0,
+//    N_CHIPS,
+//    KEY,
+//    WINDOW_SIZE,
+//    SEQUENCE_MASK,
+//    TIMER,
+//    DATA
+//};
+
+// The model-specific parameters
+//mcmc_params_pointer_t params;
+
+// The model-specific state
+mcmc_state_pointer_t state;
+
+uint32_t *parameter_rec_ptr;
+
+struct double_uint {
+    uint first_word;
+    uint second_word;
 };
 
-// An array of sequence numbers received on each core
-// Note that this potentially will be in SDRAM with enough cores
-uint *sequence_received;
+union double_to_ints {
+    CALC_TYPE double_value;
+    struct double_uint int_values;
+};
 
-// The list of keys for each of the cores - ordered for quick searching
-uint *chip_keys;
+void print_value(CALC_TYPE d_value, char *buffer) {
+    union double_to_ints converter;
+    converter.double_value = d_value;
+    io_printf(
+        buffer, "0x%08x%08x",
+        converter.int_values.second_word, converter.int_values.first_word);
+}
 
-// The size of the remaining data to be sent
-uint data_size;
+//enum regions {
+//    RECORDING,
+//	PARAMETERS,
+//	MODEL_PARAMETERS,
+//    MODEL_STATE
+//};
 
-// The number of chips the data is to be sent to
-uint n_chips;
+enum regions {
+	PARAMETERS
+};
 
-// The base key to send the data with
-uint key;
+struct more_parameters {
 
-// The window size for sending the data
-uint window_size;
+    // Acknowledge key for something or other
+    uint32_t acknowledge_key;
 
-// The mask which indicates the sequence number
-uint sequence_mask;
+};
 
-// Pointer to the start of the data still to be sent and confirmed
-uint *data;
+// The general parameters
+struct more_parameters more_parameters;
 
-// The timer tick at which the send will have timed out
-uint send_timeout;
 
-// The next sequence number to be sent
-uint next_sequence = 0;
-
-// The end sequence ignoring the wrap around of sequences
-uint next_end_sequence_unwrapped = 0xFFFFFFFF;
-
-// The end sequence with wrap around of sequences
-uint next_end_sequence = 0;
+//// An array of sequence numbers received on each core
+//// Note that this potentially will be in SDRAM with enough cores
+//uint *sequence_received;
+//
+//// The list of keys for each of the cores - ordered for quick searching
+//uint *chip_keys;
+//
+//// The size of the remaining data to be sent
+//uint data_size;
+//
+//// The number of chips the data is to be sent to
+//uint n_chips;
+//
+//// The base key to send the data with
+//uint key;
+//
+//// The window size for sending the data
+//uint window_size;
+//
+//// The mask which indicates the sequence number
+//uint sequence_mask;
+//
+//// Pointer to the start of the data still to be sent and confirmed
+//uint *data;
+//
+//// The timer tick at which the send will have timed out
+//uint send_timeout;
+//
+//// The next sequence number to be sent
+//uint next_sequence = 0;
+//
+//// The end sequence ignoring the wrap around of sequences
+//uint next_end_sequence_unwrapped = 0xFFFFFFFF;
+//
+//// The end sequence with wrap around of sequences
+//uint next_end_sequence = 0;
 
 // Helper functions for finding the root
 
@@ -133,7 +184,7 @@ void laguerre_poly_root( complex float a[], int m, complex float *x, int *its )
 			*x = *x - RCmul( frac[ iter / MT ], dx ); // occasionally take fractional step to break rare limit cycle
 		}
 
-	printf("Too many iterations in laguerre_poly_root()"); exit(1); // very unusual and only for complex roots
+//	printf("Too many iterations in laguerre_poly_root()"); exit(1); // very unusual and only for complex roots
 
 	return;
 }
@@ -210,14 +261,50 @@ void zroots( complex float a[], int m, complex float roots[], bool polish )
 #undef EPS
 #undef MAXM
 
+uint32_t mcmc_model_get_state_n_bytes() {
+    return sizeof(struct mcmc_state);
+}
+
 void run(uint unused0, uint unused1) {
     use(unused0);
     use(unused1);
 
-    uint8_t i, p, q;
-    CALC_TYPE *parameters;
+    // for debug writing values
+    char buffer[1024];
 
-    // Set up the data somewhere in here
+    uint8_t i, p, q;
+    CALC_TYPE *state_parameters;  //[PPOLYORDER+QPOLYORDER+2];
+
+    p = PPOLYORDER;
+    q = QPOLYORDER;
+
+//    log_info("ROOT FINDER: in run() function, p=%d", p);
+
+    // Set up the parameters and the state
+	uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
+
+//	log_info("ROOT FINDER: state_n_bytes: %d", state_n_bytes);
+
+	// parameter_rec_ptr should have arrived at this point
+//	log_info("ROOT FINDER: parameter_rec_ptr[0]: %d", parameter_rec_ptr[0]);
+//	log_info("ROOT FINDER: parameter_rec_ptr: %d", parameter_rec_ptr);
+
+	// get parameters from sdram
+	spin1_memcpy(state_parameters, parameter_rec_ptr, state_n_bytes);
+
+//	spin1_memcpy(state, model_state_address, state_n_bytes);
+
+//	state_parameters = state->parameters;
+
+//	print_value(state_parameters[1], buffer);
+//	log_info("ROOT FINDER: state_parameters[1] = %s", buffer);
+//	print_value(state_parameters[10], buffer);
+//	log_info("ROOT FINDER: state_parameters[10] = %s", buffer);
+	print_value(state_parameters[18], buffer);
+	log_info("ROOT FINDER: state_parameters[18] = %s", buffer);
+
+//	log_info("ROOT_FINDER: state_parameters[0]: %d", state_parameters[0]);
+
 
 
 	// This is probably the point where the executables need to be separated;
@@ -243,7 +330,7 @@ void run(uint unused0, uint unused1) {
 	// The characteristic equation is -a_p*x^p-a_(p-1)*x^(p-1)-...+1=0;
 	AR_eq[p] = REAL_CONST( 1.0 );  // ONE;
 	for(i=0; i < p; i++) {
-		AR_eq[i] = -parameters[p-i-1];
+		AR_eq[i] = -state_parameters[p-i-1];
 	}
 
 	// This command reverses the sequence from the p+1 to q elements
@@ -252,7 +339,7 @@ void run(uint unused0, uint unused1) {
 	// The characteristic equation is -b_q*x^q-b_(q-1)*x^(q-1)-...+1=0;
 	MA_eq[q] = REAL_CONST( 1.0 );  // ONE:
 	for(i=0; i < q; i++) {
-		MA_eq[i] = -parameters[p+(q-i-1)];
+		MA_eq[i] = -state_parameters[p+(q-i-1)];
 	}
 
 	// read parameters into complex vectors so that we can calculate roots - from 0?
@@ -266,8 +353,13 @@ void run(uint unused0, uint unused1) {
 		MA_param[i] = (float)MA_eq[i] + 0.0f * I;
 	}
 
+//    log_info("ROOT FINDER: call zroots for AR");
+
 	// this function finds the complex roots in each case
 	zroots( AR_param, p, AR_rt, true);
+
+//	log_info("ROOT FINDER: call zroots for MA");
+
 	zroots( MA_param, q, MA_rt, true);
 
 	CALC_TYPE returnval = 0.0f;  // ZERO;
@@ -279,147 +371,64 @@ void run(uint unused0, uint unused1) {
 	for(i=1; i <= q; i++)  // 0 or 1 for start point?
 		if( cabsf(MA_rt[i]) <= 1.0f ) returnval = ROOT_FAIL;  // REAL_CONST( ROOT_FAIL );
 
-	// At this point send returnval to SDRAM
+	// At this point send returnval to normal vertex
+	address_t data_address = data_specification_get_data_address();
+	address_t more_parameters_address = data_specification_get_region(
+	        PARAMETERS, data_address);
+	struct more_parameters *more_sdram_params =
+			(struct more_parameters *) more_parameters_address;
+	spin1_memcpy(&more_parameters, more_sdram_params,
+			sizeof(struct more_parameters));
+
+	uint32_t ack_key = more_parameters.acknowledge_key;
+	spin1_send_mc_packet(ack_key, returnval, WITH_PAYLOAD);
 
 // if all conditions have been passed then return a pass result
 	// return ZERO;  // REAL_CONST( 0.0 ); here send ZERO to sdram
-}
 
-void send_callback(uint send_time, uint unused) {
-    use(unused);
+	log_info("ROOT FINDER: returnval sent to ARMA");
 
-    // If the data has all been sent, send a start message and quit
-    if (data_size == 0) {
-        log_info("All data has been sent and confirmed");
-        while (!spin1_send_mc_packet(key, 0, NO_PAYLOAD)) {
-            spin1_delay_us(1);
-        }
-        spin1_exit(0);
-        return;
-    }
+	//log_info("ROOT FINDER: at end of run(), returnval = 0x%08x", returnval);
 
-    // Send the next packets
-    uint packets_to_send = window_size;
-    if (window_size > data_size) {
-        packets_to_send = data_size;
-    }
-    for (uint i = 0; i < packets_to_send; i++) {
-        uint sequence = (next_sequence + i) & sequence_mask;
-        while (!spin1_send_mc_packet(
-                key + sequence, data[i], WITH_PAYLOAD)) {
-            spin1_delay_us(1);
-        }
-    }
-    next_end_sequence_unwrapped = next_sequence + packets_to_send - 1;
-    next_end_sequence = next_end_sequence_unwrapped & sequence_mask;
-    send_timeout = send_time + TIMEOUT;
-}
-
-
-void timer_callback(uint time, uint unused) {
-    use(unused);
-
-    // Only do anything if there is sequence to check
-    if (next_end_sequence_unwrapped == 0xFFFFFFFF) {
-        return;
-    }
-
-    // Determine if the timeout would expire
-    uint timed_out = 0;
-    if (time >= send_timeout) {
-        timed_out = 1;
-    }
-
-    // Find the smallest sequence number received
-    uint smallest_sequence = 0xFFFFFFFF;
-    for (uint i = 0; i < n_chips; i++) {
-        if (sequence_received[i] < smallest_sequence) {
-            smallest_sequence = sequence_received[i];
-
-            // If one of the cores hasn't yet got the latest sequence
-            // and we haven't timed out, we may as well give up
-            if ((smallest_sequence < next_end_sequence_unwrapped) &&
-                    !timed_out) {
-                break;
-            }
-        }
-    }
-
-    // If all chips have the data, or we have timed out, start sending again
-    if ((smallest_sequence == next_end_sequence_unwrapped) || timed_out) {
-
-        // Adjust the sequence to the next sequence to send
-        if (smallest_sequence >= next_sequence &&
-                smallest_sequence <= next_end_sequence_unwrapped) {
-
-            // Work out how many words have been sent
-            uint words_sent = (smallest_sequence - next_sequence) + 1;
-
-            // Adjust the pointers to the next bit of data to send
-            data = &(data[words_sent]);
-            data_size -= words_sent;
-
-            next_sequence = (smallest_sequence + 1) & sequence_mask;
-        }
-
-        // Avoid sending more data in case the send takes too long
-        next_end_sequence_unwrapped = 0xFFFFFFFF;
-
-        // Send the data
-        spin1_schedule_callback(send_callback, time, 0, 1);
-    }
+	// somehow we need to exit the executable... ?
+    spin1_exit(0);
 }
 
 void multicast_callback(uint key, uint payload) {
-
-    // Find the core that this packet is from using binary search
-    uint imin = 0;
-    uint imax = n_chips;
-    while (imin < imax) {
-
-        uint imid = (imax + imin) >> 1;
-
-        // If the key is found, update the sequence with the payload
-        if (chip_keys[imid] == key) {
-
-            uint sequence = payload;
-            uint current_sequence = sequence_received[imid];
-
-            // If the range is wrapped, adjust the sequence to ignore the wrap
-            if (next_end_sequence < next_sequence) {
-                if (sequence < next_sequence) {
-                    sequence += sequence_mask + 1;
-                }
-            }
-
-
-            // Only update if the sequence is in the expected range
-            if (sequence >= next_sequence &&
-                    sequence <= next_end_sequence_unwrapped) {
-
-                // If the current sequence is out of range, update
-                if (current_sequence < next_sequence ||
-                        current_sequence > next_end_sequence_unwrapped ||
-                        sequence > current_sequence) {
-                    sequence_received[imid] = sequence;
-                }
-            }
-            break;
-        }
-
-        if (chip_keys[imid] < key) {
-            imin = imid + 1;
-        } else {
-            imax = imid;
-        }
-    }
+	use(key);
+	parameter_rec_ptr[0] = payload;
+//    log_info("ROOT FINDER: multicast_callback");
+//    spin1_callback_off(TIMER_TICK);
+//    spin1_schedule_callback(run, 0, 0, 2);
 }
 
-
-void empty_multicast_callback(uint key, uint payload) {
-    use(key);
-    use(payload);
-}
+//	// this needs to be edited - it's not the data sequence that comes in here
+//	// but the params
+//
+//
+////    uint sequence = key & parameters.sequence_mask;
+////    if (sequence == next_sequence) {
+////        data_receive_ptr[0] = payload;
+////        data_receive_ptr++;
+////        last_sequence = sequence;
+////        next_sequence = (sequence + 1) & parameters.sequence_mask;
+////    }
+//}
+//
+//void timer_callback(uint time, uint unused) {
+//	// again here, not data sequence, but params
+//
+////    spin1_delay_us(parameters.timer >> 1);
+////    use(time);
+////    use(unused);
+////    spin1_send_mc_packet(
+////        parameters.acknowledge_key, last_sequence, WITH_PAYLOAD);
+//}
+//
+//void empty_multicast_callback(uint key, uint payload) {
+//    use(key);
+//    use(payload);
+//}
 
 void trigger_run(uint unused0, uint unused1) {
     use(unused0);
@@ -430,85 +439,14 @@ void trigger_run(uint unused0, uint unused1) {
 
 void c_main() {
 
-    address_t data_address = data_specification_get_data_address();
-    address_t params = data_specification_get_region(0, data_address);
-
-    // Get the size of the data in words
-    data_size = params[DATA_SIZE];
-    log_info("Data size = %d", data_size);
-
-    // Get a count of the chips to load on to
-    n_chips = params[N_CHIPS];
-    log_info("N chips = %d", n_chips);
-
-    // Get the key to send the data with
-    key = params[KEY];
-    log_info("Key = 0x%08x", key);
-
-    // Get the number of packets to be sent at the same time
-    window_size = params[WINDOW_SIZE];
-    log_info("Window size = %d", window_size);
-
-    // Get the total number of window spaces available
-    sequence_mask = params[SEQUENCE_MASK];
-    log_info("Sequence mask = 0x%08x", sequence_mask);
-
-    // Get the timer tick
-    uint timer = params[TIMER];
-    log_info("Timer = %d", timer);
-
-    // Get a pointer to the data - not worth copying at present
-    data = (uint *) &(params[DATA]);
-
-    // Get a pointer to the keys for each chip which will verify
-    // the reception of data
-    uint *chip_data = (uint *) &(data[data_size]);
-
-    // Try to allocate an array of keys in DTCM
-    chip_keys = (uint *) spin1_malloc(n_chips * sizeof(uint));
-    if (chip_keys == NULL) {
-        log_warning("Could not allocate chip keys in DTCM - using SDRAM");
-        chip_keys = chip_data;
-    } else {
-        spin1_memcpy(chip_keys, chip_data, n_chips * sizeof(uint));
-    }
-
-    // Try to allocate an array of last sequences in DTCM
-    sequence_received = (uint *) spin1_malloc(n_chips * sizeof(uint));
-    if (sequence_received == NULL) {
-        log_warning("Could not allocate sequences in DTCM - using SDRAM");
-        sequence_received = (uint *) sark_xalloc(
-                sv->sdram_heap, n_chips * sizeof(uint), 0, ALLOC_LOCK);
-        if (sequence_received == NULL) {
-            log_error("Could not allocate sequences in SDRAM");
-            rt_error(RTE_SWERR);
-        }
-    }
-    for (uint i = 0; i < n_chips; i++) {
-        sequence_received[i] = sequence_mask;
-    }
-    send_timeout = TIMEOUT;
-
-    // Set up the timer
-    spin1_set_timer_tick(timer);
-
-    // Register for the start message
+    // register for the start message
     spin1_callback_on(MC_PACKET_RECEIVED, trigger_run, -1);
 
-    // Setup callback on multicast packet with payload, for acknowledge packets
-    spin1_callback_on(MCPL_PACKET_RECEIVED, multicast_callback, -1);
-    spin1_callback_on(MC_PACKET_RECEIVED, empty_multicast_callback, -1);
+    // register for the sdram address value / start
+	spin1_callback_on(MCPL_PACKET_RECEIVED, multicast_callback, -1);
 
-    // Setup callback on timer to timeout sent packets and send next packets
-    spin1_callback_on(TIMER_TICK, timer_callback, 2);
-
-    // Schedule the first call of the send callback
-    spin1_schedule_callback(send_callback, 0, 0, 1);
-
-    // Start in sync with all the cores, to ensure they are ready
-    // to receive packets
+	// start in sync_wait
     spin1_start(SYNC_WAIT);
-
 }
 
 //#define ORDER 18

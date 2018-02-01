@@ -55,12 +55,12 @@ for i in range(0,np):
 q_jump_scale = []
 for i in range(0,nq):
     parameters.append(0.01)
-    q_jump_scale(0.1)
+    q_jump_scale.append(0.1)
 
 parameters.append(mu)
 parameters.append(sigma)
 
-print 'parameter set:', parameters
+print 'state parameter set:', parameters
 
 # Run and get the samples
 model = ARMAModel(parameters, p_jump_scale, q_jump_scale)
