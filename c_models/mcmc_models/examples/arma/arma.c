@@ -89,7 +89,7 @@ uint32_t mcmc_model_get_state_n_bytes() {
 //        converter.int_values.second_word, converter.int_values.first_word);
 //}
 
-CALC_TYPE result_value; // not sure about this?
+volatile CALC_TYPE result_value; // not sure about this?
 
 void result_callback(uint key, uint payload) {
 	log_info("ARMA: result_callback");
@@ -211,7 +211,7 @@ CALC_TYPE mcmc_model_prior_prob(
         mcmc_params_pointer_t params, mcmc_state_pointer_t state) {
 	// debug for writing values
 	char buffer[1024];
-	result_value = 1.0;
+	result_value = TWO;  // 1.0f;
 
 	// read in AR and MA parameter dimensions
 	uint8_t p = PPOLYORDER;  // state->order_p;
@@ -225,6 +225,13 @@ CALC_TYPE mcmc_model_prior_prob(
 //	log_info("ARMA: state_parameters[0] = 0x%08x", state_parameters[0]);
 
 	if( sigma <= ZERO ) return ROOT_FAIL;  // first fail condition can provide early exit
+
+	uint mode = spin1_int_enable();
+
+	// callback for result here
+	spin1_callback_off(MCPL_PACKET_RECEIVED);
+	spin1_callback_off(MC_PACKET_RECEIVED);
+	spin1_callback_on(MCPL_PACKET_RECEIVED, result_callback, -1);
 
 	address_t data_address = data_specification_get_data_address();
 	address_t parameters_address = data_specification_get_region(
@@ -251,7 +258,7 @@ CALC_TYPE mcmc_model_prior_prob(
 
 	// send mc packet to wake up root finder
 	// Send mc packet with payload of address value
-	spin1_send_mc_packet(key, (uint) model_state_address, WITH_PAYLOAD);
+	spin1_send_mc_packet(key, model_state_address, WITH_PAYLOAD);
 
 	log_info("ARMA: model_state_address = %d", model_state_address);
 
@@ -270,12 +277,20 @@ CALC_TYPE mcmc_model_prior_prob(
 //	log_info("ARMA: model_state_address = %d", model_state_address);
 
 	// wait for result to come back
-	spin1_callback_on(MCPL_PACKET_RECEIVED, result_callback, -1);
+//	spin1_callback_on(MCPL_PACKET_RECEIVED, result_callback, -1);
+
+	log_info("callback turned on, now going in to wait...");
 
 	// do we need to sit here and wait and do nothing until result is here?
-	while (result_value==1.0) {
+	while (result_value==TWO) {
+//		print_value(result_value, buffer);
+		log_info("while loop, result_value"); //  = %s", buffer);
 		spin1_wfi();
 	}
+
+	log_info("ARMA: returning result from root finder");
+
+	spin1_mode_restore(mode);
 
 	// read result and return it
 	CALC_TYPE returnval = result_value;

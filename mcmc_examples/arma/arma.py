@@ -2,9 +2,9 @@ import numpy
 from mcmc import mcmc_framework
 from mcmc_examples.arma.arma_model import ARMAModel
 #from mcmc_examples.lighthouse.lighthouse_float_model \
-#     import LightHouseFloatModel
+#     import ARMAFloatModel
 #from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
-#     import LightHouseFixedPointModel
+#     import ARMAFixedPointModel
 
 # Data to use for 50 data points
 data_points = [
@@ -64,10 +64,10 @@ print 'state parameter set:', parameters
 
 # Run and get the samples
 model = ARMAModel(parameters, p_jump_scale, q_jump_scale)
-#model = LightHouseFloatModel(
+#model = ARMAFloatModel(
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
-#model = LightHouseFixedPointModel(
+#model = ARMAFixedPointModel(
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
 samples = mcmc_framework.run_mcmc(

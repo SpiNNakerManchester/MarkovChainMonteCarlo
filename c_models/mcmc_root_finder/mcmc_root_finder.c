@@ -3,7 +3,7 @@
 
 #include "mcmc_root_finder.h"
 
-//#include "../mcmc_models/mcmc_model.h"
+#include "../mcmc_models/mcmc_model.h"
 #include "../mcmc_models/examples/arma/arma.h"
 
 #include <spin1_api.h>
@@ -13,7 +13,8 @@
 #include <data_specification.h>
 
 //#define CALC_TYPE float
-#define ROOT_FAIL -100.0
+#define ROOT_FAIL -100.000000000000
+//#define ROOT_FAIL -100.0f
 
 //#ifndef use
 //#define use(x) do {} while ((x)!=(x))
@@ -41,23 +42,23 @@ mcmc_state_pointer_t state;
 
 uint32_t *parameter_rec_ptr;
 
-struct double_uint {
-    uint first_word;
-    uint second_word;
-};
-
-union double_to_ints {
-    CALC_TYPE double_value;
-    struct double_uint int_values;
-};
-
-void print_value(CALC_TYPE d_value, char *buffer) {
-    union double_to_ints converter;
-    converter.double_value = d_value;
-    io_printf(
-        buffer, "0x%08x%08x",
-        converter.int_values.second_word, converter.int_values.first_word);
-}
+//struct double_uint {
+//    uint first_word;
+//    uint second_word;
+//};
+//
+//union double_to_ints {
+//    CALC_TYPE double_value;
+//    struct double_uint int_values;
+//};
+//
+//void print_value(CALC_TYPE d_value, char *buffer) {
+//    union double_to_ints converter;
+//    converter.double_value = d_value;
+//    io_printf(
+//        buffer, "0x%08x%08x",
+//        converter.int_values.second_word, converter.int_values.first_word);
+//}
 
 //enum regions {
 //    RECORDING,
@@ -80,6 +81,8 @@ struct more_parameters {
 // The general parameters
 struct more_parameters more_parameters;
 
+
+uint32_t ack_key;
 
 //// An array of sequence numbers received on each core
 //// Note that this potentially will be in SDRAM with enough cores
@@ -147,7 +150,8 @@ void laguerre_poly_root( complex float a[], int m, complex float *x, int *its )
 		*its = iter;
 		b = a[m];
 		err = cabsf( b );
-		d = f = 0.0f + 0.0f * I;
+		//d = f = 0.0f + 0.0f * I;
+		d = f = ZERO * ZERO * I;
 		abx = cabsf( *x );
 		for ( j = m-1; j >= 0; j-- ) {	// efficient computation of polynomial and first two derivatives
 			f = ( *x * f ) + d;
@@ -162,7 +166,7 @@ void laguerre_poly_root( complex float a[], int m, complex float *x, int *its )
 
 		g = d / b;								// the generic case so use Laguerre's formula
 		g2 = g * g;
-		h = g2 - RCmul( 2.0f, f / b );
+		h = g2 - RCmul( TWO, f / b );
 		sq = csqrtf( RCmul( (float) (m-1), RCmul((float) m, h ) - g2 ));
 		gp = g + sq;
 		gm = g - sq;
@@ -171,8 +175,8 @@ void laguerre_poly_root( complex float a[], int m, complex float *x, int *its )
 
 		if ( abp < abm ) gp = gm;
 
-		dx = FMAX( abp, abm ) > 0.0f ? ( ((float) m ) + 0.0f * I ) / gp :
-		RCmul( 1.0f + abx, cosf((float)iter) + sinf((float)iter) * I );
+		dx = FMAX( abp, abm ) > ZERO ? ( ((float) m ) + ZERO * I ) / gp :
+		RCmul( ONE + abx, cosf((float)iter) + sinf((float)iter) * I );
 
 		x1 = *x - dx;
 
@@ -224,12 +228,12 @@ void zroots( complex float a[], int m, complex float roots[], bool polish )
 
 	for ( j = m; j >= 1; j-- ) {	// loop over each root to be found
 
-		x = 0.0f + 0.0f * I;  		// start at zero to favour convergence to smallest root
+		x = ZERO + ZERO * I;  		// start at zero to favour convergence to smallest root
 
 		laguerre_poly_root( ad, j, &x, &its );
 
-		if ( fabs(cimagf(x)) <= 2.0f * EPS * fabs(crealf(x)))
-			x = crealf(x) + 0.0f * I; // set imaginary part to zero
+		if ( fabs(cimagf(x)) <= TWO * EPS * fabs(crealf(x)))
+			x = crealf(x) + ZERO * I; // set imaginary part to zero
 
 		roots[j] = x;
 
@@ -278,35 +282,6 @@ void run(uint unused0, uint unused1) {
     p = PPOLYORDER;
     q = QPOLYORDER;
 
-//    log_info("ROOT FINDER: in run() function, p=%d", p);
-
-    // Set up the parameters and the state
-	uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
-
-//	log_info("ROOT FINDER: state_n_bytes: %d", state_n_bytes);
-
-	// parameter_rec_ptr should have arrived at this point
-//	log_info("ROOT FINDER: parameter_rec_ptr[0]: %d", parameter_rec_ptr[0]);
-//	log_info("ROOT FINDER: parameter_rec_ptr: %d", parameter_rec_ptr);
-
-	// get parameters from sdram
-	spin1_memcpy(state_parameters, parameter_rec_ptr, state_n_bytes);
-
-//	spin1_memcpy(state, model_state_address, state_n_bytes);
-
-//	state_parameters = state->parameters;
-
-//	print_value(state_parameters[1], buffer);
-//	log_info("ROOT FINDER: state_parameters[1] = %s", buffer);
-//	print_value(state_parameters[10], buffer);
-//	log_info("ROOT FINDER: state_parameters[10] = %s", buffer);
-	print_value(state_parameters[18], buffer);
-	log_info("ROOT FINDER: state_parameters[18] = %s", buffer);
-
-//	log_info("ROOT_FINDER: state_parameters[0]: %d", state_parameters[0]);
-
-
-
 	// This is probably the point where the executables need to be separated;
 	// So if sigma > ZERO then we need to write the parameters to SDRAM?
 	// Then the other executable reads these parameters back from SDRAM,
@@ -316,7 +291,37 @@ void run(uint unused0, uint unused1) {
 	// executable can read it... there needs to be some form of control
 	// whereby this is possible...
 
-    // Need to get p and q from somewhere...
+//    log_info("ROOT FINDER: in run() function, p=%d", p);
+
+    // Set up the parameters and the state
+	uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
+
+//	log_info("ROOT FINDER: state_n_bytes: %d", state_n_bytes);
+
+	// parameter_rec_ptr should have arrived at this point
+	log_info("ROOT FINDER: parameter_rec_ptr[0]: %d", parameter_rec_ptr[0]);
+
+	// get parameters from sdram
+	spin1_memcpy(state_parameters, parameter_rec_ptr, state_n_bytes);
+
+//	spin1_callback_off(MCPL_PACKET_RECEIVED); // turn it off?
+
+//	spin1_memcpy(state, model_state_address, state_n_bytes);
+
+//	state_parameters = state->parameters;
+
+//	print_value(state_parameters[1], buffer);
+//	log_info("ROOT FINDER: state_parameters[1] = %s", buffer);
+//	print_value(state_parameters[10], buffer);
+//	log_info("ROOT FINDER: state_parameters[10] = %s", buffer);
+//	print_value(state_parameters[18], buffer);
+//	log_info("ROOT FINDER: state_parameters[18] = %s", buffer);
+
+//	log_info("ROOT_FINDER: state_parameters[0]: %d", state_parameters[0]);
+
+
+
+
 
 	// set up data structures for the coefficients of a polynomial
 	// characteristic equation for AR and MA model respectively.
@@ -328,7 +333,7 @@ void run(uint unused0, uint unused1) {
 	// get their negative values and adds an element 1 at the end
 	// to form the coeffients of AR characteristic equation.
 	// The characteristic equation is -a_p*x^p-a_(p-1)*x^(p-1)-...+1=0;
-	AR_eq[p] = REAL_CONST( 1.0 );  // ONE;
+	AR_eq[p] = ONE;  // REAL_CONST( 1.0 );  // ONE;
 	for(i=0; i < p; i++) {
 		AR_eq[i] = -state_parameters[p-i-1];
 	}
@@ -337,7 +342,7 @@ void run(uint unused0, uint unused1) {
 	// of the parameters, get their negative values and add an element 1
 	// at the end to form the coeffients of MA characteristic equation.
 	// The characteristic equation is -b_q*x^q-b_(q-1)*x^(q-1)-...+1=0;
-	MA_eq[q] = REAL_CONST( 1.0 );  // ONE:
+	MA_eq[q] = ONE;  // REAL_CONST( 1.0 );  // ONE:
 	for(i=0; i < q; i++) {
 		MA_eq[i] = -state_parameters[p+(q-i-1)];
 	}
@@ -345,12 +350,12 @@ void run(uint unused0, uint unused1) {
 	// read parameters into complex vectors so that we can calculate roots - from 0?
 	for(i=0; i <= p; i++) {
 		// only real part relevant - so imaginary part = 0
-		AR_param[i] = (float)AR_eq[i] + 0.0f * I;
+		AR_param[i] = (float)AR_eq[i] + ZERO * I;
 	}
 
 	for( i = 0; i <= q; i++ ) {
 		// only real part relevant - so imaginary part = 0
-		MA_param[i] = (float)MA_eq[i] + 0.0f * I;
+		MA_param[i] = (float)MA_eq[i] + ZERO * I;
 	}
 
 //    log_info("ROOT FINDER: call zroots for AR");
@@ -362,26 +367,22 @@ void run(uint unused0, uint unused1) {
 
 	zroots( MA_param, q, MA_rt, true);
 
-	CALC_TYPE returnval = 0.0f;  // ZERO;
+	CALC_TYPE returnval = ZERO;  // 0.0f;
 
 	// test for root magnitude <= 1 and if so return a fail result  // n+1 coefficients, n roots
 	for(i=1; i <= p; i++)  // 0 or 1 for start point?
-		if( cabsf(AR_rt[i]) <= 1.0f ) returnval = ROOT_FAIL; // return ROOT_FAIL;  // REAL_CONST( ROOT_FAIL );
+		if( cabsf(AR_rt[i]) <= ONE ) returnval = ROOT_FAIL; // return ROOT_FAIL;  // REAL_CONST( ROOT_FAIL );
 
 	for(i=1; i <= q; i++)  // 0 or 1 for start point?
-		if( cabsf(MA_rt[i]) <= 1.0f ) returnval = ROOT_FAIL;  // REAL_CONST( ROOT_FAIL );
+		if( cabsf(MA_rt[i]) <= ONE ) returnval = ROOT_FAIL;  // REAL_CONST( ROOT_FAIL );
 
 	// At this point send returnval to normal vertex
-	address_t data_address = data_specification_get_data_address();
-	address_t more_parameters_address = data_specification_get_region(
-	        PARAMETERS, data_address);
-	struct more_parameters *more_sdram_params =
-			(struct more_parameters *) more_parameters_address;
-	spin1_memcpy(&more_parameters, more_sdram_params,
-			sizeof(struct more_parameters));
+	log_info("ack_key = 0x%08x", more_parameters.acknowledge_key);
 
-	uint32_t ack_key = more_parameters.acknowledge_key;
-	spin1_send_mc_packet(ack_key, returnval, WITH_PAYLOAD);
+	// wait until packet is acknowledged/sent...
+	while (!spin1_send_mc_packet(ack_key, returnval, WITH_PAYLOAD)) {
+		spin1_delay_us(1);
+	}
 
 // if all conditions have been passed then return a pass result
 	// return ZERO;  // REAL_CONST( 0.0 ); here send ZERO to sdram
@@ -391,7 +392,7 @@ void run(uint unused0, uint unused1) {
 	//log_info("ROOT FINDER: at end of run(), returnval = 0x%08x", returnval);
 
 	// somehow we need to exit the executable... ?
-    spin1_exit(0);
+    //spin1_exit(0);
 }
 
 void multicast_callback(uint key, uint payload) {
@@ -438,8 +439,20 @@ void trigger_run(uint unused0, uint unused1) {
 }
 
 void c_main() {
+	// Get the ack_key from more_parameters
+	address_t data_address = data_specification_get_data_address();
+	address_t more_parameters_address = data_specification_get_region(
+	        PARAMETERS, data_address);
+	struct more_parameters *more_sdram_params =
+			(struct more_parameters *) more_parameters_address;
+	spin1_memcpy(&more_parameters, more_sdram_params,
+			sizeof(struct more_parameters));
 
-    // register for the start message
+	ack_key = more_parameters.acknowledge_key;
+
+	//log_info("ack_key = 0x%08x", more_parameters.acknowledge_key);
+
+	// register for the start message
     spin1_callback_on(MC_PACKET_RECEIVED, trigger_run, -1);
 
     // register for the sdram address value / start
