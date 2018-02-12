@@ -7,12 +7,13 @@ from mcmc.mcmc_state_variable import MCMCStateVariable
 import numpy
 
 
-class ARMAModel(MCMCModel):
-    """ MCMC Model for the ARMA problem, using double (float64)
+class ARMAFloatModel(MCMCModel):
+    """ MCMC Model for the ARMA problem, using single-point (float)
     """
 
     def __init__(
-            self, parameters, p_jump_scale, q_jump_scale):
+            self, parameters, p_jump_scale, q_jump_scale, mu_jump_scale,
+            sigma_jump_scale):
         """
         :param parameters:\
             array of coefficients of polynomials, plus mu and sigma
@@ -20,11 +21,17 @@ class ARMAModel(MCMCModel):
             array of scale values for polynomial coefficients for p
         :param q_jump_scale:\
             array of scale values for polynomial coefficients for q
+        :param mu_jump_scale:\
+            scale value for mu
+        :param sigma_jump_scale:\
+            scale value for sigma
         """
 
         self._parameters = parameters
         self._p_jump_scale = p_jump_scale
         self._q_jump_scale = q_jump_scale
+        self._mu_jump_scale = mu_jump_scale
+        self._sigma_jump_scale = sigma_jump_scale
 
     @overrides(MCMCModel.get_binary_name)
     def get_binary_name(self):
@@ -36,10 +43,16 @@ class ARMAModel(MCMCModel):
         return_params = []
         for i in range(len(self._p_jump_scale)):
             return_params.append(
-                MCMCParameter(self._p_jump_scale[i], numpy.float64))
+                MCMCParameter(self._p_jump_scale[i], numpy.float32))
         for i in range(len(self._q_jump_scale)):
             return_params.append(
-                MCMCParameter(self._q_jump_scale[i], numpy.float64))
+                MCMCParameter(self._q_jump_scale[i], numpy.float32))
+
+        # Append mu and sigma scales to the end of this array
+        return_params.append(
+            MCMCParameter(self._mu_jump_scale, numpy.float32))
+        return_params.append(
+            MCMCParameter(self._sigma_jump_scale, numpy.float32))
 
         return return_params
 
@@ -50,6 +63,6 @@ class ARMAModel(MCMCModel):
         for i in range(len(self._parameters)):
             return_state_vars.append(
                 MCMCStateVariable("param_"+str(i),
-                                  self._parameters[i], numpy.float64))
+                                  self._parameters[i], numpy.float32))
 
         return return_state_vars

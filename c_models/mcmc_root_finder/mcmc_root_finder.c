@@ -13,8 +13,8 @@
 #include <data_specification.h>
 
 //#define CALC_TYPE float
-#define ROOT_FAIL -100.000000000000
-//#define ROOT_FAIL -100.0f
+//#define ROOT_FAIL -100.000000000000
+#define ROOT_FAIL -100.0f
 
 //#ifndef use
 //#define use(x) do {} while ((x)!=(x))
@@ -23,22 +23,8 @@
 // Timeout between sending and receiving results in number of timer ticks
 //#define TIMEOUT 3
 
-//// The parameters to be read from memory
-//enum params {
-//    DATA_SIZE = 0,
-//    N_CHIPS,
-//    KEY,
-//    WINDOW_SIZE,
-//    SEQUENCE_MASK,
-//    TIMER,
-//    DATA
-//};
-
-// The model-specific parameters
-//mcmc_params_pointer_t params;
-
 // The model-specific state
-mcmc_state_pointer_t state;
+//mcmc_state_pointer_t state;
 
 uint32_t *parameter_rec_ptr;
 
@@ -60,13 +46,6 @@ uint32_t *parameter_rec_ptr;
 //        converter.int_values.second_word, converter.int_values.first_word);
 //}
 
-//enum regions {
-//    RECORDING,
-//	PARAMETERS,
-//	MODEL_PARAMETERS,
-//    MODEL_STATE
-//};
-
 enum regions {
 	PARAMETERS
 };
@@ -81,45 +60,7 @@ struct more_parameters {
 // The general parameters
 struct more_parameters more_parameters;
 
-
 uint32_t ack_key;
-
-//// An array of sequence numbers received on each core
-//// Note that this potentially will be in SDRAM with enough cores
-//uint *sequence_received;
-//
-//// The list of keys for each of the cores - ordered for quick searching
-//uint *chip_keys;
-//
-//// The size of the remaining data to be sent
-//uint data_size;
-//
-//// The number of chips the data is to be sent to
-//uint n_chips;
-//
-//// The base key to send the data with
-//uint key;
-//
-//// The window size for sending the data
-//uint window_size;
-//
-//// The mask which indicates the sequence number
-//uint sequence_mask;
-//
-//// Pointer to the start of the data still to be sent and confirmed
-//uint *data;
-//
-//// The timer tick at which the send will have timed out
-//uint send_timeout;
-//
-//// The next sequence number to be sent
-//uint next_sequence = 0;
-//
-//// The end sequence ignoring the wrap around of sequences
-//uint next_end_sequence_unwrapped = 0xFFFFFFFF;
-//
-//// The end sequence with wrap around of sequences
-//uint next_end_sequence = 0;
 
 // Helper functions for finding the root
 
@@ -150,8 +91,8 @@ void laguerre_poly_root( complex float a[], int m, complex float *x, int *its )
 		*its = iter;
 		b = a[m];
 		err = cabsf( b );
-		//d = f = 0.0f + 0.0f * I;
-		d = f = ZERO * ZERO * I;
+		d = f = 0.0f + 0.0f * I;
+		//d = f = ZERO * ZERO * I;
 		abx = cabsf( *x );
 		for ( j = m-1; j >= 0; j-- ) {	// efficient computation of polynomial and first two derivatives
 			f = ( *x * f ) + d;
@@ -166,7 +107,8 @@ void laguerre_poly_root( complex float a[], int m, complex float *x, int *its )
 
 		g = d / b;								// the generic case so use Laguerre's formula
 		g2 = g * g;
-		h = g2 - RCmul( TWO, f / b );
+		//h = g2 - RCmul( TWO, f / b );
+		h = g2 - RCmul( 2.0f, f / b );
 		sq = csqrtf( RCmul( (float) (m-1), RCmul((float) m, h ) - g2 ));
 		gp = g + sq;
 		gm = g - sq;
@@ -175,8 +117,10 @@ void laguerre_poly_root( complex float a[], int m, complex float *x, int *its )
 
 		if ( abp < abm ) gp = gm;
 
-		dx = FMAX( abp, abm ) > ZERO ? ( ((float) m ) + ZERO * I ) / gp :
-		RCmul( ONE + abx, cosf((float)iter) + sinf((float)iter) * I );
+		dx = FMAX( abp, abm ) > 0.0f ? ( ((float) m ) + 0.0f * I ) / gp :
+		RCmul( 1.0f + abx, cosf((float)iter) + sinf((float)iter) * I );
+//		dx = FMAX( abp, abm ) > ZERO ? ( ((float) m ) + ZERO * I ) / gp :
+//		RCmul( ONE + abx, cosf((float)iter) + sinf((float)iter) * I );
 
 		x1 = *x - dx;
 
@@ -228,12 +172,15 @@ void zroots( complex float a[], int m, complex float roots[], bool polish )
 
 	for ( j = m; j >= 1; j-- ) {	// loop over each root to be found
 
-		x = ZERO + ZERO * I;  		// start at zero to favour convergence to smallest root
+		//x = ZERO + ZERO * I;  		// start at zero to favour convergence to smallest root
+		x = 0.0f + 0.0f * I;  		// start at zero to favour convergence to smallest root
 
 		laguerre_poly_root( ad, j, &x, &its );
 
-		if ( fabs(cimagf(x)) <= TWO * EPS * fabs(crealf(x)))
-			x = crealf(x) + ZERO * I; // set imaginary part to zero
+		if ( fabs(cimagf(x)) <= 2.0f * EPS * fabs(crealf(x)))
+			x = crealf(x) + 0.0f * I; // set imaginary part to zero
+//		if ( fabs(cimagf(x)) <= TWO * EPS * fabs(crealf(x)))
+//			x = crealf(x) + ZERO * I; // set imaginary part to zero
 
 		roots[j] = x;
 
@@ -274,10 +221,10 @@ void run(uint unused0, uint unused1) {
     use(unused1);
 
     // for debug writing values
-    char buffer[1024];
+   // char buffer[1024];
 
     uint8_t i, p, q;
-    CALC_TYPE *state_parameters;  //[PPOLYORDER+QPOLYORDER+2];
+    CALC_TYPE state_parameters[PPOLYORDER+QPOLYORDER+2];
 
     p = PPOLYORDER;
     q = QPOLYORDER;
@@ -299,7 +246,7 @@ void run(uint unused0, uint unused1) {
 //	log_info("ROOT FINDER: state_n_bytes: %d", state_n_bytes);
 
 	// parameter_rec_ptr should have arrived at this point
-	log_info("ROOT FINDER: parameter_rec_ptr[0]: %d", parameter_rec_ptr[0]);
+//	log_info("ROOT FINDER: parameter_rec_ptr[0]: %d", parameter_rec_ptr[0]);
 
 	// get parameters from sdram
 	spin1_memcpy(state_parameters, parameter_rec_ptr, state_n_bytes);
@@ -377,7 +324,7 @@ void run(uint unused0, uint unused1) {
 		if( cabsf(MA_rt[i]) <= ONE ) returnval = ROOT_FAIL;  // REAL_CONST( ROOT_FAIL );
 
 	// At this point send returnval to normal vertex
-	log_info("ack_key = 0x%08x", more_parameters.acknowledge_key);
+//	log_info("ack_key = 0x%08x", ack_key);
 
 	// wait until packet is acknowledged/sent...
 	while (!spin1_send_mc_packet(ack_key, returnval, WITH_PAYLOAD)) {
@@ -386,8 +333,7 @@ void run(uint unused0, uint unused1) {
 
 // if all conditions have been passed then return a pass result
 	// return ZERO;  // REAL_CONST( 0.0 ); here send ZERO to sdram
-
-	log_info("ROOT FINDER: returnval sent to ARMA");
+//	log_info("ROOT FINDER: returnval sent to ARMA");
 
 	//log_info("ROOT FINDER: at end of run(), returnval = 0x%08x", returnval);
 
@@ -395,13 +341,13 @@ void run(uint unused0, uint unused1) {
     //spin1_exit(0);
 }
 
-void multicast_callback(uint key, uint payload) {
-	use(key);
-	parameter_rec_ptr[0] = payload;
-//    log_info("ROOT FINDER: multicast_callback");
-//    spin1_callback_off(TIMER_TICK);
-//    spin1_schedule_callback(run, 0, 0, 2);
-}
+//void multicast_callback(uint key, uint payload) {
+//	use(key);
+//	parameter_rec_ptr[0] = payload;
+////    log_info("ROOT FINDER: multicast_callback");
+////    spin1_callback_off(TIMER_TICK);
+////    spin1_schedule_callback(run, 0, 0, 2);
+//}
 
 //	// this needs to be edited - it's not the data sequence that comes in here
 //	// but the params
@@ -431,10 +377,13 @@ void multicast_callback(uint key, uint payload) {
 //    use(payload);
 //}
 
-void trigger_run(uint unused0, uint unused1) {
-    use(unused0);
-    use(unused1);
-    spin1_callback_off(TIMER_TICK);
+//void trigger_run(uint unused0, uint unused1) {
+void trigger_run(uint key, uint payload) {
+//    use(unused0);
+//    use(unused1);
+	use(key);
+	parameter_rec_ptr[0] = payload;
+	spin1_callback_off(TIMER_TICK);
     spin1_schedule_callback(run, 0, 0, 2);
 }
 
@@ -453,10 +402,11 @@ void c_main() {
 	//log_info("ack_key = 0x%08x", more_parameters.acknowledge_key);
 
 	// register for the start message
-    spin1_callback_on(MC_PACKET_RECEIVED, trigger_run, -1);
+//    spin1_callback_on(MC_PACKET_RECEIVED, trigger_run, -1);
+    spin1_callback_on(MCPL_PACKET_RECEIVED, trigger_run, -1);
 
     // register for the sdram address value / start
-	spin1_callback_on(MCPL_PACKET_RECEIVED, multicast_callback, -1);
+//	spin1_callback_on(MCPL_PACKET_RECEIVED, multicast_callback, -1);
 
 	// start in sync_wait
     spin1_start(SYNC_WAIT);

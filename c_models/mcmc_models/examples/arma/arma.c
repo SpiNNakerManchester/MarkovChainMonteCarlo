@@ -4,7 +4,7 @@
 #include <debug.h>
 #include <data_specification.h>
 
-#define ROOT_FAIL CONCAT(-100.000000, SUFFIX)		// how bad is a root failure
+#define ROOT_FAIL CONCAT(-1000.000000, SUFFIX)		// how bad is a root failure
 #define REAL float
 
 enum regions {
@@ -71,6 +71,26 @@ uint32_t mcmc_model_get_state_n_bytes() {
     return sizeof(struct mcmc_state);
 }
 
+#if TYPE_SELECT != 2
+struct double_uint {
+    uint first_word;
+    uint second_word;
+};
+
+union double_to_ints {
+    CALC_TYPE double_value;
+    struct double_uint int_values;
+};
+
+void print_value_arma(CALC_TYPE d_value, char *buffer) {
+    union double_to_ints converter;
+    converter.double_value = d_value;
+    io_printf(
+        buffer, "0x%08x%08x",
+        converter.int_values.second_word, converter.int_values.first_word);
+}
+#endif
+
 //struct double_uint {
 //    uint first_word;
 //    uint second_word;
@@ -89,10 +109,10 @@ uint32_t mcmc_model_get_state_n_bytes() {
 //        converter.int_values.second_word, converter.int_values.first_word);
 //}
 
-volatile CALC_TYPE result_value; // not sure about this?
+volatile CALC_TYPE result_value;
 
 void result_callback(uint key, uint payload) {
-	log_info("ARMA: result_callback");
+//	log_info("ARMA: result_callback");
 	result_value = payload;
 }
 
@@ -107,6 +127,8 @@ CALC_TYPE mcmc_model_likelihood(
         CALC_TYPE *data, uint32_t n_pts, mcmc_params_pointer_t params,
 		mcmc_state_pointer_t state) {
 	use(params);
+
+	char buffer[1024];
 
 	// read in AR and MA parameter dimensions
 	uint8_t p = PPOLYORDER;  // state->order_p;
@@ -193,11 +215,17 @@ lglikelihood=-sum(err(p+q+1:end).^2)/(2*sigma^2)-0.5*(N-p)*log(sigma^2);
 	CALC_TYPE divisor = ONE / (TWO*SQR(sigma) - HALF*(N-p)*LN(SQR(sigma)));
 	// Check value of divisor here (similar to in transition_jump??
 
+//	print_value_arma(divisor, buffer);
+//	log_info("ARMA likelihood, divisor = %s", divisor);
+
 	//float divisor = 1.0f / (( 2.0f * sigma * sigma ) - 0.5f * (N-p) * logf( sigma * sigma )); // to avoid divide, create one floating point inverse & multiply later
 	for(i=p+q; i < N+q; i++) { // check
 		temp = err[i];
 		sum += temp * temp;
 	}
+
+//	print_value_arma(sum, buffer);
+//	log_info("ARMA likelihood, sum = %s", sum);
 
 	return -sum * (CALC_TYPE) divisor;  // possibly add some error checking in case divisor is stupid value
 }
@@ -211,7 +239,7 @@ CALC_TYPE mcmc_model_prior_prob(
         mcmc_params_pointer_t params, mcmc_state_pointer_t state) {
 	// debug for writing values
 	char buffer[1024];
-	result_value = TWO;  // 1.0f;
+	result_value = 2.0f;  // 1.0f;
 
 	// read in AR and MA parameter dimensions
 	uint8_t p = PPOLYORDER;  // state->order_p;
@@ -219,19 +247,13 @@ CALC_TYPE mcmc_model_prior_prob(
 //	uint8_t i;
 
 //	REAL sigma = params->sigma; // could plausibly use this rather than a parameters array?
-	CALC_TYPE *state_parameters = state->parameters;
+	CALC_TYPE *state_parameters;
+	state_parameters = state->parameters;
 	CALC_TYPE sigma = state_parameters[p+q+1];  // last entry in vector
 
 //	log_info("ARMA: state_parameters[0] = 0x%08x", state_parameters[0]);
 
 	if( sigma <= ZERO ) return ROOT_FAIL;  // first fail condition can provide early exit
-
-	uint mode = spin1_int_enable();
-
-	// callback for result here
-	spin1_callback_off(MCPL_PACKET_RECEIVED);
-	spin1_callback_off(MC_PACKET_RECEIVED);
-	spin1_callback_on(MCPL_PACKET_RECEIVED, result_callback, -1);
 
 	address_t data_address = data_specification_get_data_address();
 	address_t parameters_address = data_specification_get_region(
@@ -242,7 +264,7 @@ CALC_TYPE mcmc_model_prior_prob(
 //	log_info("Key = 0x%08x", key);
 
 	// send key to wake up root finder
-	spin1_send_mc_packet(key, 0, 0);
+//	spin1_send_mc_packet(key, 0, 0);
 
 	// Pointer to receive the data with
 //	uint32_t *param_receive_ptr;
@@ -251,21 +273,22 @@ CALC_TYPE mcmc_model_prior_prob(
 	uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
 //	log_info("ARMA: state_n_bytes = %d", state_n_bytes);
 
-	log_info("ARMA: state_n_bytes: %d", state_n_bytes);
+//	log_info("ARMA: state_n_bytes: %d", state_n_bytes);
 
 	address_t model_state_address = data_specification_get_region(
 	        MODEL_STATE, data_address);
+
+    // copy state parameters to sdram
+	spin1_memcpy(model_state_address, state_parameters, state_n_bytes);
 
 	// send mc packet to wake up root finder
 	// Send mc packet with payload of address value
 	spin1_send_mc_packet(key, model_state_address, WITH_PAYLOAD);
 
-	log_info("ARMA: model_state_address = %d", model_state_address);
+//	log_info("ARMA: model_state_address = %d", model_state_address);
 
 //	print_value(sigma, buffer);
 //	log_info("ARMA: sigma = %s", buffer);
-
-	spin1_memcpy(model_state_address, state_parameters, state_n_bytes);
 
 //	log_info("ARMA: parameters_address = %d", parameters_address);
 
@@ -276,19 +299,29 @@ CALC_TYPE mcmc_model_prior_prob(
 
 //	log_info("ARMA: model_state_address = %d", model_state_address);
 
-	// wait for result to come back
-//	spin1_callback_on(MCPL_PACKET_RECEIVED, result_callback, -1);
+	uint mode = spin1_int_enable();
 
-	log_info("callback turned on, now going in to wait...");
+	// callback for result here
+	spin1_callback_off(MCPL_PACKET_RECEIVED);
+	//spin1_callback_off(MC_PACKET_RECEIVED);
+	spin1_callback_on(MCPL_PACKET_RECEIVED, result_callback, -1);
+
+	// wait for result to come back
+	//spin1_callback_on(MCPL_PACKET_RECEIVED, result_callback, -1);
+
+//	print_value_arma(result_value, buffer);
+//	log_info("callback turned on, now going in to wait... %s", buffer);
 
 	// do we need to sit here and wait and do nothing until result is here?
-	while (result_value==TWO) {
+	while (result_value==2.0f) {
 //		print_value(result_value, buffer);
-		log_info("while loop, result_value"); //  = %s", buffer);
+//		log_info("while loop, result_value"); //  = %s", buffer);
+//		log_info("what is in result_value... %f", result_value);
 		spin1_wfi();
 	}
 
-	log_info("ARMA: returning result from root finder");
+//	print_value_arma(result_value, buffer);
+//	log_info("ARMA: returning result from root finder: %s", buffer);
 
 	spin1_mode_restore(mode);
 
@@ -309,16 +342,20 @@ void mcmc_model_transition_jump(
 	// loop over parameters and apply relevant jump_scale
 	// - it'll look something like this...
 	CALC_TYPE *parameters = state->parameters;
-	CALC_TYPE *new_parameters = new_state->parameters;
+//	CALC_TYPE *new_parameters = new_state->parameters;
 	uint32_t p = PPOLYORDER;  // state->order_p;
 	uint32_t q = QPOLYORDER;  // state->order_q;
 	unsigned int i;
 	for (i=0; i < p; i++) {
-		new_parameters[i] = parameters[i] +
+		new_state->parameters[i] = parameters[i] +
 				(t_deviate() * params->p_jump_scale[i]);
 	}
 	for (i=p; i < p+q; i++) {
-		new_parameters[i] = parameters[i] +
+		new_state->parameters[i] = parameters[i] +
 				(t_deviate() * params->q_jump_scale[i]);
 	}
+	new_state->parameters[p+q] = parameters[p+q] +
+			(t_deviate() * params->mu_jump_scale);
+	new_state->parameters[p+q+1] = parameters[p+q+1] +
+			(t_deviate() * params->sigma_jump_scale);
 }

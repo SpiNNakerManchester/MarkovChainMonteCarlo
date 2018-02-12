@@ -1,24 +1,28 @@
 import numpy
 from mcmc import mcmc_framework
-from mcmc_examples.arma.arma_model import ARMAModel
-#from mcmc_examples.lighthouse.lighthouse_float_model \
-#     import ARMAFloatModel
+#from mcmc_examples.arma.arma_model import ARMAModel
+from mcmc_examples.arma.arma_float_model import ARMAFloatModel
 #from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #     import ARMAFixedPointModel
 
+# Data to use for 1000 data points (read from file)
+data_1000 = numpy.loadtxt('data_1000.csv')
+
 # Data to use for 50 data points
-data_points = [
-    2.37706, 4.51142, 0.406605, 0.909418, 0.642899,
-    1.21925, 1.47647, -2.95771, -0.801802, -1.86529,
-    -75.6865, -1.94398, 1.57055, 2.53382, 0.783884,
-    1.16725, 1.16995, 0.367477, -1.24639, -2.29897,
-    0.461939, -0.126669, 0.0965992, 1.56107, 0.747027,
-    66.7057, 1.07821, -0.125864, -0.693059, 7.48744,
-    1.94184, -0.439164, 3.64695, -63.2296, 0.783037,
-    2.26351, 1.30222, 0.542981, 3.78199, -37.1692,
-    1.54959, 0.485336, 1.02509, -0.204211, 0.164426,
-    -13.1977, 0.650243, 0.671339, 2.93511, 0.788114
-]
+n_test_points = 100
+data_points = data_1000[0:n_test_points]
+# data_points = [
+#     2.37706, 4.51142, 0.406605, 0.909418, 0.642899,
+#     1.21925, 1.47647, -2.95771, -0.801802, -1.86529,
+#     -75.6865, -1.94398, 1.57055, 2.53382, 0.783884,
+#     1.16725, 1.16995, 0.367477, -1.24639, -2.29897,
+#     0.461939, -0.126669, 0.0965992, 1.56107, 0.747027,
+#     66.7057, 1.07821, -0.125864, -0.693059, 7.48744,
+#     1.94184, -0.439164, 3.64695, -63.2296, 0.783037,
+#     2.26351, 1.30222, 0.542981, 3.78199, -37.1692,
+#     1.54959, 0.485336, 1.02509, -0.204211, 0.164426,
+#     -13.1977, 0.650243, 0.671339, 2.93511, 0.788114
+# ]
 
 # Data to use for 10 data points
 #data_points = [
@@ -37,6 +41,9 @@ n_samples = 100
 # mu and sigma values
 mu = 0.1
 sigma = 0.08
+
+mu_jump_scale = 0.01
+sigma_jump_scale = 0.01
 
 # size of p and q arrays
 np = 9
@@ -60,13 +67,14 @@ for i in range(0,nq):
 parameters.append(mu)
 parameters.append(sigma)
 
-print 'state parameter set:', parameters
+print 'data: ', data_points
+
+print 'state parameter set: ', parameters
 
 # Run and get the samples
-model = ARMAModel(parameters, p_jump_scale, q_jump_scale)
-#model = ARMAFloatModel(
-#    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
-#    beta_max)
+#model = ARMAModel(parameters, p_jump_scale, q_jump_scale)
+model = ARMAFloatModel(parameters, p_jump_scale, q_jump_scale, mu_jump_scale,
+                       sigma_jump_scale)
 #model = ARMAFixedPointModel(
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)

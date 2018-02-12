@@ -349,6 +349,8 @@ void run(uint unused0, uint unused1) {
     use(unused0);
     use(unused1);
 
+    char buffer[1024];
+
     // Create a new state pointer
     uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
     mcmc_state_pointer_t new_state = (mcmc_state_pointer_t) spin1_malloc(
@@ -393,8 +395,14 @@ void run(uint unused0, uint unused1) {
     }
 
     // exponential to get likelihood back from log likelihood
-    current_posterior = full_data_set_likelihood(state) *
+//    current_posterior = full_data_set_likelihood(state) *
+//    		mcmc_model_prior_prob(params, state);
+    // if this is a log-likelihood and prior then comment out above and use below
+    current_posterior = full_data_set_likelihood(state) +
     		mcmc_model_prior_prob(params, state);
+
+//    print_value(current_posterior, buffer);
+//    log_info("current posterior calculated: %s", buffer);
 
     // update likelihood function counter for diagnostics
     likelihood_calls++;
@@ -412,8 +420,14 @@ void run(uint unused0, uint unused1) {
         likelihood_calls++;
 
         // calculate joint probability at this point
-        new_posterior = full_data_set_likelihood(new_state) *
+//        new_posterior = full_data_set_likelihood(new_state) *
+//				mcmc_model_prior_prob(params, new_state);
+        // if this is a log-likelihood and prior then comment out above and use below
+        new_posterior = full_data_set_likelihood(new_state) +
 				mcmc_model_prior_prob(params, new_state);
+
+//        print_value(new_posterior, buffer);
+//        log_info("new posterior calculated: %s", buffer);
 
         // if accepted, update current state, otherwise leave it as is
         if (MH_MCMC_keep_new_point(
@@ -425,6 +439,9 @@ void run(uint unused0, uint unused1) {
             // update acceptance count
             accepted++;
         };
+
+//        log_info("likelihood_calls = %d, accepted = %d, sample count = %d",
+//        		likelihood_calls, accepted, sample_count);
 
         if (burn_in) {
             if (likelihood_calls == parameters.burn_in) {
@@ -452,6 +469,9 @@ void run(uint unused0, uint unused1) {
     recording_finalise();
 
     log_info("Sampling accepted %d of %d", accepted, likelihood_calls);
+
+    // There needs to be an exit_function of some description here to deal
+    // with the multiple-executable case when needed
     spin1_exit(0);
 }
 
@@ -549,9 +569,9 @@ void c_main() {
     log_info("Data Window Size = %d", parameters.data_window_size);
     log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
     log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
-    log_info("Data tag = %d", parameters.data_tag);
-    log_info("Timer = %d", parameters.timer);
-//    log_info("Key = 0x%08x", parameters.key);
+//    log_info("Data tag = %d", parameters.data_tag);
+//    log_info("Timer = %d", parameters.timer);
+    log_info("Key = 0x%08x", parameters.key);
 #if TYPE_SELECT == 2
     log_info("Degrees of freedom = %k", parameters.degrees_of_freedom);
 #else

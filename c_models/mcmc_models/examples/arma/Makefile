@@ -9,7 +9,7 @@ BUILD_DIR = ./build/
 SOURCES = $(SOURCE_DIR)/examples/arma/arma.c
 
 # will editing this here work to add -std=c99? yes but it doesn't help... 
-CFLAGS += -fcx-limited-range $(OSPACE)
+CFLAGS += -fcx-limited-range $(OSPACE) -l m
 # OFLAGS += -fcx-limited-range 
 
 include ../../Makefile.common
