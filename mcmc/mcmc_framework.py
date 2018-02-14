@@ -172,7 +172,8 @@ def run_mcmc(
                     vertex.result_partition_name)  # "acknowledge key" set here
 
     # Run the simulation
-    g.run(None)
+    #g.run(None)
+    g.run_until_complete()
 
     start_computing_time = time.time()
 
@@ -205,6 +206,7 @@ def run_mcmc(
     samples = list()
     for coordinator in coordinators.itervalues():
         samples.append(coordinator.read_samples(g.buffer_manager()))
+
     samples = numpy.hstack(samples)
 
     # Close the machine

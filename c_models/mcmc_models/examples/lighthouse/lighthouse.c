@@ -66,3 +66,20 @@ void mcmc_model_transition_jump(
     new_state->alpha = state->alpha + (t_deviate() * params->alpha_jump_scale);
     new_state->beta = state->beta + (t_deviate() * params->beta_jump_scale);
 }
+
+/*
+ exit function from MCMC: single-core executable, so simply spin1_exit
+ */
+void mcmc_exit_function() {
+	spin1_exit(0);
+}
+
+/*
+ set up address and key function: in this single-core exec. case, empty function
+ */
+void mcmc_get_address_and_key() {
+
+}
+
+
+

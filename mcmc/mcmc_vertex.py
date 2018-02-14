@@ -280,8 +280,6 @@ class MCMCVertex(
         data_values, _ = buffer_manager.get_data_for_vertex(placement, 0)
         data = data_values.read_all()
 
-        print 'data: ', data
-
         numpy_format = list()
         output_format = list()
         for var in self._model.get_state_variables():
@@ -290,6 +288,8 @@ class MCMCVertex(
                 output_format.append((var.name, numpy.float32))
             else:
                 numpy_format.append((var.name, var.data_type))
+
+        print 'numpy_format: ', numpy_format
 
         # Convert the data into an array of state variables
         if (self._model.get_parameters()[0].data_type is DataType.S1615):
@@ -304,7 +304,6 @@ class MCMCVertex(
 
             return convert
         else:
-            print 'reading back the data, from a float format '
             return numpy.array(data, dtype=numpy.uint8).view(numpy_format)
 
     def get_minimum_buffer_sdram_usage(self):

@@ -387,6 +387,15 @@ void trigger_run(uint key, uint payload) {
     spin1_schedule_callback(run, 0, 0, 2);
 }
 
+void end_callback(uint unused0, uint unused1) {
+	use(unused0);
+	use(unused1);
+	// End message has arrived from other vertex, so exit
+	log_info("Root finder: exit");
+	spin1_exit(0);
+
+}
+
 void c_main() {
 	// Get the ack_key from more_parameters
 	address_t data_address = data_specification_get_data_address();
@@ -402,11 +411,10 @@ void c_main() {
 	//log_info("ack_key = 0x%08x", more_parameters.acknowledge_key);
 
 	// register for the start message
-//    spin1_callback_on(MC_PACKET_RECEIVED, trigger_run, -1);
     spin1_callback_on(MCPL_PACKET_RECEIVED, trigger_run, -1);
 
-    // register for the sdram address value / start
-//	spin1_callback_on(MCPL_PACKET_RECEIVED, multicast_callback, -1);
+    // register for the shutdown message
+    spin1_callback_on(MC_PACKET_RECEIVED, end_callback, -1);
 
 	// start in sync_wait
     spin1_start(SYNC_WAIT);

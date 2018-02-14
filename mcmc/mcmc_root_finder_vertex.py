@@ -43,7 +43,7 @@ class MCMCRootFinderRegions(Enum):
 
 class MCMCRootFinderVertex(
         MachineVertex, AbstractHasAssociatedBinary,
-        AbstractGeneratesDataSpecification, AbstractReceiveBuffersToHost):
+        AbstractGeneratesDataSpecification):  #, AbstractReceiveBuffersToHost):
 #        AbstractProvidesNKeysForPartition):
     """ A vertex that runs the (MCMC) root finder algorithm
     """
@@ -179,18 +179,19 @@ class MCMCRootFinderVertex(
     def read_samples(self, buffer_manager, placement):
         """ Read back the samples (dummy call)
         """
-        print('There are no samples to read back on a root finder vertex')
+        print 'There are no samples to read back on a root finder vertex'
+        return None
 
-    def get_minimum_buffer_sdram_usage(self):
-        return 1024
-
-    def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
-        return recording_utilities.get_n_timesteps_in_buffer_space(
-            buffer_space, 4)
-
-    def get_recorded_region_ids(self):
-        return [0]
-
-    def get_recording_region_base_address(self, txrx, placement):
-        return helpful_functions.locate_memory_region_for_placement(
-            placement, MCMCRootFinderRegions.PARAMETERS.value, txrx)
+#     def get_minimum_buffer_sdram_usage(self):
+#         return 1024
+#
+#     def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
+#         return recording_utilities.get_n_timesteps_in_buffer_space(
+#             buffer_space, 4)
+#
+#     def get_recorded_region_ids(self):
+#         return [0]
+#
+#     def get_recording_region_base_address(self, txrx, placement):
+#         return helpful_functions.locate_memory_region_for_placement(
+#             placement, MCMCRootFinderRegions.PARAMETERS.value, txrx)

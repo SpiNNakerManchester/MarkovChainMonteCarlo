@@ -63,6 +63,15 @@ struct parameters parameters;
 // Define spin1_wfi
 extern void spin1_wfi();
 
+// Key
+uint32_t key;
+
+// Model state address
+address_t model_state_address;
+
+// size of model state
+uint32_t state_n_bytes;
+
 uint32_t mcmc_model_get_params_n_bytes() {
     return sizeof(struct mcmc_params);
 }
@@ -255,28 +264,29 @@ CALC_TYPE mcmc_model_prior_prob(
 
 	if( sigma <= ZERO ) return ROOT_FAIL;  // first fail condition can provide early exit
 
-	address_t data_address = data_specification_get_data_address();
-	address_t parameters_address = data_specification_get_region(
-	        PARAMETERS, data_address);
-	struct parameters *sdram_params = (struct parameters *) parameters_address;
-	spin1_memcpy(&parameters, sdram_params, sizeof(struct parameters));
-	uint32_t key = parameters.key;
-//	log_info("Key = 0x%08x", key);
-
-	// send key to wake up root finder
-//	spin1_send_mc_packet(key, 0, 0);
-
-	// Pointer to receive the data with
-//	uint32_t *param_receive_ptr;
-
-	// write parameters to sdram
-	uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
-//	log_info("ARMA: state_n_bytes = %d", state_n_bytes);
-
-//	log_info("ARMA: state_n_bytes: %d", state_n_bytes);
-
-	address_t model_state_address = data_specification_get_region(
-	        MODEL_STATE, data_address);
+//	// this doesn't need to happen every time!
+//	address_t data_address = data_specification_get_data_address();
+//	address_t parameters_address = data_specification_get_region(
+//	        PARAMETERS, data_address);
+//	struct parameters *sdram_params = (struct parameters *) parameters_address;
+//	spin1_memcpy(&parameters, sdram_params, sizeof(struct parameters));
+//	key = parameters.key;
+////	log_info("Key = 0x%08x", key);
+//
+//	// send key to wake up root finder
+////	spin1_send_mc_packet(key, 0, 0);
+//
+//	// Pointer to receive the data with
+////	uint32_t *param_receive_ptr;
+//
+//	// write parameters to sdram
+//	uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
+////	log_info("ARMA: state_n_bytes = %d", state_n_bytes);
+//
+////	log_info("ARMA: state_n_bytes: %d", state_n_bytes);
+//
+//	model_state_address = data_specification_get_region(
+//	        MODEL_STATE, data_address);
 
     // copy state parameters to sdram
 	spin1_memcpy(model_state_address, state_parameters, state_n_bytes);
@@ -358,4 +368,35 @@ void mcmc_model_transition_jump(
 			(t_deviate() * params->mu_jump_scale);
 	new_state->parameters[p+q+1] = parameters[p+q+1] +
 			(t_deviate() * params->sigma_jump_scale);
+}
+
+/*
+ exit function: send message to root finder to exit, then exit
+ */
+void mcmc_exit_function() {
+	// send message to root finder
+	spin1_send_mc_packet(key, 0, 0);
+
+	// exit for this core
+	spin1_exit(0);
+}
+
+/*
+ set up addresses for sending information to root finder
+ */
+void mcmc_get_address_and_key() {
+	// get address from data spec
+	address_t data_address = data_specification_get_data_address();
+
+	// get key
+	address_t parameters_address = data_specification_get_region(
+	        PARAMETERS, data_address);
+	struct parameters *sdram_params = (struct parameters *) parameters_address;
+	spin1_memcpy(&parameters, sdram_params, sizeof(struct parameters));
+	key = parameters.key;
+
+	// store size of state parameters and model state address
+	state_n_bytes = mcmc_model_get_state_n_bytes();
+	model_state_address = data_specification_get_region(
+	        MODEL_STATE, data_address);
 }

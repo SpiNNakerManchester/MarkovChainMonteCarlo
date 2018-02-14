@@ -394,12 +394,15 @@ void run(uint unused0, uint unused1) {
         do_transfer(data, DMA_BUFFER_SIZE);
     }
 
+    // Set up address and keys for posterior calculation (if needed)
+    mcmc_get_address_and_key();
+
     // exponential to get likelihood back from log likelihood
-//    current_posterior = full_data_set_likelihood(state) *
-//    		mcmc_model_prior_prob(params, state);
-    // if this is a log-likelihood and prior then comment out above and use below
-    current_posterior = full_data_set_likelihood(state) +
+    current_posterior = full_data_set_likelihood(state) *
     		mcmc_model_prior_prob(params, state);
+    // if this is a log-likelihood and prior then comment out above and use below
+//    current_posterior = full_data_set_likelihood(state) +
+//    		mcmc_model_prior_prob(params, state);
 
 //    print_value(current_posterior, buffer);
 //    log_info("current posterior calculated: %s", buffer);
@@ -420,11 +423,11 @@ void run(uint unused0, uint unused1) {
         likelihood_calls++;
 
         // calculate joint probability at this point
-//        new_posterior = full_data_set_likelihood(new_state) *
-//				mcmc_model_prior_prob(params, new_state);
-        // if this is a log-likelihood and prior then comment out above and use below
-        new_posterior = full_data_set_likelihood(new_state) +
+        new_posterior = full_data_set_likelihood(new_state) *
 				mcmc_model_prior_prob(params, new_state);
+        // if this is a log-likelihood and prior then comment out above and use below
+//        new_posterior = full_data_set_likelihood(new_state) +
+//				mcmc_model_prior_prob(params, new_state);
 
 //        print_value(new_posterior, buffer);
 //        log_info("new posterior calculated: %s", buffer);
@@ -472,7 +475,8 @@ void run(uint unused0, uint unused1) {
 
     // There needs to be an exit_function of some description here to deal
     // with the multiple-executable case when needed
-    spin1_exit(0);
+    mcmc_exit_function();
+    //spin1_exit(0);
 }
 
 void multicast_callback(uint key, uint payload) {

@@ -279,8 +279,9 @@ class MCMCCoordinatorVertex(
         for placement in self._mcmc_placements:
 
             # Read the data recorded
-            samples.append(
-                placement.vertex.read_samples(buffer_manager, placement))
+            sample = placement.vertex.read_samples(buffer_manager, placement)
+            if sample is not None:
+                samples.append(sample);
             progress.update()
         progress.end()
 

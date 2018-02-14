@@ -6,10 +6,10 @@ from mcmc_examples.arma.arma_float_model import ARMAFloatModel
 #     import ARMAFixedPointModel
 
 # Data to use for 1000 data points (read from file)
-data_1000 = numpy.loadtxt('data_1000.csv')
+data_1000 = numpy.loadtxt("data_1000.csv", delimiter=",")
 
 # Data to use for 50 data points
-n_test_points = 100
+n_test_points = 10
 data_points = data_1000[0:n_test_points]
 # data_points = [
 #     2.37706, 4.51142, 0.406605, 0.909418, 0.642899,
@@ -83,6 +83,9 @@ samples = mcmc_framework.run_mcmc(
     degrees_of_freedom=3.0, seed=seed, n_chips=3*43,
     root_finder=True)  # n_chips=23*48)
 
+print 'samples: ', samples
+
 # Save the results
 numpy.save("results.npy", samples)
+# numpy.savetxt("results.csv", samples, fmt="%f", delimiter=",")
 numpy.savetxt("results.csv", samples, fmt="%f", delimiter=",")
