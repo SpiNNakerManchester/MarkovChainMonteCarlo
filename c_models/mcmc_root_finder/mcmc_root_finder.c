@@ -14,7 +14,7 @@
 
 //#define CALC_TYPE float
 //#define ROOT_FAIL -100.000000000000
-#define ROOT_FAIL -100.0f
+#define ROOT_FAIL -1000.0f
 
 //#ifndef use
 //#define use(x) do {} while ((x)!=(x))
@@ -28,25 +28,27 @@
 
 uint32_t *parameter_rec_ptr;
 
-//struct double_uint {
-//    uint first_word;
-//    uint second_word;
-//};
-//
-//union double_to_ints {
-//    CALC_TYPE double_value;
-//    struct double_uint int_values;
-//};
-//
-//void print_value(CALC_TYPE d_value, char *buffer) {
-//    union double_to_ints converter;
-//    converter.double_value = d_value;
-//    io_printf(
-//        buffer, "0x%08x%08x",
-//        converter.int_values.second_word, converter.int_values.first_word);
-//}
+struct double_uint {
+    uint first_word;
+    uint second_word;
+};
+
+union double_to_ints {
+    CALC_TYPE double_value;
+    struct double_uint int_values;
+};
+
+void print_value_rf(CALC_TYPE d_value, char *buffer) {
+    union double_to_ints converter;
+    converter.double_value = d_value;
+    io_printf(
+        buffer, "0x%08x%08x",
+        converter.int_values.second_word, converter.int_values.first_word);
+}
 
 enum regions {
+	// add a recording region for debug to check the roots calculation
+
 	PARAMETERS
 };
 
@@ -221,7 +223,7 @@ void run(uint unused0, uint unused1) {
     use(unused1);
 
     // for debug writing values
-   // char buffer[1024];
+    char buffer[1024];
 
     uint8_t i, p, q;
     CALC_TYPE state_parameters[PPOLYORDER+QPOLYORDER+2];
@@ -249,7 +251,7 @@ void run(uint unused0, uint unused1) {
 //	log_info("ROOT FINDER: parameter_rec_ptr[0]: %d", parameter_rec_ptr[0]);
 
 	// get parameters from sdram
-	spin1_memcpy(state_parameters, parameter_rec_ptr, state_n_bytes);
+	spin1_memcpy(state_parameters, parameter_rec_ptr[0], state_n_bytes);
 
 //	spin1_callback_off(MCPL_PACKET_RECEIVED); // turn it off?
 
@@ -283,6 +285,8 @@ void run(uint unused0, uint unused1) {
 	AR_eq[p] = ONE;  // REAL_CONST( 1.0 );  // ONE;
 	for(i=0; i < p; i++) {
 		AR_eq[i] = -state_parameters[p-i-1];
+//		print_value_rf(AR_eq[i], buffer);
+//		log_info("check parameter value (AR) = %s", buffer);
 	}
 
 	// This command reverses the sequence from the p+1 to q elements
@@ -292,6 +296,8 @@ void run(uint unused0, uint unused1) {
 	MA_eq[q] = ONE;  // REAL_CONST( 1.0 );  // ONE:
 	for(i=0; i < q; i++) {
 		MA_eq[i] = -state_parameters[p+(q-i-1)];
+//		print_value_rf(MA_eq[i], buffer);
+//		log_info("check parameter value (MA) = %s", buffer);
 	}
 
 	// read parameters into complex vectors so that we can calculate roots - from 0?
@@ -314,11 +320,19 @@ void run(uint unused0, uint unused1) {
 
 	zroots( MA_param, q, MA_rt, true);
 
+	// debug: record the results of the root finder and send back?
+	//        (note: this requires extra setup on the python side as well)
+	//recording_record(0, AR_rt, sizeinbytes(AR_rt));
+	//recording_record(0, MA_rt, sizeinbytes(MR_rt));
+
 	CALC_TYPE returnval = ZERO;  // 0.0f;
 
 	// test for root magnitude <= 1 and if so return a fail result  // n+1 coefficients, n roots
-	for(i=1; i <= p; i++)  // 0 or 1 for start point?
+	for(i=1; i <= p; i++) { // 0 or 1 for start point?
 		if( cabsf(AR_rt[i]) <= ONE ) returnval = ROOT_FAIL; // return ROOT_FAIL;  // REAL_CONST( ROOT_FAIL );
+	}
+	//		print_value_rf(cabsf(AR_rt[i]), buffer);
+	//		log_info("root magnitude (AR) = %s", buffer);
 
 	for(i=1; i <= q; i++)  // 0 or 1 for start point?
 		if( cabsf(MA_rt[i]) <= ONE ) returnval = ROOT_FAIL;  // REAL_CONST( ROOT_FAIL );
@@ -337,8 +351,9 @@ void run(uint unused0, uint unused1) {
 
 	//log_info("ROOT FINDER: at end of run(), returnval = 0x%08x", returnval);
 
-	// somehow we need to exit the executable... ?
-    //spin1_exit(0);
+	// DEBUG: exit here to prevent too much writing to iobuf - we just
+	//        want to test whether the values coming back out are sensible
+//    spin1_exit(0);
 }
 
 //void multicast_callback(uint key, uint payload) {

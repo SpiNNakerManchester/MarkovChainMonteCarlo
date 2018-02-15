@@ -100,24 +100,6 @@ void print_value_arma(CALC_TYPE d_value, char *buffer) {
 }
 #endif
 
-//struct double_uint {
-//    uint first_word;
-//    uint second_word;
-//};
-//
-//union double_to_ints {
-//    CALC_TYPE double_value;
-//    struct double_uint int_values;
-//};
-//
-//void print_value(CALC_TYPE d_value, char *buffer) {
-//    union double_to_ints converter;
-//    converter.double_value = d_value;
-//    io_printf(
-//        buffer, "0x%08x%08x",
-//        converter.int_values.second_word, converter.int_values.first_word);
-//}
-
 volatile CALC_TYPE result_value;
 
 void result_callback(uint key, uint payload) {
@@ -142,7 +124,8 @@ CALC_TYPE mcmc_model_likelihood(
 	// read in AR and MA parameter dimensions
 	uint8_t p = PPOLYORDER;  // state->order_p;
 	uint8_t q = QPOLYORDER;  // state->order_q;
-	uint8_t i, j;
+	uint8_t j;
+	uint32_t i;
 	uint32_t N = n_pts;
 
 	uint32_t error_length = N + q;  // check this and all indexing below!
@@ -160,13 +143,18 @@ CALC_TYPE mcmc_model_likelihood(
 	CALC_TYPE mu = state_parameters[p+q];
 	CALC_TYPE sigma = state_parameters[p+q+1];
 
+	// debug
+//	print_value_arma(ROOT_FAIL, buffer);
+//	log_info("ARMA model likelihood, ROOT_FAIL = %s", buffer);
+
 /*
 err is all zeros with size of (N+q)*1
 err=zeros(N+q,1); % this vector will become non-zero from the p+q+1
 */
 
-	for(i=0; i < error_length; i++)
+	for(i=0; i < error_length; i++) {
 		err[i] = ZERO;  // REAL_CONST( 0.0 );
+	}
 
 /*
 	Y=zeros(N,1);% this is the predicted output
@@ -191,6 +179,9 @@ end
 
 	// OK this is the part that is slightly complex to understand - very careful about indexing here
 	for(i=p; i < N; i++) {
+		// debug this loop
+//		log_info("loop for dot products, i = %d", i);
+
 		// loop over p for parameters * data dot product
 		for (j=0; j < p; j++) {
 			tempdotp = state_parameters[j] * data[(i-1)-j]; // check this
@@ -221,22 +212,25 @@ lglikelihood=-sum(err(p+q+1:end).^2)/(2*sigma^2)-0.5*(N-p)*log(sigma^2);
 */
 	CALC_TYPE sum = ZERO; // REAL_CONST( 0.0 );
 	CALC_TYPE temp;
-	CALC_TYPE divisor = ONE / (TWO*SQR(sigma) - HALF*(N-p)*LN(SQR(sigma)));
+	CALC_TYPE denominator = (TWO*SQR(sigma) - HALF*(N-p)*LN(SQR(sigma)));
+	CALC_TYPE divisor = ONE / denominator;
 	// Check value of divisor here (similar to in transition_jump??
 
 //	print_value_arma(divisor, buffer);
-//	log_info("ARMA likelihood, divisor = %s", divisor);
+//	log_info("ARMA likelihood, divisor = %s", buffer);
+//	print_value_arma(denominator, buffer);
+//	log_info("ARMA likelihood, denominator = %s", buffer);
 
 	//float divisor = 1.0f / (( 2.0f * sigma * sigma ) - 0.5f * (N-p) * logf( sigma * sigma )); // to avoid divide, create one floating point inverse & multiply later
 	for(i=p+q; i < N+q; i++) { // check
 		temp = err[i];
-		sum += temp * temp;
+		sum += temp * temp;  // might be better using SQR here?
 	}
 
 //	print_value_arma(sum, buffer);
-//	log_info("ARMA likelihood, sum = %s", sum);
+//	log_info("ARMA likelihood, sum = %s", buffer);
 
-	return -sum * (CALC_TYPE) divisor;  // possibly add some error checking in case divisor is stupid value
+	return -sum * divisor;  // possibly add some error checking in case divisor is stupid value
 }
 
 /*
@@ -362,7 +356,7 @@ void mcmc_model_transition_jump(
 	}
 	for (i=p; i < p+q; i++) {
 		new_state->parameters[i] = parameters[i] +
-				(t_deviate() * params->q_jump_scale[i]);
+				(t_deviate() * params->q_jump_scale[i-p]);
 	}
 	new_state->parameters[p+q] = parameters[p+q] +
 			(t_deviate() * params->mu_jump_scale);

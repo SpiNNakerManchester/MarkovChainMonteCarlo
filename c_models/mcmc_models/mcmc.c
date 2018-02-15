@@ -243,14 +243,14 @@ bool MH_MCMC_keep_new_point(CALC_TYPE old_pt_posterior_prob,
 	// This may of course be completely unnecessary but it was done in order
 	// to test that the log-likelihood implementation was returning the same
 	// values as the likelihood implementation.
-	if (new_pt_posterior_prob == ZERO) {
-		CALC_TYPE dummy = uniform(seed);
-		return false;
-	}
-
-	// If old_pt is zero, then return true!
-	if (old_pt_posterior_prob == ZERO)
-		return true;
+//	if (new_pt_posterior_prob == ZERO) {
+//		CALC_TYPE dummy = uniform(seed);
+//		return false;
+//	}
+//
+//	// If old_pt is zero, then return true!
+//	if (old_pt_posterior_prob == ZERO)
+//		return true;
 
 	// Now do actual tests if required
 	if (new_pt_posterior_prob > old_pt_posterior_prob)
@@ -350,6 +350,7 @@ void run(uint unused0, uint unused1) {
     use(unused1);
 
     char buffer[1024];
+    char buffer2[1024];
 
     // Create a new state pointer
     uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
@@ -362,6 +363,10 @@ void run(uint unused0, uint unused1) {
 
     CALC_TYPE current_posterior;
     CALC_TYPE new_posterior;
+    // Debug
+    CALC_TYPE likelihood_value;
+    CALC_TYPE prior_value;
+
     unsigned int sample_count = 0;
     unsigned int accepted = 0;
     unsigned int likelihood_calls = 0;
@@ -398,11 +403,11 @@ void run(uint unused0, uint unused1) {
     mcmc_get_address_and_key();
 
     // exponential to get likelihood back from log likelihood
-    current_posterior = full_data_set_likelihood(state) *
-    		mcmc_model_prior_prob(params, state);
-    // if this is a log-likelihood and prior then comment out above and use below
-//    current_posterior = full_data_set_likelihood(state) +
+//    current_posterior = full_data_set_likelihood(state) *
 //    		mcmc_model_prior_prob(params, state);
+    // if this is a log-likelihood and prior then comment out above and use below
+    current_posterior = full_data_set_likelihood(state) +
+    		mcmc_model_prior_prob(params, state);
 
 //    print_value(current_posterior, buffer);
 //    log_info("current posterior calculated: %s", buffer);
@@ -412,6 +417,8 @@ void run(uint unused0, uint unused1) {
 
     uint samples_to_go = parameters.thinning;
     bool burn_in = true;
+
+    log_info("Burn-in Prior Likelihood Likelihood_calls accepted");
 
     do {
 
@@ -423,14 +430,18 @@ void run(uint unused0, uint unused1) {
         likelihood_calls++;
 
         // calculate joint probability at this point
-        new_posterior = full_data_set_likelihood(new_state) *
-				mcmc_model_prior_prob(params, new_state);
+//        new_posterior = full_data_set_likelihood(new_state) *
+//				mcmc_model_prior_prob(params, new_state);
         // if this is a log-likelihood and prior then comment out above and use below
+        likelihood_value = full_data_set_likelihood(state);
+        prior_value = mcmc_model_prior_prob(params, state);
+        new_posterior = likelihood_value + prior_value;
 //        new_posterior = full_data_set_likelihood(new_state) +
 //				mcmc_model_prior_prob(params, new_state);
 
-//        print_value(new_posterior, buffer);
-//        log_info("new posterior calculated: %s", buffer);
+        print_value(likelihood_value, buffer);
+        print_value(prior_value, buffer2);
+        log_info("%d %s %s %d %d", burn_in, buffer2, buffer, likelihood_calls, accepted);
 
         // if accepted, update current state, otherwise leave it as is
         if (MH_MCMC_keep_new_point(

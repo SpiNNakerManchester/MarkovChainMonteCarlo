@@ -6,29 +6,15 @@ from mcmc_examples.arma.arma_float_model import ARMAFloatModel
 #     import ARMAFixedPointModel
 
 # Data to use for 1000 data points (read from file)
-data_1000 = numpy.loadtxt("data_1000.csv", delimiter=",")
+data_10000 = numpy.loadtxt("data_10000.csv", delimiter=",")
 
-# Data to use for 50 data points
-n_test_points = 10
-data_points = data_1000[0:n_test_points]
-# data_points = [
-#     2.37706, 4.51142, 0.406605, 0.909418, 0.642899,
-#     1.21925, 1.47647, -2.95771, -0.801802, -1.86529,
-#     -75.6865, -1.94398, 1.57055, 2.53382, 0.783884,
-#     1.16725, 1.16995, 0.367477, -1.24639, -2.29897,
-#     0.461939, -0.126669, 0.0965992, 1.56107, 0.747027,
-#     66.7057, 1.07821, -0.125864, -0.693059, 7.48744,
-#     1.94184, -0.439164, 3.64695, -63.2296, 0.783037,
-#     2.26351, 1.30222, 0.542981, 3.78199, -37.1692,
-#     1.54959, 0.485336, 1.02509, -0.204211, 0.164426,
-#     -13.1977, 0.650243, 0.671339, 2.93511, 0.788114
-# ]
+# Data to use for 1000 data points (read from file)
+#data_1000 = numpy.loadtxt("data_1000.csv", delimiter=",")
 
-# Data to use for 10 data points
-#data_points = [
-#    2.37706, 4.51142, 0.406605, 0.909418, 0.642899,
-#    1.21925, 1.47647, -2.95771, -0.801802, -1.86529
-#]
+# Edit this number if you want to use less of the data that you've loaded
+n_test_points = 5000  # 1000
+data_points = data_10000[0:n_test_points]
+#data_points = data_1000[0:n_test_points]
 
 seed = None  # set this if you want to use a different seed on each core
 #seed = [  # use this for the same seed on each core
@@ -42,8 +28,8 @@ n_samples = 100
 mu = 0.1
 sigma = 0.08
 
-mu_jump_scale = 0.01
-sigma_jump_scale = 0.01
+mu_jump_scale = 0.1
+sigma_jump_scale = 0.1
 
 # size of p and q arrays
 np = 9
@@ -80,7 +66,7 @@ model = ARMAFloatModel(parameters, p_jump_scale, q_jump_scale, mu_jump_scale,
 #    beta_max)
 samples = mcmc_framework.run_mcmc(
     model, data_points, n_samples,
-    degrees_of_freedom=3.0, seed=seed, n_chips=3*43,
+    degrees_of_freedom=3.0, seed=seed, n_chips=1,  # 3*43,
     root_finder=True)  # n_chips=23*48)
 
 print 'samples: ', samples
