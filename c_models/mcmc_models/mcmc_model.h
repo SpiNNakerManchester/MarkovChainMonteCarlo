@@ -60,6 +60,7 @@
 // Define constants by adding defined suffix value at end
 #define ONE CONCAT(1.000000, SUFFIX)
 #define HALF CONCAT(0.500000, SUFFIX)
+#define QUARTER CONCAT(0.250000, SUFFIX)
 #define ZERO CONCAT(0.000000, SUFFIX)
 #define TWO CONCAT(2.000000, SUFFIX)
 #define THREE CONCAT(3.000000, SUFFIX)

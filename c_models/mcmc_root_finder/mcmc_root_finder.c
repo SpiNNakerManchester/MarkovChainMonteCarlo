@@ -14,7 +14,7 @@
 
 //#define CALC_TYPE float
 //#define ROOT_FAIL -100.000000000000
-#define ROOT_FAIL -1000.0f
+#define ROOT_FAIL 1 // define it this way here to send "boolean" back
 
 //#ifndef use
 //#define use(x) do {} while ((x)!=(x))
@@ -28,23 +28,23 @@
 
 uint32_t *parameter_rec_ptr;
 
-struct double_uint {
-    uint first_word;
-    uint second_word;
-};
-
-union double_to_ints {
-    CALC_TYPE double_value;
-    struct double_uint int_values;
-};
-
-void print_value_rf(CALC_TYPE d_value, char *buffer) {
-    union double_to_ints converter;
-    converter.double_value = d_value;
-    io_printf(
-        buffer, "0x%08x%08x",
-        converter.int_values.second_word, converter.int_values.first_word);
-}
+//struct double_uint {
+//    uint first_word;
+//    uint second_word;
+//};
+//
+//union double_to_ints {
+//    CALC_TYPE double_value;
+//    struct double_uint int_values;
+//};
+//
+//void print_value_rf(CALC_TYPE d_value, char *buffer) {
+//    union double_to_ints converter;
+//    converter.double_value = d_value;
+//    io_printf(
+//        buffer, "0x%08x%08x",
+//        converter.int_values.second_word, converter.int_values.first_word);
+//}
 
 enum regions {
 	// add a recording region for debug to check the roots calculation
@@ -139,10 +139,10 @@ void laguerre_poly_root( complex float a[], int m, complex float *x, int *its )
 	return;
 }
 
-#undef EPSS
-#undef MR
-#undef MT
-#undef MAXIT
+//#undef EPSS
+//#undef MR
+//#undef MT
+//#undef MAXIT
 
 /* from NR in C errata
 *** 40,42 ****
@@ -211,8 +211,8 @@ void zroots( complex float a[], int m, complex float roots[], bool polish )
 		}
 }
 
-#undef EPS
-#undef MAXM
+//#undef EPS
+//#undef MAXM
 
 uint32_t mcmc_model_get_state_n_bytes() {
     return sizeof(struct mcmc_state);
@@ -282,22 +282,36 @@ void run(uint unused0, uint unused1) {
 	// get their negative values and adds an element 1 at the end
 	// to form the coeffients of AR characteristic equation.
 	// The characteristic equation is -a_p*x^p-a_(p-1)*x^(p-1)-...+1=0;
-	AR_eq[p] = ONE;  // REAL_CONST( 1.0 );  // ONE;
+
+	// we don't need to do this reversal here as the c function assumes the
+	// original order is correct!  gah!
+
+	//AR_eq[p] = ONE;  // REAL_CONST( 1.0 );  // ONE;
+	AR_eq[0] = ONE;
 	for(i=0; i < p; i++) {
-		AR_eq[i] = -state_parameters[p-i-1];
+		//AR_eq[i] = -state_parameters[p-i-1];
+		AR_eq[i+1] = -state_parameters[i];
 //		print_value_rf(AR_eq[i], buffer);
 //		log_info("check parameter value (AR) = %s", buffer);
+//		log_info("check parameter value %d (AR) = %k", i, (accum) AR_eq[i]);
 	}
 
 	// This command reverses the sequence from the p+1 to q elements
 	// of the parameters, get their negative values and add an element 1
 	// at the end to form the coeffients of MA characteristic equation.
 	// The characteristic equation is -b_q*x^q-b_(q-1)*x^(q-1)-...+1=0;
-	MA_eq[q] = ONE;  // REAL_CONST( 1.0 );  // ONE:
+
+	// we don't need to do this reversal here as the c function assumes the
+	// original order is correct!  gah!
+
+//	MA_eq[q] = ONE;  // REAL_CONST( 1.0 );  // ONE:
+	MA_eq[0] = ONE;
 	for(i=0; i < q; i++) {
-		MA_eq[i] = -state_parameters[p+(q-i-1)];
+//		MA_eq[i] = -state_parameters[p+(q-i-1)];
+		MA_eq[i+1] = -state_parameters[p+i];
 //		print_value_rf(MA_eq[i], buffer);
 //		log_info("check parameter value (MA) = %s", buffer);
+//		log_info("check parameter value %d (MA) = %k", i, (accum) MA_eq[i]);
 	}
 
 	// read parameters into complex vectors so that we can calculate roots - from 0?
@@ -325,7 +339,10 @@ void run(uint unused0, uint unused1) {
 	//recording_record(0, AR_rt, sizeinbytes(AR_rt));
 	//recording_record(0, MA_rt, sizeinbytes(MR_rt));
 
-	CALC_TYPE returnval = ZERO;  // 0.0f;
+	uint8_t returnval = 0;  // 0.0f;
+
+//	print_value_rf(returnval, buffer);
+//	log_info("set returnval = %s", buffer);
 
 	// test for root magnitude <= 1 and if so return a fail result  // n+1 coefficients, n roots
 	for(i=1; i <= p; i++) { // 0 or 1 for start point?
@@ -339,6 +356,9 @@ void run(uint unused0, uint unused1) {
 
 	// At this point send returnval to normal vertex
 //	log_info("ack_key = 0x%08x", ack_key);
+//	print_value_rf(returnval, buffer);
+//	log_info("check after magnitude test, returnval = %s", buffer);
+//	log_info("check returnval using accum = %k", returnval);
 
 	// wait until packet is acknowledged/sent...
 	while (!spin1_send_mc_packet(ack_key, returnval, WITH_PAYLOAD)) {
@@ -406,7 +426,7 @@ void end_callback(uint unused0, uint unused1) {
 	use(unused0);
 	use(unused1);
 	// End message has arrived from other vertex, so exit
-	log_info("Root finder: exit");
+//	log_info("Root finder: exit");
 	spin1_exit(0);
 
 }
@@ -423,7 +443,7 @@ void c_main() {
 
 	ack_key = more_parameters.acknowledge_key;
 
-	//log_info("ack_key = 0x%08x", more_parameters.acknowledge_key);
+//	log_info("ack_key = 0x%08x", ack_key);
 
 	// register for the start message
     spin1_callback_on(MCPL_PACKET_RECEIVED, trigger_run, -1);

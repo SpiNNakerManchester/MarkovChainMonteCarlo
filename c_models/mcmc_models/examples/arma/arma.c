@@ -100,10 +100,11 @@ void print_value_arma(CALC_TYPE d_value, char *buffer) {
 }
 #endif
 
-volatile CALC_TYPE result_value;
+uint8_t result_value;
 
 void result_callback(uint key, uint payload) {
 //	log_info("ARMA: result_callback");
+	use(key);
 	result_value = payload;
 }
 
@@ -184,11 +185,11 @@ end
 
 		// loop over p for parameters * data dot product
 		for (j=0; j < p; j++) {
-			tempdotp = state_parameters[j] * data[(i-1)-j]; // check this
+			tempdotp += state_parameters[j] * data[(i-1)-j]; // check this
 		}
 		// loop over q for parameters * err dot product
 		for (j=0; j < q; j++) {
-			tempdotq = state_parameters[p+j] * err[(i+q-1)-j]; // check this
+			tempdotq += state_parameters[p+j] * err[(i+q-1)-j]; // check this
 		}
 
 		// Add two results together plus mean
@@ -242,7 +243,7 @@ CALC_TYPE mcmc_model_prior_prob(
         mcmc_params_pointer_t params, mcmc_state_pointer_t state) {
 	// debug for writing values
 	char buffer[1024];
-	result_value = 2.0f;  // 1.0f;
+	result_value = 2;  // 1.0f;
 
 	// read in AR and MA parameter dimensions
 	uint8_t p = PPOLYORDER;  // state->order_p;
@@ -257,6 +258,10 @@ CALC_TYPE mcmc_model_prior_prob(
 //	log_info("ARMA: state_parameters[0] = 0x%08x", state_parameters[0]);
 
 	if( sigma <= ZERO ) return ROOT_FAIL;  // first fail condition can provide early exit
+
+    // debug check result value here
+//	print_value_arma(result_value, buffer);
+//	log_info("ARMA: check result_value before calling root_finder: %s", buffer);
 
 //	// this doesn't need to happen every time!
 //	address_t data_address = data_specification_get_data_address();
@@ -303,12 +308,12 @@ CALC_TYPE mcmc_model_prior_prob(
 
 //	log_info("ARMA: model_state_address = %d", model_state_address);
 
-	uint mode = spin1_int_enable();
+//	uint mode = spin1_int_enable();
 
 	// callback for result here
-	spin1_callback_off(MCPL_PACKET_RECEIVED);
-	//spin1_callback_off(MC_PACKET_RECEIVED);
-	spin1_callback_on(MCPL_PACKET_RECEIVED, result_callback, -1);
+//	spin1_callback_off(MCPL_PACKET_RECEIVED);
+//	spin1_callback_off(MC_PACKET_RECEIVED);
+//	spin1_callback_on(MCPL_PACKET_RECEIVED, result_callback, -1);
 
 	// wait for result to come back
 	//spin1_callback_on(MCPL_PACKET_RECEIVED, result_callback, -1);
@@ -317,7 +322,7 @@ CALC_TYPE mcmc_model_prior_prob(
 //	log_info("callback turned on, now going in to wait... %s", buffer);
 
 	// do we need to sit here and wait and do nothing until result is here?
-	while (result_value==2.0f) {
+	while (result_value==2) {
 //		print_value(result_value, buffer);
 //		log_info("while loop, result_value"); //  = %s", buffer);
 //		log_info("what is in result_value... %f", result_value);
@@ -325,12 +330,15 @@ CALC_TYPE mcmc_model_prior_prob(
 	}
 
 //	print_value_arma(result_value, buffer);
-//	log_info("ARMA: returning result from root finder: %s", buffer);
+//	log_info("ARMA: received result from root finder: %s", buffer);
 
-	spin1_mode_restore(mode);
+	// There seems to be an issue here with sending/receiving negative floats?
+
+//	spin1_mode_restore(mode);
 
 	// read result and return it
-	CALC_TYPE returnval = result_value;
+	CALC_TYPE returnval = ZERO;
+	if (result_value==1) returnval = ROOT_FAIL;
 	return returnval;
 
 }
@@ -345,21 +353,31 @@ void mcmc_model_transition_jump(
         mcmc_state_pointer_t new_state) {
 	// loop over parameters and apply relevant jump_scale
 	// - it'll look something like this...
+//	char buffer[1024];
+
+	// NOTE (16/2/18): this needs to use Cholesky decomposition to
+	// update the jump scale parameters
+
 	CALC_TYPE *parameters = state->parameters;
-//	CALC_TYPE *new_parameters = new_state->parameters;
+	//CALC_TYPE new_parameters[PPOLYORDER+QPOLYORDER+2];
 	uint32_t p = PPOLYORDER;  // state->order_p;
 	uint32_t q = QPOLYORDER;  // state->order_q;
 	unsigned int i;
 	for (i=0; i < p; i++) {
+//		print_value_arma(parameters[i], buffer);
+//		log_info("parameter %d (MA) is %k", i, (accum) parameters[i]);
 		new_state->parameters[i] = parameters[i] +
 				(t_deviate() * params->p_jump_scale[i]);
 	}
 	for (i=p; i < p+q; i++) {
+//		log_info("parameter %d (AR) is %k", i, (accum) parameters[i]);
 		new_state->parameters[i] = parameters[i] +
 				(t_deviate() * params->q_jump_scale[i-p]);
 	}
+//	log_info("mu parameter is %k", (accum) parameters[p+q]);
 	new_state->parameters[p+q] = parameters[p+q] +
 			(t_deviate() * params->mu_jump_scale);
+//	log_info("sigma parameter is %k", (accum) parameters[p+q+1]);
 	new_state->parameters[p+q+1] = parameters[p+q+1] +
 			(t_deviate() * params->sigma_jump_scale);
 }
@@ -393,4 +411,8 @@ void mcmc_get_address_and_key() {
 	state_n_bytes = mcmc_model_get_state_n_bytes();
 	model_state_address = data_specification_get_region(
 	        MODEL_STATE, data_address);
+
+	// set up callback for results from root finder
+	spin1_callback_on(MCPL_PACKET_RECEIVED, result_callback, -1);
+
 }
