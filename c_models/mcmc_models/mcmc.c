@@ -257,7 +257,9 @@ bool MH_MCMC_keep_new_point(CALC_TYPE old_pt_posterior_prob,
 //        return true;
 	// log-domain, so can turn division into subtraction and use EXP
 //    else if (EXP(new_pt_posterior_prob-old_pt_posterior_prob) > uniform(seed))
-    if (EXP(new_pt_posterior_prob-old_pt_posterior_prob) > uniform(seed))
+	CALC_TYPE test_uniform = uniform(seed);
+	log_info("value from uniform(seed) = %k", (accum) test_uniform);
+    if (EXP(new_pt_posterior_prob-old_pt_posterior_prob) > test_uniform)
         return true;
     else
         return false;
@@ -448,8 +450,8 @@ void run(uint unused0, uint unused1) {
 //        new_posterior = full_data_set_likelihood(new_state) *
 //				mcmc_model_prior_prob(params, new_state);
         // if this is a log-likelihood and prior then comment out above and use below
-        likelihood_value = full_data_set_likelihood(state);
-        prior_value = mcmc_model_prior_prob(params, state);
+        likelihood_value = full_data_set_likelihood(new_state);
+        prior_value = mcmc_model_prior_prob(params, new_state);
         new_posterior = likelihood_value + prior_value;
 //        new_posterior = full_data_set_likelihood(new_state) +
 //				mcmc_model_prior_prob(params, new_state);

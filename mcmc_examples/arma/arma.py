@@ -12,7 +12,7 @@ from mcmc_examples.arma.arma_float_model import ARMAFloatModel
 data_1000 = numpy.loadtxt("data_1000.csv", delimiter=",")
 
 # Edit this number if you want to use less of the data that you've loaded
-n_test_points = 1000  # 5000
+n_test_points = 100  # 5000
 #data_points = data_10000[0:n_test_points]
 data_points = data_1000[0:n_test_points]
 
