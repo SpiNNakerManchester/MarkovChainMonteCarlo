@@ -111,8 +111,8 @@ void result_callback(uint key, uint payload) {
 /*
  ARMA wind log likelihood
   - data, size n_pts
-  - use state->order_p and state->order_q which are the orders of an ARMA(p,q) model,
-    which has the form z(t)=a_1*z(t-1)+...+a_p*z(t-p)-b_1*e(t-1)-...-b_q*e(t-q)+mu
+  - p and q are the orders of an ARMA(p,q) model, which has the form
+    z(t)=a_1*z(t-1)+...+a_p*z(t-p)-b_1*e(t-1)-...-b_q*e(t-q)+mu
   - params is [a1,...,ap,b1,...,bq,mu,sigma]
  */
 CALC_TYPE mcmc_model_likelihood(
@@ -192,8 +192,8 @@ end
 			tempdotq += state_parameters[p+j] * err[(i+q-1)-j]; // check this
 		}
 
-		// Add two results together plus mean
-		Y[i] = tempdotp + tempdotq + mu;
+		// Add two results together plus mean // wait, it's a subtraction in Matlab code...
+		Y[i] = tempdotp - tempdotq + mu;
 		// Error is data minus predicted data
 		err[i+q] = data[i] - Y[i];
 
@@ -213,14 +213,17 @@ lglikelihood=-sum(err(p+q+1:end).^2)/(2*sigma^2)-0.5*(N-p)*log(sigma^2);
 */
 	CALC_TYPE sum = ZERO; // REAL_CONST( 0.0 );
 	CALC_TYPE temp;
-	CALC_TYPE denominator = (TWO*SQR(sigma) - HALF*(N-p)*LN(SQR(sigma)));
+	CALC_TYPE denominator = TWO*SQR(sigma);
+	CALC_TYPE Nminusp = (CALC_TYPE) (N-p);
+	CALC_TYPE temp2 = HALF*Nminusp*LN(SQR(sigma));
 	CALC_TYPE divisor = ONE / denominator;
 	// Check value of divisor here (similar to in transition_jump??
 
 //	print_value_arma(divisor, buffer);
-//	log_info("ARMA likelihood, divisor = %s", buffer);
-//	print_value_arma(denominator, buffer);
-//	log_info("ARMA likelihood, denominator = %s", buffer);
+//	log_info("ARMA likelihood, Nminusp = %k", (accum) Nminusp);
+//	log_info("ARMA likelihood, divisor = %k", (accum) divisor);
+////	print_value_arma(denominator, buffer);
+//	log_info("ARMA likelihood, temp2 = %k", (accum) temp2);
 
 	//float divisor = 1.0f / (( 2.0f * sigma * sigma ) - 0.5f * (N-p) * logf( sigma * sigma )); // to avoid divide, create one floating point inverse & multiply later
 	for(i=p+q; i < N+q; i++) { // check
@@ -231,7 +234,7 @@ lglikelihood=-sum(err(p+q+1:end).^2)/(2*sigma^2)-0.5*(N-p)*log(sigma^2);
 //	print_value_arma(sum, buffer);
 //	log_info("ARMA likelihood, sum = %s", buffer);
 
-	return -sum * divisor;  // possibly add some error checking in case divisor is stupid value
+	return (-sum * divisor) - temp2;  // possibly add some error checking in case divisor is stupid value
 }
 
 /*

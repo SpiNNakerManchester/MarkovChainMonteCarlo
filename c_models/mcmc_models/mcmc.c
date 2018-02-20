@@ -334,7 +334,7 @@ CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
 //                    dma_buffers[dma_process_buffer][i], params, state_to_use);
 //        }
         // Move the loop inside the model_likelihood function
-        l = mcmc_model_likelihood(
+        l += mcmc_model_likelihood(
         		dma_buffers[dma_process_buffer], points, params, state_to_use);
 
         points_to_process -= points;
@@ -426,12 +426,12 @@ void run(uint unused0, uint unused1) {
 
     // debug printing - of course the other option here is accum conversion
     // and direct print
-//    print_value(likelihood_value, buffer);
-//    print_value(prior_value, buffer2);
+    print_value(likelihood_value, buffer);
+    print_value(prior_value, buffer2);
     log_info("Burn-in Prior Likelihood Likelihood_calls accepted");
-//    log_info("%d %s %s %d %d", burn_in, buffer2, buffer, likelihood_calls, accepted);
-    log_info("%d %k %k %d %d", burn_in, (accum) prior_value,
-    		(accum) likelihood_value, likelihood_calls, accepted);
+    log_info("%d %s %s %d %d", burn_in, buffer2, buffer, likelihood_calls, accepted);
+//    log_info("%d %k %k %d %d", burn_in, (accum) prior_value,
+//    		(accum) likelihood_value, likelihood_calls, accepted);
 
     uint samples_to_go = parameters.thinning;
 //    bool burn_in = true;
