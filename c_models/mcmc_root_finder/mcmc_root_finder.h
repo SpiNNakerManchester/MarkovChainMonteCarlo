@@ -1,15 +1,8 @@
-
 // compile with gcc -std=c99 -O3 -fcx-limited-range root_finder.c -l m -o rf
 
 #include "mcmc_spinn_real_type.h"
 
-// somewhere in here there probably needs to be a struct of the parameters; or
-// is there some way of having a "combined header" file between this and arma?
-
-// #include "../mcmc_models/examples/arma/arma.h"
-
 // some utility functions
-// float MAX()
 static float maxarg1,maxarg2;
 #define FMAX( a, b ) (maxarg1=(a),maxarg2=(b),(maxarg1) > (maxarg2) ? (maxarg1) : (maxarg2))
 

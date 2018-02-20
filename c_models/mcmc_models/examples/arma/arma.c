@@ -144,15 +144,10 @@ CALC_TYPE mcmc_model_likelihood(
 	CALC_TYPE mu = state_parameters[p+q];
 	CALC_TYPE sigma = state_parameters[p+q+1];
 
-	// debug
-//	print_value_arma(ROOT_FAIL, buffer);
-//	log_info("ARMA model likelihood, ROOT_FAIL = %s", buffer);
-
 /*
 err is all zeros with size of (N+q)*1
 err=zeros(N+q,1); % this vector will become non-zero from the p+q+1
 */
-
 	for(i=0; i < error_length; i++) {
 		err[i] = ZERO;  // REAL_CONST( 0.0 );
 	}
@@ -161,8 +156,6 @@ err=zeros(N+q,1); % this vector will become non-zero from the p+q+1
 	Y=zeros(N,1);% this is the predicted output
 */
 	REAL Y[N]; // C99 compile flag required
-
-	// compiler issue, could add mu here rather than in the main loop
 
 /*
 MATLAB code that works:
@@ -180,9 +173,6 @@ end
 
 	// OK this is the part that is slightly complex to understand - very careful about indexing here
 	for(i=p; i < N; i++) {
-		// debug this loop
-//		log_info("loop for dot products, i = %d", i);
-
 		// loop over p for parameters * data dot product
 		for (j=0; j < p; j++) {
 			tempdotp += state_parameters[j] * data[(i-1)-j]; // check this
@@ -219,22 +209,14 @@ lglikelihood=-sum(err(p+q+1:end).^2)/(2*sigma^2)-0.5*(N-p)*log(sigma^2);
 	CALC_TYPE divisor = ONE / denominator;
 	// Check value of divisor here (similar to in transition_jump??
 
-//	print_value_arma(divisor, buffer);
-//	log_info("ARMA likelihood, Nminusp = %k", (accum) Nminusp);
-//	log_info("ARMA likelihood, divisor = %k", (accum) divisor);
-////	print_value_arma(denominator, buffer);
-//	log_info("ARMA likelihood, temp2 = %k", (accum) temp2);
-
-	//float divisor = 1.0f / (( 2.0f * sigma * sigma ) - 0.5f * (N-p) * logf( sigma * sigma )); // to avoid divide, create one floating point inverse & multiply later
+	// Loop to do sum
 	for(i=p+q; i < N+q; i++) { // check
 		temp = err[i];
 		sum += temp * temp;  // might be better using SQR here?
 	}
 
-//	print_value_arma(sum, buffer);
-//	log_info("ARMA likelihood, sum = %s", buffer);
-
-	return (-sum * divisor) - temp2;  // possibly add some error checking in case divisor is stupid value
+	// possibly add some error checking in case divisor is stupid value
+	return (-sum * divisor) - temp2;
 }
 
 /*
@@ -245,101 +227,34 @@ lglikelihood=-sum(err(p+q+1:end).^2)/(2*sigma^2)-0.5*(N-p)*log(sigma^2);
 CALC_TYPE mcmc_model_prior_prob(
         mcmc_params_pointer_t params, mcmc_state_pointer_t state) {
 	// debug for writing values
-	char buffer[1024];
+//	char buffer[1024];
+	// set result_value in order to wait for result from root_finder
 	result_value = 2;  // 1.0f;
 
 	// read in AR and MA parameter dimensions
 	uint8_t p = PPOLYORDER;  // state->order_p;
 	uint8_t q = QPOLYORDER;  // state->order_q;
-//	uint8_t i;
 
-//	REAL sigma = params->sigma; // could plausibly use this rather than a parameters array?
+	// Get the sigma value
 	CALC_TYPE *state_parameters;
 	state_parameters = state->parameters;
 	CALC_TYPE sigma = state_parameters[p+q+1];  // last entry in vector
 
-//	log_info("ARMA: state_parameters[0] = 0x%08x", state_parameters[0]);
+	// If sigma is less than zero then we can exit without using root_finder
+	if( sigma <= ZERO ) return ROOT_FAIL;
 
-	if( sigma <= ZERO ) return ROOT_FAIL;  // first fail condition can provide early exit
-
-    // debug check result value here
-//	print_value_arma(result_value, buffer);
-//	log_info("ARMA: check result_value before calling root_finder: %s", buffer);
-
-//	// this doesn't need to happen every time!
-//	address_t data_address = data_specification_get_data_address();
-//	address_t parameters_address = data_specification_get_region(
-//	        PARAMETERS, data_address);
-//	struct parameters *sdram_params = (struct parameters *) parameters_address;
-//	spin1_memcpy(&parameters, sdram_params, sizeof(struct parameters));
-//	key = parameters.key;
-////	log_info("Key = 0x%08x", key);
-//
-//	// send key to wake up root finder
-////	spin1_send_mc_packet(key, 0, 0);
-//
-//	// Pointer to receive the data with
-////	uint32_t *param_receive_ptr;
-//
-//	// write parameters to sdram
-//	uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
-////	log_info("ARMA: state_n_bytes = %d", state_n_bytes);
-//
-////	log_info("ARMA: state_n_bytes: %d", state_n_bytes);
-//
-//	model_state_address = data_specification_get_region(
-//	        MODEL_STATE, data_address);
-
-    // copy state parameters to sdram
+    // If we're still going, we need to copy state parameters to sdram
 	spin1_memcpy(model_state_address, state_parameters, state_n_bytes);
 
-	// send mc packet to wake up root finder
-	// Send mc packet with payload of address value
+	// Send mc packet with payload of address value to wake up root_finder
 	spin1_send_mc_packet(key, model_state_address, WITH_PAYLOAD);
 
-//	log_info("ARMA: model_state_address = %d", model_state_address);
-
-//	print_value(sigma, buffer);
-//	log_info("ARMA: sigma = %s", buffer);
-
-//	log_info("ARMA: parameters_address = %d", parameters_address);
-
-
-//	param_receive_ptr = (uint32_t *) sark_xalloc(
-//			sv->sdram_heap, (PPOLYORDER + QPOLYORDER + 2) * sizeof(CALC_TYPE),
-//	        0, ALLOC_LOCK);
-
-//	log_info("ARMA: model_state_address = %d", model_state_address);
-
-//	uint mode = spin1_int_enable();
-
-	// callback for result here
-//	spin1_callback_off(MCPL_PACKET_RECEIVED);
-//	spin1_callback_off(MC_PACKET_RECEIVED);
-//	spin1_callback_on(MCPL_PACKET_RECEIVED, result_callback, -1);
-
-	// wait for result to come back
-	//spin1_callback_on(MCPL_PACKET_RECEIVED, result_callback, -1);
-
-//	print_value_arma(result_value, buffer);
-//	log_info("callback turned on, now going in to wait... %s", buffer);
-
-	// do we need to sit here and wait and do nothing until result is here?
+	// Wait here for the result to come back
 	while (result_value==2) {
-//		print_value(result_value, buffer);
-//		log_info("while loop, result_value"); //  = %s", buffer);
-//		log_info("what is in result_value... %f", result_value);
 		spin1_wfi();
 	}
 
-//	print_value_arma(result_value, buffer);
-//	log_info("ARMA: received result from root finder: %s", buffer);
-
-	// There seems to be an issue here with sending/receiving negative floats?
-
-//	spin1_mode_restore(mode);
-
-	// read result and return it
+	// Read the result and return it
 	CALC_TYPE returnval = ZERO;
 	if (result_value==1) returnval = ROOT_FAIL;
 	return returnval;
@@ -355,32 +270,29 @@ void mcmc_model_transition_jump(
         mcmc_params_pointer_t params, mcmc_state_pointer_t state,
         mcmc_state_pointer_t new_state) {
 	// loop over parameters and apply relevant jump_scale
-	// - it'll look something like this...
 //	char buffer[1024];
 
 	// NOTE (16/2/18): this needs to use Cholesky decomposition to
 	// update the jump scale parameters
 
 	CALC_TYPE *parameters = state->parameters;
-	//CALC_TYPE new_parameters[PPOLYORDER+QPOLYORDER+2];
 	uint32_t p = PPOLYORDER;  // state->order_p;
 	uint32_t q = QPOLYORDER;  // state->order_q;
 	unsigned int i;
+
+	// Update polynomial coefficients
 	for (i=0; i < p; i++) {
-//		print_value_arma(parameters[i], buffer);
-//		log_info("parameter %d (MA) is %k", i, (accum) parameters[i]);
 		new_state->parameters[i] = parameters[i] +
 				(t_deviate() * params->p_jump_scale[i]);
 	}
 	for (i=p; i < p+q; i++) {
-//		log_info("parameter %d (AR) is %k", i, (accum) parameters[i]);
 		new_state->parameters[i] = parameters[i] +
 				(t_deviate() * params->q_jump_scale[i-p]);
 	}
-//	log_info("mu parameter is %k", (accum) parameters[p+q]);
+
+	// Update mu and sigma
 	new_state->parameters[p+q] = parameters[p+q] +
 			(t_deviate() * params->mu_jump_scale);
-//	log_info("sigma parameter is %k", (accum) parameters[p+q+1]);
 	new_state->parameters[p+q+1] = parameters[p+q+1] +
 			(t_deviate() * params->sigma_jump_scale);
 }
