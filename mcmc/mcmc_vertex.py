@@ -289,9 +289,7 @@ class MCMCVertex(
             else:
                 numpy_format.append((var.name, var.data_type))
 
-        print 'numpy_format: ', numpy_format
-
-        # Convert the data into an array of state variables
+         # Convert the data into an array of state variables
         if (self._model.get_parameters()[0].data_type is DataType.S1615):
             data_view = numpy.array(data, dtype=numpy.uint8).view(numpy_format)
             convert = numpy.zeros_like(

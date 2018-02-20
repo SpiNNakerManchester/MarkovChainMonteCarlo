@@ -28,23 +28,23 @@
 
 uint32_t *parameter_rec_ptr;
 
-struct double_uint {
-    uint first_word;
-    uint second_word;
-};
-
-union double_to_ints {
-    CALC_TYPE double_value;
-    struct double_uint int_values;
-};
-
-void print_value_rf(CALC_TYPE d_value, char *buffer) {
-    union double_to_ints converter;
-    converter.double_value = d_value;
-    io_printf(
-        buffer, "0x%08x%08x",
-        converter.int_values.second_word, converter.int_values.first_word);
-}
+//struct double_uint {
+//    uint first_word;
+//    uint second_word;
+//};
+//
+//union double_to_ints {
+//    CALC_TYPE double_value;
+//    struct double_uint int_values;
+//};
+//
+//void print_value_rf(CALC_TYPE d_value, char *buffer) {
+//    union double_to_ints converter;
+//    converter.double_value = d_value;
+//    io_printf(
+//        buffer, "0x%08x%08x",
+//        converter.int_values.second_word, converter.int_values.first_word);
+//}
 
 enum regions {
 	// add a recording region for debug to check the roots calculation
@@ -341,10 +341,10 @@ void run(uint unused0, uint unused1) {
 
 	uint8_t returnval = 0;  // 0.0f;
 
-	print_value_rf(EPSS, buffer);
-	log_info("EPSS = %s", buffer);
-	print_value_rf(EPS, buffer);
-	log_info("EPS = %s", buffer);
+//	print_value_rf(EPSS, buffer);
+//	log_info("EPSS = %s", buffer);
+//	print_value_rf(EPS, buffer);
+//	log_info("EPS = %s", buffer);
 
 	// test for root magnitude <= 1 and if so return a fail result  // n+1 coefficients, n roots
 	for(i=1; i <= p; i++) { // 0 or 1 for start point?
@@ -445,7 +445,7 @@ void c_main() {
 
 	ack_key = more_parameters.acknowledge_key;
 
-//	log_info("ack_key = 0x%08x", ack_key);
+	log_info("ack_key = 0x%08x", ack_key);
 
 	// register for the start message
     spin1_callback_on(MCPL_PACKET_RECEIVED, trigger_run, -1);

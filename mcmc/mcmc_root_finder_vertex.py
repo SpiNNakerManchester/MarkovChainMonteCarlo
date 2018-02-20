@@ -179,7 +179,7 @@ class MCMCRootFinderVertex(
     def read_samples(self, buffer_manager, placement):
         """ Read back the samples (dummy call)
         """
-        print 'There are no samples to read back on a root finder vertex'
+#        print 'There are no samples to read back on a root finder vertex'
         return None
 
 #     def get_minimum_buffer_sdram_usage(self):

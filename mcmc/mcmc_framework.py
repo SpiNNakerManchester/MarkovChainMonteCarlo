@@ -59,8 +59,6 @@ def run_mcmc(
     boards = dict()
     for chip in machine.ethernet_connected_chips:
 
-        print 'ethernet chip: ', chip
-
         # Create a coordinator
         coordinator = MCMCCoordinatorVertex(
             model, data, n_samples, burn_in, thinning,
@@ -82,16 +80,11 @@ def run_mcmc(
     n_cores_available = g.get_number_of_available_cores_on_machine()
 
     # Though, remember, this doesn't know about the coordinator at this point!
-    print 'number of cores available: ', n_cores_available
-
-    print 'chip at (0,1) is : ', machine.get_chip_at(0,1)
 
     n_workers = 0
     if (root_finder):
         n_root_finders = 0
     for chip in machine.chips:
-
-        print 'chip_x, y: ', chip.x, ' ', chip.y
 
         # Count the cores in the processor
         # (-1 if this chip also has a coordinator)
@@ -100,12 +93,10 @@ def run_mcmc(
             n_cores -= 3  # coordinator and extra_monitor_support (2)
             if (root_finder):
                 n_cores = n_cores / 2
-                print 'coordinator, n_cores: ', n_cores
         else:
             n_cores -= 1  # just extra_monitor_support
             if (root_finder):
                 n_cores = n_cores / 2
-                print 'non-coordinator, n_cores: ', n_cores
 
 #        print 'n_cores before cheating is: ', n_cores
 #         take_into_account_chip_power_monitor = globals_variables.get_simulator(
@@ -187,8 +178,6 @@ def run_mcmc(
     running = txrx.get_core_state_count(app_id, CPUState.RUNNING)
     # there are now cores doing extra_monitor etc.
     non_worker_cores = n_chips_on_machine + (2 * len(boards))  # extra_monitor + coordinator
-    print 'non_worker_cores: ', non_worker_cores
-    print 'running: ', running
     while running > non_worker_cores:
         time.sleep(0.5)
         error = txrx.get_core_state_count(app_id, CPUState.RUN_TIME_EXCEPTION)

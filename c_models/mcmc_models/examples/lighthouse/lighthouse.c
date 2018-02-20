@@ -48,11 +48,14 @@ CALC_TYPE mcmc_model_likelihood(
  */
 CALC_TYPE mcmc_model_prior_prob(
         mcmc_params_pointer_t params, mcmc_state_pointer_t state) {
+	// we made the likelihood into log-likelihood, so this needs to do the same?
     if (state->alpha < params->alpha_min || state->alpha > params->alpha_max ||
             state->beta < params->beta_min || state->beta > params->beta_max) {
-        return ZERO;
+    	// log(0) = -inf
+        return BIGNEG; // ZERO;
     }
-    return ONE;
+    // log(1) = 0
+    return ZERO; // ONE;
 }
 
 

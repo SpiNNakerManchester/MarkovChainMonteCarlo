@@ -212,7 +212,7 @@ data_1000 = [
     -13.1977, 0.650243, 0.671339, 2.93511, 0.788114
 ]
 
-data_points = data_1000  # data_50
+data_points = data_50
 
 print 'data_points: ', data_points
 

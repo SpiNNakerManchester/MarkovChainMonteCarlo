@@ -65,6 +65,7 @@
 #define TWO CONCAT(2.000000, SUFFIX)
 #define THREE CONCAT(3.000000, SUFFIX)
 #define FOUR CONCAT(4.000000, SUFFIX)
+#define BIGNEG CONCAT(-1000.000000, SUFFIX)
 
 typedef struct mcmc_params* mcmc_params_pointer_t;
 typedef struct mcmc_state* mcmc_state_pointer_t;

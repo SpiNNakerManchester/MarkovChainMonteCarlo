@@ -236,30 +236,10 @@ CALC_TYPE t_deviate() {
  */
 bool MH_MCMC_keep_new_point(CALC_TYPE old_pt_posterior_prob,
         CALC_TYPE new_pt_posterior_prob, uniform_seed seed) {
-	// Now we are taking log-likelihood, new_pt > old_pt when new_pt is zero
-	// (i.e. when the prior probability is zero)
-	// - to follow the same earlier logic used with likelihood we need to call
-	// the uniform(seed) function but always return false.
-	// This may of course be completely unnecessary but it was done in order
-	// to test that the log-likelihood implementation was returning the same
-	// values as the likelihood implementation.
-//	if (new_pt_posterior_prob == ZERO) {
-//		CALC_TYPE dummy = uniform(seed);
-//		return false;
-//	}
-//
-//	// If old_pt is zero, then return true!
-//	if (old_pt_posterior_prob == ZERO)
-//		return true;
-
-	// Now do actual tests if required
-//	if (new_pt_posterior_prob > old_pt_posterior_prob)
-//        return true;
-	// log-domain, so can turn division into subtraction and use EXP
-//    else if (EXP(new_pt_posterior_prob-old_pt_posterior_prob) > uniform(seed))
-	CALC_TYPE test_uniform = uniform(seed);
-	log_info("value from uniform(seed) = %k", (accum) test_uniform);
-    if (EXP(new_pt_posterior_prob-old_pt_posterior_prob) > test_uniform)
+	// Using log-likelihood, so we need to do exponential for test vs random
+	if (new_pt_posterior_prob > old_pt_posterior_prob)
+		return true;
+	else if (EXP(new_pt_posterior_prob-old_pt_posterior_prob) > uniform(seed))
         return true;
     else
         return false;
@@ -284,12 +264,7 @@ void do_transfer(CALC_TYPE *dataptr, uint bytes) {
 CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
     CALC_TYPE l = ZERO;
     if (!dma_likelihood) {
-        // distribute these data points across cores?
-//        for (unsigned int i = 0; i < parameters.n_data_points; i++) {
-//            l += mcmc_model_likelihood(data[i], params, state_to_use);
-//        }
-//        return l;
-    	// move the loop inside the model_likelihood function
+    	// process all the data inside the application-specific likelihood
     	return mcmc_model_likelihood(
     			data, parameters.n_data_points, params, state_to_use);
     }
@@ -329,11 +304,6 @@ CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
         }
 
         // Process the points in the buffer
-//        for (uint i = 0; i < points; i++) {
-//        	l += mcmc_model_likelihood(
-//                    dma_buffers[dma_process_buffer][i], params, state_to_use);
-//        }
-        // Move the loop inside the model_likelihood function
         l += mcmc_model_likelihood(
         		dma_buffers[dma_process_buffer], points, params, state_to_use);
 
@@ -348,6 +318,12 @@ void dma_callback(uint unused0, uint unused1) {
     likelihood_done = 1;
 }
 
+/*
+ main program which implements MCMC and outputs sample points from the
+ posterior distribution using Bayes' theorem
+
+ P( ALPHA, BETA | X ) ~= P( ALPHA, BETA ) * P( X | ALPHA, BETA )
+ */
 void run(uint unused0, uint unused1) {
     use(unused0);
     use(unused1);
@@ -407,38 +383,29 @@ void run(uint unused0, uint unused1) {
     // Set up address and keys for posterior calculation (if needed)
     mcmc_get_address_and_key();
 
-    // exponential to get likelihood back from log likelihood
-//    current_posterior = full_data_set_likelihood(state) *
-//    		mcmc_model_prior_prob(params, state);
-    // if this is a log-likelihood and prior then comment out above and use below
+    // Collect the likelihood and prior and add them (log!)
     likelihood_value = full_data_set_likelihood(state);
     prior_value = mcmc_model_prior_prob(params, state);
     current_posterior = likelihood_value + prior_value;
-
 //    current_posterior = full_data_set_likelihood(state) +
 //    		mcmc_model_prior_prob(params, state);
-
-    //    print_value(current_posterior, buffer);
-//    log_info("current posterior calculated: %s", buffer);
 
     // update likelihood function counter for diagnostics
     likelihood_calls++;
 
     // debug printing - of course the other option here is accum conversion
     // and direct print
-    print_value(likelihood_value, buffer);
-    print_value(prior_value, buffer2);
-    log_info("Burn-in Prior Likelihood Likelihood_calls accepted");
-    log_info("%d %s %s %d %d", burn_in, buffer2, buffer, likelihood_calls, accepted);
+//    print_value(likelihood_value, buffer);
+//    print_value(prior_value, buffer2);
+//    log_info("Burn-in Prior Likelihood Likelihood_calls accepted");
+//    log_info("%d %s %s %d %d", burn_in, buffer2, buffer, likelihood_calls, accepted);
 //    log_info("%d %k %k %d %d", burn_in, (accum) prior_value,
 //    		(accum) likelihood_value, likelihood_calls, accepted);
 
     uint samples_to_go = parameters.thinning;
-//    bool burn_in = true;
 
-
+    // Main loop
     do {
-
         // make a jump around parameter space using bivariate t distribution
         // with 3 degrees of freedom
         mcmc_model_transition_jump(params, state, new_state);
@@ -446,21 +413,19 @@ void run(uint unused0, uint unused1) {
         // update likelihood function counter for diagnostics
         likelihood_calls++;
 
-        // calculate joint probability at this point
-//        new_posterior = full_data_set_likelihood(new_state) *
-//				mcmc_model_prior_prob(params, new_state);
-        // if this is a log-likelihood and prior then comment out above and use below
+        // calculate joint probability at this point: remember now using log
         likelihood_value = full_data_set_likelihood(new_state);
         prior_value = mcmc_model_prior_prob(params, new_state);
         new_posterior = likelihood_value + prior_value;
 //        new_posterior = full_data_set_likelihood(new_state) +
 //				mcmc_model_prior_prob(params, new_state);
 
+        // Debug printing if needed
 //        print_value(likelihood_value, buffer);
 //        print_value(prior_value, buffer2);
 //        log_info("%d %s %s %d %d", burn_in, buffer2, buffer, likelihood_calls, accepted);
-        log_info("%d %k %k %d %d", burn_in, (accum) prior_value,
-        		(accum) likelihood_value, likelihood_calls, accepted);
+//        log_info("%d %k %k %d %d", burn_in, (accum) prior_value,
+//        		(accum) likelihood_value, likelihood_calls, accepted);
 
         // if accepted, update current state, otherwise leave it as is
         if (MH_MCMC_keep_new_point(
@@ -472,9 +437,6 @@ void run(uint unused0, uint unused1) {
             // update acceptance count
             accepted++;
         };
-
-//        log_info("likelihood_calls = %d, accepted = %d, sample count = %d",
-//        		likelihood_calls, accepted, sample_count);
 
         if (burn_in) {
             if (likelihood_calls == parameters.burn_in) {
@@ -503,12 +465,13 @@ void run(uint unused0, uint unused1) {
 
     log_info("Sampling accepted %d of %d", accepted, likelihood_calls);
 
-    // There needs to be an exit_function of some description here to deal
-    // with the multiple-executable case when needed
+    // Finished: exit (application-specific)
     mcmc_exit_function();
-    //spin1_exit(0);
 }
 
+/*
+ Callbacks required for communication of data and parameters
+ */
 void multicast_callback(uint key, uint payload) {
     uint sequence = key & parameters.sequence_mask;
     if (sequence == next_sequence) {
@@ -539,13 +502,10 @@ void trigger_run(uint unused0, uint unused1) {
     spin1_schedule_callback(run, 0, 0, 2);
 }
 
-
 /*
- main program which implements MCMC and outputs sample points from the
- posterior distribution using Bayes' theorem
+ main program which sets up DSG and prepares to communicate data to cores
+*/
 
- P( ALPHA, BETA | X ) ~= P( ALPHA, BETA ) * P( X | ALPHA, BETA )
- */
 void c_main() {
 #if TYPE_SELECT != 2
     char buffer[1024];
@@ -603,8 +563,8 @@ void c_main() {
     log_info("Data Window Size = %d", parameters.data_window_size);
     log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
     log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
-//    log_info("Data tag = %d", parameters.data_tag);
-//    log_info("Timer = %d", parameters.timer);
+    log_info("Data tag = %d", parameters.data_tag);
+    log_info("Timer = %d", parameters.timer);
     log_info("Key = 0x%08x", parameters.key);
 #if TYPE_SELECT == 2
     log_info("Degrees of freedom = %k", parameters.degrees_of_freedom);
