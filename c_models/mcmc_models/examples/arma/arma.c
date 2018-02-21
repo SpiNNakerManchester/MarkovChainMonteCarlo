@@ -120,7 +120,7 @@ CALC_TYPE mcmc_model_likelihood(
 		mcmc_state_pointer_t state) {
 	use(params);
 
-	char buffer[1024];
+//	char buffer[1024];
 
 	// read in AR and MA parameter dimensions
 	uint8_t p = PPOLYORDER;  // state->order_p;
@@ -155,7 +155,8 @@ err=zeros(N+q,1); % this vector will become non-zero from the p+q+1
 /*
 	Y=zeros(N,1);% this is the predicted output
 */
-	REAL Y[N]; // C99 compile flag required
+	//REAL Y[N]; // C99 compile flag required
+	CALC_TYPE Y;  // this is only used inside the upcoming loop
 
 /*
 MATLAB code that works:
@@ -182,10 +183,10 @@ end
 			tempdotq += state_parameters[p+j] * err[(i+q-1)-j]; // check this
 		}
 
-		// Add two results together plus mean // wait, it's a subtraction in Matlab code...
-		Y[i] = tempdotp - tempdotq + mu;
+		// Combine two results together plus mean
+		Y = tempdotp - tempdotq + mu;
 		// Error is data minus predicted data
-		err[i+q] = data[i] - Y[i];
+		err[i+q] = data[i] - Y;
 
 		// Reset dot products
 		tempdotp = ZERO;

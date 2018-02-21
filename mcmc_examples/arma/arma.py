@@ -6,15 +6,15 @@ from mcmc_examples.arma.arma_float_model import ARMAFloatModel
 #     import ARMAFixedPointModel
 
 # Data to use for 1000 data points (read from file)
-#data_10000 = numpy.loadtxt("data_10000.csv", delimiter=",")
+data_10000 = numpy.loadtxt("data_10000.csv", delimiter=",")
 
 # Data to use for 1000 data points (read from file)
-data_1000 = numpy.loadtxt("data_1000.csv", delimiter=",")
+#data_1000 = numpy.loadtxt("data_1000.csv", delimiter=",")
 
 # Edit this number if you want to use less of the data that you've loaded
-n_test_points = 1000  # 5000
-#data_points = data_10000[0:n_test_points]
-data_points = data_1000[0:n_test_points]
+n_test_points = 10000  # 1000  # 5000
+data_points = data_10000[0:n_test_points]
+#data_points = data_1000[0:n_test_points]
 
 seed = None  # set this if you want to use a different seed on each core
 #seed = [  # use this for the same seed on each core
