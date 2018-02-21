@@ -162,11 +162,14 @@ def run_mcmc(
                     MachineEdge(rf_vertex, vertex),
                     vertex.result_partition_name)  # "acknowledge key" set here
 
+
+    start_computing_time = time.time()
+
     # Run the simulation
     #g.run(None)
     g.run_until_complete()
 
-    start_computing_time = time.time()
+    mid_computing_time = time.time()
 
     # Wait for the application to finish
     txrx = g.transceiver()
@@ -206,6 +209,8 @@ def run_mcmc(
     print("Overhead time is %s seconds" % (start_computing_time - start_time))
     print("Computing time is %s seconds"
           % (finish_computing_time - start_computing_time))
+    print("run_until_complete takes %s seconds"
+          % (mid_computing_time - start_computing_time))
     print("Data collecting time is %s seconds"
           % (finish_time - finish_computing_time))
     print("Overall running time is %s seconds" % (finish_time - start_time))

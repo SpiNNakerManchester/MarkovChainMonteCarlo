@@ -39,7 +39,7 @@ enum regions {
 	PARAMETERS
 };
 
-struct more_parameters {
+struct rf_parameters {
 
     // Acknowledge key for parameter location in SDRAM
     uint32_t acknowledge_key;
@@ -47,7 +47,7 @@ struct more_parameters {
 };
 
 // The general parameters
-struct more_parameters more_parameters;
+struct rf_parameters rf_parameters;
 
 // Acknowledge key global variable
 uint32_t ack_key;
@@ -300,16 +300,16 @@ void end_callback(uint unused0, uint unused1) {
 }
 
 void c_main() {
-	// Get the ack_key from more_parameters
+	// Get the acknowledge key from rf_parameters
 	address_t data_address = data_specification_get_data_address();
-	address_t more_parameters_address = data_specification_get_region(
+	address_t rf_parameters_address = data_specification_get_region(
 	        PARAMETERS, data_address);
-	struct more_parameters *more_sdram_params =
-			(struct more_parameters *) more_parameters_address;
-	spin1_memcpy(&more_parameters, more_sdram_params,
-			sizeof(struct more_parameters));
+	struct rf_parameters *rf_sdram_params =
+			(struct rf_parameters *) rf_parameters_address;
+	spin1_memcpy(&rf_parameters, rf_sdram_params,
+			sizeof(struct rf_parameters));
 
-	ack_key = more_parameters.acknowledge_key;
+	ack_key = rf_parameters.acknowledge_key;
 
 	log_info("ack_key = 0x%08x", ack_key);
 
