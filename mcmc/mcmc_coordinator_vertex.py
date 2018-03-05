@@ -1,4 +1,4 @@
-from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
+from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
@@ -17,8 +17,8 @@ from spinn_front_end_common.abstract_models\
 from spinn_front_end_common.abstract_models\
     .abstract_provides_n_keys_for_partition \
     import AbstractProvidesNKeysForPartition
-from spinn_front_end_common.abstract_models.abstract_starts_synchronized \
-    import AbstractStartsSynchronized
+from spinn_front_end_common.utilities.utility_objs.executable_type \
+    import ExecutableType
 
 from spinn_machine.utilities.progress_bar import ProgressBar
 
@@ -29,36 +29,29 @@ import random
 class MCMCCoordinatorVertex(
         MachineVertex, AbstractHasAssociatedBinary,
         AbstractGeneratesDataSpecification,
-        AbstractProvidesNKeysForPartition,
-        AbstractStartsSynchronized):
+        AbstractProvidesNKeysForPartition):
     """ A vertex that runs the MCMC algorithm
     """
 
     # The number of bytes for the parameters
+    # (in mcmc_coordinator.c, 6*4 not including data)
     _N_PARAMETER_BYTES = 24
 
     # The data type of the data count
     _DATA_COUNT_TYPE = DataType.UINT32
 
-    # The data type of each data element
-    _DATA_ELEMENT_TYPE = DataType.FLOAT_64
-
-    # The numpy data type of each data element
-    _NUMPY_DATA_ELEMENT_TYPE = numpy.double
-
     # The data type of the keys
     _KEY_ELEMENT_TYPE = DataType.UINT32
 
     def __init__(
-            self, data, n_samples, burn_in, thinning,
-            alpha_jump_scale, alpha_min, alpha_max,
-            beta_jump_scale, beta_min, beta_max,
+            self, model, data, n_samples, burn_in, thinning,
             degrees_of_freedom, seed=None,
             send_timer=1000, receive_timer=1000, window_size=1024,
             n_sequences=2048, data_partition_name="MCMCData",
             acknowledge_partition_name="MCMCDataAck", data_tag=1):
         """
 
+        :param model: The model being simulated
         :param data: The data to sample
         :param n_samples: The number of samples to generate
         :param burn_in:\
@@ -66,30 +59,17 @@ class MCMCCoordinatorVertex(
             generating inference samples
         :param thinning:\
             sampling rate i.e. 5 = 1 sample for 5 generated steps
-        :param alpha_jump_scale:\
-            scaling of t transition distribution for MH jumps in alpha\
-            direction
-        :param alpha_min: The minimum value of alpha
-        :param alpha_max: The maximum value of alpha
-        :param beta_jump_scale:\
-            scaling of t transition distribution for MH jumps in beta direction
-        :param beta_min: The minimum value of beta
-        :param beta_max: The maximum value of beta
         :param degrees_of_freedom:\
             The number of degrees of freedom to jump around with
+        :param seed: The random seed to use
         """
 
-        MachineVertex.__init__(self, None, label="MCMC Node")
+        MachineVertex.__init__(self, label="MCMC Node", constraints=None)
+        self._model = model
         self._data = data
         self._n_samples = n_samples
         self._burn_in = burn_in
         self._thinning = thinning
-        self._alpha_jump_scale = alpha_jump_scale
-        self._alpha_min = alpha_min
-        self._alpha_max = alpha_max
-        self._beta_jump_scale = beta_jump_scale
-        self._beta_min = beta_min
-        self._beta_max = beta_max
         self._degrees_of_freedom = degrees_of_freedom
         self._seed = seed
         self._send_timer = send_timer
@@ -100,8 +80,24 @@ class MCMCCoordinatorVertex(
         self._acknowledge_partition_name = acknowledge_partition_name
         self._data_tag = data_tag
 
+        # The data type of each data element
+        if (self._model.get_parameters()[0].data_type is numpy.float64):
+            self._data_element_type = DataType.FLOAT_64
+        elif (self._model.get_parameters()[0].data_type is numpy.float32):
+            self._data_element_type = DataType.FLOAT_32
+        elif (self._model.get_parameters()[0].data_type is DataType.S1615):
+            self._data_element_type = DataType.S1615
+
+        # The numpy data type of each data element
+        if (self._model.get_parameters()[0].data_type is numpy.float64):
+            self._numpy_data_element_type = numpy.float64
+        elif (self._model.get_parameters()[0].data_type is numpy.float32):
+            self._numpy_data_element_type = numpy.float32
+        elif (self._model.get_parameters()[0].data_type is DataType.S1615):
+            self._numpy_data_element_type = numpy.uint32
+
         self._data_size = (
-            (len(self._data) * self._DATA_ELEMENT_TYPE.size) +
+            (len(self._data) * self._data_element_type.size) +
             self._DATA_COUNT_TYPE.size
         )
         self._sdram_usage = (
@@ -126,30 +122,6 @@ class MCMCCoordinatorVertex(
     @property
     def thinning(self):
         return self._thinning
-
-    @property
-    def alpha_jump_scale(self):
-        return self._alpha_jump_scale
-
-    @property
-    def beta_jump_scale(self):
-        return self._beta_jump_scale
-
-    @property
-    def alpha_min(self):
-        return self._alpha_min
-
-    @property
-    def alpha_max(self):
-        return self._alpha_max
-
-    @property
-    def beta_min(self):
-        return self._beta_min
-
-    @property
-    def beta_max(self):
-        return self._beta_max
 
     @property
     def degrees_of_freedom(self):
@@ -225,6 +197,10 @@ class MCMCCoordinatorVertex(
     def get_binary_file_name(self):
         return "mcmc_coordinator.aplx"
 
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
+    def get_binary_start_type(self):
+        return ExecutableType.SYNC
+
     @inject_items({
         "placements": "MemoryPlacements",
         "routing_info": "MemoryRoutingInfos"})
@@ -254,7 +230,7 @@ class MCMCCoordinatorVertex(
 
         # Write the data size in words
         spec.write_value(
-            len(self._data) * (float(self._DATA_ELEMENT_TYPE.size) / 4.0),
+            len(self._data) * (float(self._data_element_type.size) / 4.0),
             data_type=self._DATA_COUNT_TYPE)
 
         # Write the number of chips
@@ -276,7 +252,13 @@ class MCMCCoordinatorVertex(
         spec.write_value(self._send_timer, data_type=DataType.UINT32)
 
         # Write the data - Arrays must be 32-bit values, so convert
-        data = numpy.array(self._data, dtype=self._NUMPY_DATA_ELEMENT_TYPE)
+        if (self._model.get_parameters()[0].data_type is DataType.S1615):
+            data_convert = [int(x * float(DataType.S1615.scale))
+                            for x in self._data]
+            data = numpy.array(data_convert, dtype=self._numpy_data_element_type)
+        else:
+            data = numpy.array(self._data, dtype=self._numpy_data_element_type)
+
         spec.write_array(data.view(numpy.uint32))
 
         # Write the keys
@@ -297,8 +279,9 @@ class MCMCCoordinatorVertex(
         for placement in self._mcmc_placements:
 
             # Read the data recorded
-            samples.append(
-                placement.vertex.read_samples(buffer_manager, placement))
+            sample = placement.vertex.read_samples(buffer_manager, placement)
+            if sample is not None:
+                samples.append(sample);
             progress.update()
         progress.end()
 

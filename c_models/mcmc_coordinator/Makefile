@@ -6,15 +6,13 @@
 APP = mcmc_coordinator
 
 # Directory to create APLX files in (must include trailing slash)
-APP_OUTPUT_DIR = ./
+APP_OUTPUT_DIR = ../../mcmc/model_binaries/
 
 # Directory to place compilation artefacts (must include trailing slash)
 BUILD_DIR = ./build/
 
-CFLAGS += -Ofast
-LFLAGS += -Ofast
-
-LIBRARIES += -lm
+CFLAGS += ${OTIME}
+LFLAGS += ${OTIME}
 
 SOURCE_DIRS = .
 SOURCES = mcmc_coordinator.c
