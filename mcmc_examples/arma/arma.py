@@ -9,17 +9,17 @@ from mcmc_examples.arma.arma_float_model import ARMAFloatModel
 data_10000 = numpy.loadtxt("data_10000.csv", delimiter=",")
 
 # Data to use for 1000 data points (read from file)
-#data_1000 = numpy.loadtxt("data_1000.csv", delimiter=",")
+# data_1000 = numpy.loadtxt("data_1000.csv", delimiter=",")
 
 # Edit this number if you want to use less of the data that you've loaded
 n_test_points = 10000  # 1000  # 5000
 data_points = data_10000[0:n_test_points]
-#data_points = data_1000[0:n_test_points]
+# data_points = data_1000[0:n_test_points]
 
 seed = None  # set this if you want to use a different seed on each core
-#seed = [  # use this for the same seed on each core
+# seed = [  # use this for the same seed on each core
 #    123456789, 234567891, 345678912, 456789123, 0
-#]
+# ]
 
 # number of posterior samples required per core
 n_samples = 100
@@ -28,8 +28,8 @@ n_samples = 100
 mu = 0.1
 sigma = 0.08
 
-mu_jump_scale = 0.01
-sigma_jump_scale = 0.001
+mu_jump_scale = 0.001  # 0.01
+sigma_jump_scale = 0.0001 # 0.001
 
 # size of p and q arrays
 np = 9
@@ -41,14 +41,14 @@ parameters = []
 p_jump_scale = []
 for i in range(0,np):
     parameters.append(0.01)
-    p_jump_scale.append(0.001)
+    p_jump_scale.append(0.0001)
 
 # add q polynomial to parameters array
 # scaling of t transition distribution for MH jumps in q direction
 q_jump_scale = []
 for i in range(0,nq):
     parameters.append(0.01)
-    q_jump_scale.append(0.001)
+    q_jump_scale.append(0.0001)
 
 parameters.append(mu)
 parameters.append(sigma)

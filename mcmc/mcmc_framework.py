@@ -41,7 +41,7 @@ def run_mcmc(
         The number of degrees of freedom to jump around with
     :param seed: The random seed to use
     :param n_chips: The number of chips to run the model on
-    :param root_finder: Use the root finder
+    :param root_finder: Use the root finder by adding root finder vertices
 
     :return: The samples read
     :rtype: A numpy array with fields for each model state variable
@@ -71,16 +71,7 @@ def run_mcmc(
         boards[chip.x, chip.y] = chip.ip_address
 
     # Go through all the chips and add the workhorses
-#   non_worker_cores_per_chip = 1
     n_chips_on_machine = machine.n_chips
-    print 'n_chips_on_machine: ', n_chips_on_machine
-    print 'n_chips from user script: ', n_chips
-
-    # see how many available cores there are at this point
-    n_cores_available = g.get_number_of_available_cores_on_machine()
-
-    # Though, remember, this doesn't know about the coordinator at this point!
-
     n_workers = 0
     if (root_finder):
         n_root_finders = 0
@@ -97,13 +88,6 @@ def run_mcmc(
             n_cores -= 1  # just extra_monitor_support
             if (root_finder):
                 n_cores = n_cores / 2
-
-#        print 'n_cores before cheating is: ', n_cores
-#         take_into_account_chip_power_monitor = globals_variables.get_simulator(
-#             )._read_config_boolean("Reports", "write_energy_report")
-#         if take_into_account_chip_power_monitor:
-#             n_cores -= machine.n_chips
-
 
         # Find the coordinator for the board (or 0, 0 if it is missing)
         eth_x = chip.nearest_ethernet_x
@@ -161,7 +145,6 @@ def run_mcmc(
                 g.add_machine_edge_instance(
                     MachineEdge(rf_vertex, vertex),
                     vertex.result_partition_name)  # "acknowledge key" set here
-
 
     start_computing_time = time.time()
 
