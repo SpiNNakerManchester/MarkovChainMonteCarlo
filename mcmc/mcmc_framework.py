@@ -3,6 +3,7 @@ import spinnaker_graph_front_end as g
 from .mcmc_vertex import MCMCVertex
 from .mcmc_coordinator_vertex import MCMCCoordinatorVertex
 from .mcmc_root_finder_vertex import MCMCRootFinderVertex
+from .mcmc_cholesky_vertex import MCMCCholeskyVertex
 from . import model_binaries
 
 from pacman.model.constraints.placer_constraints\
@@ -26,7 +27,8 @@ logger = logging.getLogger(__name__)
 
 def run_mcmc(
         model, data, n_samples, burn_in=2000, thinning=5,
-        degrees_of_freedom=3.0, seed=None, n_chips=None, root_finder=False):
+        degrees_of_freedom=3.0, seed=None, n_chips=None, root_finder=False,
+        cholesky=False):
     """ Executes an MCMC model, returning the received samples
 
     :param model: The MCMCModel to be used
@@ -42,6 +44,7 @@ def run_mcmc(
     :param seed: The random seed to use
     :param n_chips: The number of chips to run the model on
     :param root_finder: Use the root finder by adding root finder vertices
+    :param cholesky: Use the Cholesky algorithm by adding Cholesky vertices
 
     :return: The samples read
     :rtype: A numpy array with fields for each model state variable
@@ -75,6 +78,8 @@ def run_mcmc(
     n_workers = 0
     if (root_finder):
         n_root_finders = 0
+    if (cholesky):
+        n_cholesky = 0
     for chip in machine.chips:
 
         # Count the cores in the processor
@@ -146,6 +151,29 @@ def run_mcmc(
                     MachineEdge(rf_vertex, vertex),
                     vertex.result_partition_name)  # "acknowledge key" set here
 
+            if (cholesky):
+                # Create a Cholesky vertex
+                cholesky_vertex = MCMCCholeskyVertex(vertex, model)
+                n_cholesky += 1
+                g.add_machine_vertex_instance(cholesky_vertex)
+
+                # put it on the same chip as the standard mcmc vertex?
+                # no - put it on a "nearby" chip, however that works
+                cholesky_vertex.add_constraint(
+                    ChipAndCoreConstraint(chip.x, chip.y))
+
+                # Add an edge from mcmc vertex to Cholesky vertex,
+                # to "send" the data - need to work this out
+                g.add_machine_edge_instance(
+                    MachineEdge(vertex, cholesky_vertex),
+                    vertex.cholesky_parameter_partition_name)  # key set here!
+
+                # Add edge from Choleskyvertex back to mcmc vertex
+                # to send acknowledgement / result - need to work this out
+                g.add_machine_edge_instance(
+                    MachineEdge(cholesky_vertex, vertex),
+                    vertex.cholesky_result_partition_name)  # "acknowledge key" set here
+
     start_computing_time = time.time()
 
     # Run the simulation
@@ -160,6 +188,8 @@ def run_mcmc(
     logger.info("Running {} worker cores".format(n_workers))
     if (root_finder):
         logger.info("Running {} root finder cores".format(n_root_finders))
+    if (cholesky):
+        logger.info("Running {} Cholesky cores".format(n_cholesky))
     logger.info("Waiting for application to finish...")
     running = txrx.get_core_state_count(app_id, CPUState.RUNNING)
     # there are now cores doing extra_monitor etc.
@@ -189,6 +219,7 @@ def run_mcmc(
 
     finish_time = time.time()
 
+    # Note: this timing appears to be incorrect now; needs looking at
     print("Overhead time is %s seconds" % (start_computing_time - start_time))
     print("Computing time is %s seconds"
           % (finish_computing_time - start_computing_time))
