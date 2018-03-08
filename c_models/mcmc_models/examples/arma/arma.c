@@ -282,20 +282,25 @@ void mcmc_model_transition_jump(
 	unsigned int i;
 
 	// Update polynomial coefficients
-	for (i=0; i < p; i++) {
+	for (i=0; i < p+q+2; i++) {
 		new_state->parameters[i] = parameters[i] +
-				(t_deviate() * params->p_jump_scale[i]);
-	}
-	for (i=p; i < p+q; i++) {
-		new_state->parameters[i] = parameters[i] +
-				(t_deviate() * params->q_jump_scale[i-p]);
+				(t_deviate() * params->jump_scale[i]);
 	}
 
-	// Update mu and sigma
-	new_state->parameters[p+q] = parameters[p+q] +
-			(t_deviate() * params->mu_jump_scale);
-	new_state->parameters[p+q+1] = parameters[p+q+1] +
-			(t_deviate() * params->sigma_jump_scale);
+//	for (i=0; i < p; i++) {
+//		new_state->parameters[i] = parameters[i] +
+//				(t_deviate() * params->p_jump_scale[i]);
+//	}
+//	for (i=p; i < p+q; i++) {
+//		new_state->parameters[i] = parameters[i] +
+//				(t_deviate() * params->q_jump_scale[i-p]);
+//	}
+//
+//	// Update mu and sigma
+//	new_state->parameters[p+q] = parameters[p+q] +
+//			(t_deviate() * params->mu_jump_scale);
+//	new_state->parameters[p+q+1] = parameters[p+q+1] +
+//			(t_deviate() * params->sigma_jump_scale);
 }
 
 /*

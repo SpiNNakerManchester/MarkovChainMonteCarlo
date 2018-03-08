@@ -74,7 +74,7 @@ class MCMCCholeskyVertex(
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        return "mcmc_root_finder.aplx"
+        return "mcmc_cholesky.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):

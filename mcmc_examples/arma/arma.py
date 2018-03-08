@@ -38,20 +38,25 @@ nq = 9
 # set up parameters array with p polynomial
 # and scaling of t transition distribution for MH jumps in p direction
 parameters = []
-p_jump_scale = []
+jump_scale = []
+#p_jump_scale = []
 for i in range(0,np):
     parameters.append(0.01)
-    p_jump_scale.append(0.0001)
+    jump_scale.append(0.0001)
+ #   p_jump_scale.append(0.0001)
 
 # add q polynomial to parameters array
 # scaling of t transition distribution for MH jumps in q direction
-q_jump_scale = []
+#q_jump_scale = []
 for i in range(0,nq):
     parameters.append(0.01)
-    q_jump_scale.append(0.0001)
+    jump_scale.append(0.0001)
+    #q_jump_scale.append(0.0001)
 
 parameters.append(mu)
+jump_scale.append(mu_jump_scale)
 parameters.append(sigma)
+jump_scale.append(sigma_jump_scale)
 
 print 'data: ', data_points
 
@@ -59,8 +64,8 @@ print 'state parameter set: ', parameters
 
 # Run and get the samples
 #model = ARMAModel(parameters, p_jump_scale, q_jump_scale)
-model = ARMAFloatModel(parameters, p_jump_scale, q_jump_scale, mu_jump_scale,
-                       sigma_jump_scale)
+model = ARMAFloatModel(parameters, jump_scale) # p_jump_scale, q_jump_scale, mu_jump_scale,
+                       #sigma_jump_scale)
 #model = ARMAFixedPointModel(
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
