@@ -77,6 +77,9 @@ struct parameters {
     // Key for sending parameters
     uint32_t key;
 
+    // Cholesky key for sending parameters
+    uint32_t cholesky_key;
+
     // The random seed
     uniform_seed seed;
 
@@ -408,7 +411,7 @@ void run(uint unused0, uint unused1) {
     do {
         // make a jump around parameter space using bivariate t distribution
         // with 3 degrees of freedom
-        mcmc_model_transition_jump(params, state, new_state);
+        mcmc_model_transition_jump(params, state, new_state, likelihood_calls);
 
         // update likelihood function counter for diagnostics
         likelihood_calls++;
@@ -566,6 +569,7 @@ void c_main() {
     log_info("Data tag = %d", parameters.data_tag);
     log_info("Timer = %d", parameters.timer);
     log_info("Key = 0x%08x", parameters.key);
+    log_info("Cholesky key = 0x%08x", parameters.cholesky_key);
 #if TYPE_SELECT == 2
     log_info("Degrees of freedom = %k", parameters.degrees_of_freedom);
 #else

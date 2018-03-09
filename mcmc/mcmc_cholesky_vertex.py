@@ -93,10 +93,10 @@ class MCMCCholeskyVertex(
             MCMCCholeskyRegions.PARAMETERS.value, self._n_parameter_bytes)
         spec.switch_write_focus(MCMCCholeskyRegions.PARAMETERS.value)
 
-        # We may need the recording region in this instance as well
+        # We may need the recording region in this instance as well?
 
         # Write the acknowledge key
-        spec.write_value(self._vertex.get_result_key(
+        spec.write_value(self._vertex.get_cholesky_result_key(
             placement, routing_info))
 
         # End the specification

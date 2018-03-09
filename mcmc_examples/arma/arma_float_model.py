@@ -12,7 +12,7 @@ class ARMAFloatModel(MCMCModel):
     """
 
     def __init__(
-            self, parameters, jump_scale):
+            self, parameters, jump_scale, root_finder=True, cholesky=True):
         #p_jump_scale, q_jump_scale, mu_jump_scale,
         #    sigma_jump_scale):
         """
@@ -32,6 +32,8 @@ class ARMAFloatModel(MCMCModel):
 
         self._parameters = parameters
         self._jump_scale = jump_scale
+        self._root_finder = root_finder
+        self._cholesky = cholesky
 #         self._p_jump_scale = p_jump_scale
 #         self._q_jump_scale = q_jump_scale
 #         self._mu_jump_scale = mu_jump_scale
@@ -73,3 +75,11 @@ class ARMAFloatModel(MCMCModel):
                                   self._parameters[i], numpy.float32))
 
         return return_state_vars
+
+    @property
+    def root_finder(self):
+        return self._root_finder
+
+    @property
+    def cholesky(self):
+        return self._cholesky

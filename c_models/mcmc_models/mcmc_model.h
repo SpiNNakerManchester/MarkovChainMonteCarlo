@@ -93,7 +93,7 @@ CALC_TYPE mcmc_model_prior_prob(
 // !\brief Jump to a new state from the current state
 void mcmc_model_transition_jump(
     mcmc_params_pointer_t params, mcmc_state_pointer_t state,
-    mcmc_state_pointer_t new_state);
+    mcmc_state_pointer_t new_state, uint32_t timestep);
 
 // !\brief Define the exit function from MCMC
 void mcmc_exit_function();

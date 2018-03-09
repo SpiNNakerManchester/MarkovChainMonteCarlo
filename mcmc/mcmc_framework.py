@@ -27,8 +27,9 @@ logger = logging.getLogger(__name__)
 
 def run_mcmc(
         model, data, n_samples, burn_in=2000, thinning=5,
-        degrees_of_freedom=3.0, seed=None, n_chips=None, root_finder=False,
-        cholesky=False):
+        degrees_of_freedom=3.0, seed=None, n_chips=None):
+#    , root_finder=False,
+#        cholesky=False):
     """ Executes an MCMC model, returning the received samples
 
     :param model: The MCMCModel to be used
@@ -43,8 +44,8 @@ def run_mcmc(
         The number of degrees of freedom to jump around with
     :param seed: The random seed to use
     :param n_chips: The number of chips to run the model on
-    :param root_finder: Use the root finder by adding root finder vertices
-    :param cholesky: Use the Cholesky algorithm by adding Cholesky vertices
+#    :param root_finder: Use the root finder by adding root finder vertices
+#    :param cholesky: Use the Cholesky algorithm by adding Cholesky vertices
 
     :return: The samples read
     :rtype: A numpy array with fields for each model state variable
@@ -76,9 +77,9 @@ def run_mcmc(
     # Go through all the chips and add the workhorses
     n_chips_on_machine = machine.n_chips
     n_workers = 0
-    if (root_finder):
+    if (model.root_finder):
         n_root_finders = 0
-    if (cholesky):
+    if (model.cholesky):
         n_cholesky = 0
     for chip in machine.chips:
 
@@ -87,12 +88,18 @@ def run_mcmc(
         n_cores = len([p for p in chip.processors if not p.is_monitor])
         if (chip.x, chip.y) in coordinators:
             n_cores -= 3  # coordinator and extra_monitor_support (2)
-            if (root_finder):
-                n_cores = n_cores / 2
+            if (model.root_finder):
+                if (model.cholesky):
+                    n_cores = n_cores / 3
+                else:
+                    n_cores = n_cores / 2
         else:
             n_cores -= 1  # just extra_monitor_support
-            if (root_finder):
-                n_cores = n_cores / 2
+            if (model.root_finder):
+                if (model.cholesky):
+                    n_cores = n_cores / 3
+                else:
+                    n_cores = n_cores / 2
 
         # Find the coordinator for the board (or 0, 0 if it is missing)
         eth_x = chip.nearest_ethernet_x
@@ -129,7 +136,7 @@ def run_mcmc(
                 MachineEdge(vertex, coordinator),
                 coordinator.acknowledge_partition_name)
 
-            if (root_finder):
+            if (model.root_finder):
                 # Create a root finder vertex
                 rf_vertex = MCMCRootFinderVertex(vertex, model)
                 n_root_finders += 1
@@ -151,7 +158,7 @@ def run_mcmc(
                     MachineEdge(rf_vertex, vertex),
                     vertex.result_partition_name)  # "acknowledge key" set here
 
-            if (cholesky):
+            if (model.cholesky):
                 # Create a Cholesky vertex
                 cholesky_vertex = MCMCCholeskyVertex(vertex, model)
                 n_cholesky += 1
@@ -166,9 +173,9 @@ def run_mcmc(
                 # to "send" the data - need to work this out
                 g.add_machine_edge_instance(
                     MachineEdge(vertex, cholesky_vertex),
-                    vertex.cholesky_parameter_partition_name)  # key set here!
+                    vertex.cholesky_partition_name)  # key set here!
 
-                # Add edge from Choleskyvertex back to mcmc vertex
+                # Add edge from Cholesky vertex back to mcmc vertex
                 # to send acknowledgement / result - need to work this out
                 g.add_machine_edge_instance(
                     MachineEdge(cholesky_vertex, vertex),
@@ -186,9 +193,9 @@ def run_mcmc(
     txrx = g.transceiver()
     app_id = globals_variables.get_simulator()._app_id
     logger.info("Running {} worker cores".format(n_workers))
-    if (root_finder):
+    if (model.root_finder):
         logger.info("Running {} root finder cores".format(n_root_finders))
-    if (cholesky):
+    if (model.cholesky):
         logger.info("Running {} Cholesky cores".format(n_cholesky))
     logger.info("Waiting for application to finish...")
     running = txrx.get_core_state_count(app_id, CPUState.RUNNING)

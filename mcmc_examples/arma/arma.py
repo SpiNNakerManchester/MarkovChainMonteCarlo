@@ -64,15 +64,16 @@ print 'state parameter set: ', parameters
 
 # Run and get the samples
 #model = ARMAModel(parameters, p_jump_scale, q_jump_scale)
-model = ARMAFloatModel(parameters, jump_scale) # p_jump_scale, q_jump_scale, mu_jump_scale,
-                       #sigma_jump_scale)
+#model = ARMAFloatModel(parameters, jump_scale, root_finder=True, cholesky=False)
+model = ARMAFloatModel(parameters, jump_scale)  # note: this sets both True
+# p_jump_scale, q_jump_scale, mu_jump_scale, sigma_jump_scale)
 #model = ARMAFixedPointModel(
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
 samples = mcmc_framework.run_mcmc(
     model, data_points, n_samples,
-    degrees_of_freedom=3.0, seed=seed, n_chips=3*43,
-    root_finder=True)  # n_chips=23*48)
+    degrees_of_freedom=3.0, seed=seed, n_chips=3*43)
+#    root_finder=True, cholesky=False)  # n_chips=23*48)
 
 print 'samples: ', samples
 

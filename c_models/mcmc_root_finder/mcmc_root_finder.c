@@ -213,6 +213,8 @@ void run(uint unused0, uint unused1) {
     uint8_t i, p, q;
     CALC_TYPE state_parameters[PPOLYORDER+QPOLYORDER+2];
 
+    log_info("ROOTFINDER: running root finder");
+
     // p and q defined in header
     p = PPOLYORDER;
     q = QPOLYORDER;
