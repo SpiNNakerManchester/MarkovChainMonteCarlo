@@ -68,12 +68,12 @@ class MCMCVertex(
         params = self._get_model_parameters_array()
 
         # The number of bytes for the parameters
-        # (10 * uint32) + (5 * seed array) + (1 * d.o.f.)
+        # (11 * uint32) + (5 * seed array) + (1 * d.o.f.)
         self._n_parameter_bytes = 0
         if (model.get_parameters()[0].data_type is numpy.float64):
-            self._n_parameter_bytes = (10 * 4) + (5 * 4) + (1 * 8)
+            self._n_parameter_bytes = (11 * 4) + (5 * 4) + (1 * 8)
         else:
-            self._n_parameter_bytes = (10 * 4) + (5 * 4) + (1 * 4)
+            self._n_parameter_bytes = (11 * 4) + (5 * 4) + (1 * 4)
 
         self._sdram_usage = (
             self._n_parameter_bytes + self._recording_size +
@@ -82,6 +82,7 @@ class MCMCVertex(
             )
 
         self._data_receiver = dict()
+        self._cholesky_data_receiver = dict()
 
     def _get_model_parameters_array(self):
         parameters = self._model.get_parameters()
@@ -134,13 +135,7 @@ class MCMCVertex(
         if self._is_receiver_placement(placement):
             key = routing_info.get_first_key_from_pre_vertex(
                 placement.vertex, self._result_partition_name)
-            return key
-        return 0
-
-    def get_cholesky_result_key(self, placement, routing_info):
-        if self._is_receiver_placement(placement):
-            key = routing_info.get_first_key_from_pre_vertex(
-                placement.vertex, self._cholesky_result_partition_name)
+            print('result key is ', key)
             return key
         return 0
 
@@ -151,6 +146,22 @@ class MCMCVertex(
             self._data_receiver[x, y] = placement.p
             return True
         return self._data_receiver[(x, y)] == placement.p
+
+    def get_cholesky_result_key(self, placement, routing_info):
+        if self._is_cholesky_receiver_placement(placement):
+            key = routing_info.get_first_key_from_pre_vertex(
+                placement.vertex, self._cholesky_result_partition_name)
+            print('cholesky result key is ', key)
+            return key
+        return 0
+
+    def _is_cholesky_receiver_placement(self, placement):
+        x = placement.x
+        y = placement.y
+        if (x, y) not in self._cholesky_data_receiver:
+            self._cholesky_data_receiver[x, y] = placement.p
+            return True
+        return self._cholesky_data_receiver[(x, y)] == placement.p
 
     @property
     def coordinator(self):

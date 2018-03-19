@@ -115,7 +115,7 @@ uint8_t result_value;
 uint32_t cholesky_result;
 
 void result_callback(uint key, uint payload) {
-//	log_info("ARMA: result_callback");
+	log_info("ARMA: result_callback");
 	use(key);
 	result_value = payload;
 	cholesky_result = payload;
@@ -298,48 +298,48 @@ void mcmc_model_transition_jump(
 	uint32_t q = QPOLYORDER;  // state->order_q;
 	unsigned int i;
 
+	cholesky_result = 2;
+
 	// NOTE (16/2/18): this needs to use Cholesky decomposition to
 	// update the jump scale parameters
 	log_info("ARMA: transition_jump function, timestep %d", timestep);
+
+	// send address of parameters to Cholesky and carry on with calculation
+	spin1_memcpy(model_state_address, parameters, state_n_bytes);
+
+	// Send mc packet with payload of address value to wake up Cholesky
+	spin1_send_mc_packet(cholesky_key, model_state_address, WITH_PAYLOAD);
+
+	log_info("ARMA: cholesky send model_state %d", model_state_address);
+
+	while (cholesky_result == 2) {
+		spin1_wfi();
+	}
 
 	// Cholesky decomposition happens every N timesteps, so I guess
 	// this should be a parameter in the jump function...
 	// Need to remember to make this start from 1...
 	if ((timestep % NCHOLESKY) == 0) {
-		//
-		cholesky_result = 0;
+
+		// Reset this value again...
+		cholesky_result = 2;
 
 		log_info("ARMA: cholesky_result send %d", model_params_address);
 
 		// send address of parameters and carry on with calculation
 		spin1_memcpy(model_params_address, jump_scale, params_n_bytes);
 
-		// Send mc packet with payload of address value to wake up Cholesky
+		// Send mc packet with the model params address this time
 		spin1_send_mc_packet(cholesky_key, model_params_address, WITH_PAYLOAD);
-
-		// set up callback for values from Cholesky
-//		spin1_callback_on(MCPL_PACKET_RECEIVED, cholesky_callback, -1);
-
-//		log_info("ARMA: callback set up for cholesky");
 
 		// When Cholesky has finished it returns the address of the location
 		// of the updated jump scale
-		while (cholesky_result == 0) {
+		while (cholesky_result == 2) {
 			spin1_wfi();
 		}
 
-		log_info("ARMA: cholesky_result %d", cholesky_result);
-
 		// copy the returned values from memory
 		spin1_memcpy(jump_scale, cholesky_result, params_n_bytes);
-
-	} else {
-		// send address of parameters and carry on with calculation
-		spin1_memcpy(model_state_address, parameters, state_n_bytes);
-
-		// Send mc packet with payload of address value to wake up cholesky
-		spin1_send_mc_packet(cholesky_key, model_state_address, WITH_PAYLOAD);
-		log_info("ARMA: cholesky send %d", model_state_address);
 	}
 
 	// Update polynomial coefficients

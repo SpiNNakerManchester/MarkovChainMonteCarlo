@@ -1,5 +1,6 @@
 #include "mcmc_cholesky.h"
 #include "../mcmc_models/mcmc_model.h"
+//#include "../mcmc_models/examples/arma/arma.h"
 
 #include <spin1_api.h>
 #include <stdint.h>
@@ -33,8 +34,7 @@ uint32_t *t_jump_ptr;
 //}
 
 enum regions {
-	//RECORDING, // I think this is probably necessary as it is where the history
-	           // data that we need to use will be stored... ?
+	// add a recording region if required
 	PARAMETERS
 };
 
@@ -57,6 +57,8 @@ DataMat samples;
 // Global variable for number of samples so far
 uint32_t n_samples_read;
 
+void trigger_run(uint key, uint payload);
+
 // Helper functions for Cholesky decomposition go here
 void zero_upper_triang(Mat A, uint32_t size) {
 	uint32_t i, j;
@@ -67,15 +69,27 @@ void zero_upper_triang(Mat A, uint32_t size) {
 }
 
 void cholesky(Mat A, const uint32_t size, bool zero_upper) {
-	uint32_t i, j, k;
+	uint32_t i, j;
+	int32_t k;
 	float sum;
 
-	FOR( i, size ) {
-		for( j = i; j < size; j++ ) {
-			sum = A[i][j];
-			for( k = i-1; k >= 0; k-- )
-				sum -= A[i][k] * A[j][k];
+	log_info("Cholesky: A[0][0] %k", (accum) A[0][0]);
+	log_info("Cholesky: A[10][10] %k", (accum) A[10][10]);
+	log_info("Cholesky: A[10][15] %k", (accum) A[10][15]);
 
+	log_info("Cholesky: size is %d", size);
+
+	FOR( i, size ) {
+		//log_info("i=%d", i);
+		for( j = i; j < size; j++ ) {
+			//log_info("j=%d", j);
+			//sum = A[i][j];
+			for( sum = A[i][j], k = i-1; k >= 0; k-- ) {
+				//log_info("k=%d, sum=%k", k, (accum) sum);
+				sum -= A[i][k] * A[j][k];
+			}
+
+			//log_info("i=%d j=%d, sum is %k", i, j, (accum) sum);
 			if ( i == j ) {
 				if ( sum <= 0.0f ) { // the other possibility here is to fail with an error
 					log_info("Warning: possible non-pds matrix in cholesky()\n");
@@ -83,11 +97,11 @@ void cholesky(Mat A, const uint32_t size, bool zero_upper) {
 				}
 				else
 					A[i][i] = sqrtf( sum );
-				}
+			}
 			else
 				A[j][i] = sum / A[i][i];
-			}
 		}
+	}
 
 	if( zero_upper )
 		zero_upper_triang( A, size ); 	// zero upper triangle if necessary - for our application it is
@@ -113,6 +127,8 @@ void mean_covar_of_mat_n(const DataMat data, Vec mean, Mat cov,
 		const uint32_t n, const uint32_t d) {
 	uint32_t i, j, k;
 	float 	sum, xi, xj, covar;
+
+	log_info("Covariance matrix");
 
 	FOR( i, d ) {									// calculate means
 		for ( sum = 0.0f, j = 0; j < n; j++ )
@@ -142,6 +158,8 @@ void mean_covar_of_mat_n(const DataMat data, Vec mean, Mat cov,
 			if( i != j )
 				cov[j][i] = cov[i][j];
 
+			log_info("i=%d j=%d, cov=%k", i, j, (accum) cov[i][j]);
+
 		}
 	}
 
@@ -160,8 +178,16 @@ uint32_t mcmc_model_get_state_n_bytes() {
 void t_jump_callback(uint key, uint payload) {
 	use(key);
 	t_jump_ptr[0] = payload;
-	log_info("Cholesky: t_jump_callback");
+	log_info("Cholesky: t_jump_callback payload %d", payload);
+	//spin1_callback_off(TIMER_TICK);
 }
+
+//void call_run(uint key, uint payload) {
+//	use(key);
+//	parameter_rec_ptr[0] = payload;
+//	log_info("Cholesky: call_run, payload %d", payload);
+//	run(0,0);
+//}
 
 // Function to collect parameter history and run Cholesky algorithm
 void run(uint unused0, uint unused1) {
@@ -172,8 +198,9 @@ void run(uint unused0, uint unused1) {
  //   char buffer[1024];
     bool zero_upper = true;
 
-    uint32_t params_n_bytes, state_n_bytes;
-    uint8_t p, q, n, i;
+    uint32_t params_n_bytes, state_n_bytes, n;
+    uint32_t p, q, i;
+    uint status;
     Vec mean, rot_scaled_t_jump, t_jump;
     Mat cov;
 
@@ -198,22 +225,57 @@ void run(uint unused0, uint unused1) {
 
     log_info("Cholesky: n_samples_read is %d %d", n_samples_read, NCOVSAMPLES);
 
-	// Do the work here
-	if (n_samples_read == NCOVSAMPLES) {
-	    // register for message from arma about location of t_jump vector ?
-	//    spin1_callback_on(MCPL_PACKET_RECEIVED, t_jump_callback, -1);
+    log_info("Cholesky: pointer values %d %d", parameter_rec_ptr[0],
+    		t_jump_ptr[0]);
 
-	    log_info("Cholesky: pointer values %d %d &d", NCOVSAMPLES,
-	    		parameter_rec_ptr[0], t_jump_ptr[0]);
+    // Build up the sample
+	state_n_bytes = mcmc_model_get_state_n_bytes();
+	spin1_memcpy(state_parameters, parameter_rec_ptr[0], state_n_bytes);
+
+	for (i=0; i<n; i++) {
+		samples[n_samples_read][i] = state_parameters[i];
+	}
+
+	// send ptr back to the main vertex?
+	while (!spin1_send_mc_packet(ack_key, parameter_rec_ptr[0],
+			WITH_PAYLOAD)) {
+		spin1_delay_us(1);
+	}
+
+	// We have now read in this sample
+	n_samples_read++;
+
+	// Do the work here every NCOVSAMPLES timesteps
+	if (n_samples_read == NCOVSAMPLES) {
+
+//		status = spin1_int_disable();
+		spin1_callback_off(MCPL_PACKET_RECEIVED);
+
+		// register to get the correct address for the jump scale parameters
+	    spin1_callback_on(MCPL_PACKET_RECEIVED, t_jump_callback, -1);
+
+	    log_info("Cholesky: pointer values %d %d", parameter_rec_ptr[0],
+	    		t_jump_ptr[0]);
 
 	    // We have reached the point where we want to do the calculation
 		log_info("Cholesky: doing the calculation %d", NCOVSAMPLES);
+		log_info("Cholesky: samples[0][0] %k", (accum) samples[0][0]);
+		log_info("Cholesky: samples[1][0] %k", (accum) samples[1][0]);
+		log_info("Cholesky: samples[2][0] %k", (accum) samples[2][0]);
+		log_info("Cholesky: samples[5][0] %k", (accum) samples[5][0]);
+		log_info("Cholesky: samples[15][0] %k", (accum) samples[15][0]);
+		log_info("Cholesky: samples[95][0] %k", (accum) samples[95][0]);
+		log_info("Cholesky: samples[99][0] %k", (accum) samples[99][0]);
 
 		// Get the mean and covariance of the samples matrix
 		mean_covar_of_mat_n(samples, mean, cov, n_samples_read, n);
 
 		log_info("Cholesky: decompostion time, cov[0][0] %k",
 				(accum) cov[0][0]);
+		log_info("Cholesky: decompostion time, cov[1][1] %k",
+				(accum) cov[1][1]);
+		log_info("Cholesky: decompostion time, cov[10][10] %k",
+				(accum) cov[10][10]);
 
 		// Do the Cholesky decomposition
 		cholesky(cov, n, zero_upper);
@@ -223,10 +285,9 @@ void run(uint unused0, uint unused1) {
 	    log_info("Cholesky: pointer values %d %d", parameter_rec_ptr[0],
 	    		t_jump_ptr[0]);
 
-		// get the "old" t_jump from memory, somehow: remember it's the
-		// same size as the model state parameters
+		// get the "old" t_jump from memory
 		params_n_bytes = mcmc_model_get_params_n_bytes();
-		spin1_memcpy(t_jump, parameter_rec_ptr[0], params_n_bytes);
+		spin1_memcpy(t_jump, t_jump_ptr[0], params_n_bytes);
 
 		// Should probably check here what's in t_jump
 		log_info("t_jump[0] %k", (accum) t_jump[0]);
@@ -234,45 +295,32 @@ void run(uint unused0, uint unused1) {
 		// generate a new t_jump vector
 		vec_times_mat_scaled(t_jump, cov, rot_scaled_t_jump, 0.25, n);
 
+		log_info("Cholesky: vec_times_mat_scaled, rot_scaled_t_jump[0]=%k",
+				(accum) rot_scaled_t_jump[0]);
+
 		// Copy this to relevant location
-		spin1_memcpy(parameter_rec_ptr[0], rot_scaled_t_jump, params_n_bytes);
+		spin1_memcpy(t_jump_ptr[0], rot_scaled_t_jump, params_n_bytes);
 
 		// send ptr back to the main vertex?
-		while (!spin1_send_mc_packet(ack_key, t_jump_ptr[0], WITH_PAYLOAD)) {
+		while (!spin1_send_mc_packet(ack_key, t_jump_ptr[0],
+				WITH_PAYLOAD)) {
 			spin1_delay_us(1);
 		}
 
-		// Reset number of samples back to zero
-		n_samples_read = 1;
+		log_info("Cholesky: after ptr sent back to ARMA");
+
+		// Reset number of samples back to original value
+		n_samples_read = 0;
+
+		// turn this callback off somehow...
+		spin1_callback_off(MCPL_PACKET_RECEIVED);
+
+		spin1_callback_on(MCPL_PACKET_RECEIVED, trigger_run, -1);
+
+//		spin1_mode_restore(status);
 
 		// or something like this anyway...
 	}
-	else {
-	    log_info("Cholesky: pointer values %d %d", parameter_rec_ptr[0],
-	    		t_jump_ptr[0]);
-
-	    // Build up the sample
-		state_n_bytes = mcmc_model_get_state_n_bytes();
-		spin1_memcpy(state_parameters, parameter_rec_ptr[0], state_n_bytes);
-
-		for (i=0; i<n; i++) {
-			samples[n_samples_read][i] = state_parameters[i];
-		}
-
-		// We have now read in this sample
-		n_samples_read++;
-	}
-
-
-	// At this point send the calculated Cholesky matrix back to the
-	// model transition jump function in arma.c ?
-	// Or is it better to do the matrix * parameters calc here and send
-	// that result back?  ITCM may decide this...
-	// wait here until packet is acknowledged/sent...
-//	float returnval = ONE;
-//	while (!spin1_send_mc_packet(ack_key, returnval, WITH_PAYLOAD)) {
-//		spin1_delay_us(1);
-//	}
 
 	// End of required functions
 
@@ -282,7 +330,8 @@ void trigger_run(uint key, uint payload) {
 	use(key);
 	// Get the pointer value to the location in SDRAM
 	parameter_rec_ptr[0] = payload;
-	// Get ready to run the root_finder algorithm
+	log_info("Cholesky: trigger_run payload %d", payload);
+	// Get ready to run the cholesky algorithm
 	spin1_callback_off(TIMER_TICK);
     spin1_schedule_callback(run, 0, 0, 2);
 }
@@ -312,7 +361,7 @@ void c_main() {
 	log_info("ack_key = 0x%08x", ack_key);
 
 	// Set the global variable
-	n_samples_read = 1;
+	n_samples_read = 0;
 
 	// register for the start message ?
     spin1_callback_on(MCPL_PACKET_RECEIVED, trigger_run, -1);

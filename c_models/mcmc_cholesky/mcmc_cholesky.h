@@ -25,4 +25,3 @@ void vec_times_mat_scaled(const Vec vec, const Mat mat, Vec res,
 
 void mean_covar_of_mat_n(const DataMat data, Vec mean, Mat cov,
 		const uint32_t n, const uint32_t d);
-

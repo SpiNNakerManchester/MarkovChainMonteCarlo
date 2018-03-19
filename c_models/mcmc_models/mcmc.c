@@ -411,7 +411,8 @@ void run(uint unused0, uint unused1) {
     do {
         // make a jump around parameter space using bivariate t distribution
         // with 3 degrees of freedom
-        mcmc_model_transition_jump(params, state, new_state, likelihood_calls);
+        mcmc_model_transition_jump(params, state, new_state,
+        		likelihood_calls);
 
         // update likelihood function counter for diagnostics
         likelihood_calls++;
