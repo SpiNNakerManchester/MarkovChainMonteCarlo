@@ -5,7 +5,7 @@
 #define FOR( i, n ) for( i = 0; i < (n); i++ )
 
 // Guessing that I need to define Mat and Vec somewhere here
-#define NCOVSAMPLES 100
+#define NCOVSAMPLES 700
 
 // Matrices and vectors are mainly defined by the number of state parameters
 typedef float Mat[PPOLYORDER+QPOLYORDER+2][PPOLYORDER+QPOLYORDER+2];

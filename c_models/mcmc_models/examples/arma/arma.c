@@ -6,7 +6,7 @@
 
 #define ROOT_FAIL CONCAT(-1000.000000, SUFFIX)		// how bad is a root failure
 #define REAL float
-#define NCHOLESKY 100
+#define NCHOLESKY 700
 
 enum regions {
     RECORDING,

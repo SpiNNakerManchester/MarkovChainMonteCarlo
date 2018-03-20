@@ -15,23 +15,23 @@ uint32_t *parameter_rec_ptr;  // will need something like this...
 uint32_t *t_jump_ptr;
 
 // Functions required to print floats as hex values (uncomment for debug)
-//struct double_uint {
-//    uint first_word;
-//    uint second_word;
-//};
-//
-//union double_to_ints {
-//    CALC_TYPE double_value;
-//    struct double_uint int_values;
-//};
-//
-//void print_value_rf(CALC_TYPE d_value, char *buffer) {
-//    union double_to_ints converter;
-//    converter.double_value = d_value;
-//    io_printf(
-//        buffer, "0x%08x%08x",
-//        converter.int_values.second_word, converter.int_values.first_word);
-//}
+struct double_uint {
+    uint first_word;
+    uint second_word;
+};
+
+union double_to_ints {
+    CALC_TYPE double_value;
+    struct double_uint int_values;
+};
+
+void print_value_ch(CALC_TYPE d_value, char *buffer) {
+    union double_to_ints converter;
+    converter.double_value = d_value;
+    io_printf(
+        buffer, "0x%08x%08x",
+        converter.int_values.second_word, converter.int_values.first_word);
+}
 
 enum regions {
 	// add a recording region if required
@@ -63,6 +63,8 @@ void trigger_run(uint key, uint payload);
 void zero_upper_triang(Mat A, uint32_t size) {
 	uint32_t i, j;
 
+	log_info("Cholesky: zero_upper_triang");
+
 	FOR( i, size )
 		for( j = i+1; j < size; j++ )
 			A[i][j] = 0.0f;
@@ -72,6 +74,7 @@ void cholesky(Mat A, const uint32_t size, bool zero_upper) {
 	uint32_t i, j;
 	int32_t k;
 	float sum;
+	char buffer[1024];
 
 	log_info("Cholesky: A[0][0] %k", (accum) A[0][0]);
 	log_info("Cholesky: A[10][10] %k", (accum) A[10][10]);
@@ -87,6 +90,9 @@ void cholesky(Mat A, const uint32_t size, bool zero_upper) {
 			for( sum = A[i][j], k = i-1; k >= 0; k-- ) {
 				//log_info("k=%d, sum=%k", k, (accum) sum);
 				sum -= A[i][k] * A[j][k];
+				print_value_ch(sum, buffer);
+				log_info("i,j,k = %d,%d,%d ; sum=%k hex is %s", i, j, k,
+						(accum) sum, buffer);
 			}
 
 			//log_info("i=%d j=%d, sum is %k", i, j, (accum) sum);
@@ -100,6 +106,11 @@ void cholesky(Mat A, const uint32_t size, bool zero_upper) {
 			}
 			else
 				A[j][i] = sum / A[i][i];
+
+
+			print_value_ch(A[j][i], buffer);
+			log_info("A[%d][%d] = %k, hex is %s",
+					j, i, (accum) A[j][i], buffer);
 		}
 	}
 
@@ -128,14 +139,22 @@ void mean_covar_of_mat_n(const DataMat data, Vec mean, Mat cov,
 	uint32_t i, j, k;
 	float 	sum, xi, xj, covar;
 
-	log_info("Covariance matrix");
+	char buffer[1024];
+
+	log_info("Mean vector");
 
 	FOR( i, d ) {									// calculate means
 		for ( sum = 0.0f, j = 0; j < n; j++ )
 			sum += data[j][i];
 
 		mean[i] = sum / (float)n;
+
+		print_value_ch(mean[i], buffer);
+		log_info("i=%d, mean(accum) = %k, mean(hex) = %s",
+				i, (accum) mean[i], buffer);
 	}
+
+	log_info("Covariance matrix");
 
 	FOR( i, d ) {
 		for ( j = i; j < d; j++ ) {
@@ -158,7 +177,9 @@ void mean_covar_of_mat_n(const DataMat data, Vec mean, Mat cov,
 			if( i != j )
 				cov[j][i] = cov[i][j];
 
-			log_info("i=%d j=%d, cov=%k", i, j, (accum) cov[i][j]);
+			print_value_ch(cov[i][j], buffer);
+			log_info("i=%d j=%d, cov(accum)=%k, cov(hex)=%s",
+					i, j, (accum) cov[i][j], buffer);
 
 		}
 	}
@@ -195,7 +216,7 @@ void run(uint unused0, uint unused1) {
     use(unused1);
 
     // for debug writing values
- //   char buffer[1024];
+    char buffer[1024];
     bool zero_upper = true;
 
     uint32_t params_n_bytes, state_n_bytes, n;
@@ -290,13 +311,23 @@ void run(uint unused0, uint unused1) {
 		spin1_memcpy(t_jump, t_jump_ptr[0], params_n_bytes);
 
 		// Should probably check here what's in t_jump
-		log_info("t_jump[0] %k", (accum) t_jump[0]);
+		FOR( i, n ) {
+			print_value_ch(t_jump[i], buffer);
+			log_info("t_jump[%d] %k hex is %s",
+					i, (accum) t_jump[i], buffer);
+		}
 
 		// generate a new t_jump vector
-		vec_times_mat_scaled(t_jump, cov, rot_scaled_t_jump, 0.25, n);
+		vec_times_mat_scaled(t_jump, cov, rot_scaled_t_jump, 0.25f, n);
 
-		log_info("Cholesky: vec_times_mat_scaled, rot_scaled_t_jump[0]=%k",
-				(accum) rot_scaled_t_jump[0]);
+		FOR( i, n ) {
+			print_value_ch(rot_scaled_t_jump[i], buffer);
+			log_info("rot_scaled_t_jump[%d] %k hex is %s",
+					i, (accum) rot_scaled_t_jump[i], buffer);
+		}
+//		print_value_ch(rot_scaled_t_jump[0], buffer);
+//		log_info("Cholesky: rot_scaled_t_jump[0]=%k hex is %s",
+//				(accum) rot_scaled_t_jump[0], buffer);
 
 		// Copy this to relevant location
 		spin1_memcpy(t_jump_ptr[0], rot_scaled_t_jump, params_n_bytes);
