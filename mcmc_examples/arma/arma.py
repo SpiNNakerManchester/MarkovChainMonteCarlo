@@ -60,7 +60,9 @@ jump_scale.append(sigma_jump_scale)
 
 print 'data: ', data_points
 
-print 'state parameter set: ', parameters
+print 'initial state parameter set: ', parameters
+
+print 'initial jump scale set: ', jump_scale
 
 # Run and get the samples
 #model = ARMAModel(parameters, p_jump_scale, q_jump_scale)
@@ -72,7 +74,7 @@ model = ARMAFloatModel(parameters, jump_scale)  # note: this sets both True
 #    beta_max)
 samples = mcmc_framework.run_mcmc(
     model, data_points, n_samples, burn_in=5000, thinning=100,
-    degrees_of_freedom=3.0, seed=seed, n_chips=3*43)
+    degrees_of_freedom=6.0, seed=seed, n_chips=3*43)
 #    root_finder=True, cholesky=False)  # n_chips=23*48)
 
 print 'samples: ', samples
