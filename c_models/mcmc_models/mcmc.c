@@ -29,7 +29,6 @@
 #include <simulation.h>
 #include <recording.h>
 #include "mcmc_model.h"
-//#include "examples/lighthouse/lighthouse.h"
 
 // Define spin1_wfi
 extern void spin1_wfi();

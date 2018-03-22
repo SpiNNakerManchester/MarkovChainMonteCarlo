@@ -6,7 +6,7 @@
 
 #define ROOT_FAIL CONCAT(-1000.000000, SUFFIX)		// how bad is a root failure
 #define REAL float
-#define NCHOLESKY 700
+#define NCHOLESKY 500
 
 enum regions {
     RECORDING,
@@ -115,17 +115,10 @@ uint8_t result_value;
 uint32_t cholesky_result;
 
 void result_callback(uint key, uint payload) {
-//	log_info("ARMA: result_callback");
 	use(key);
 	result_value = payload;
 	cholesky_result = payload;
 }
-
-//void cholesky_callback(uint key, uint payload) {
-//	log_info("ARMA: cholesky_callback");
-//	use(key);
-//	cholesky_result = payload;
-//}
 
 /*
  ARMA wind log likelihood
@@ -175,7 +168,7 @@ err=zeros(N+q,1); % this vector will become non-zero from the p+q+1
 	Y=zeros(N,1);% this is the predicted output
 */
 	//REAL Y[N]; // C99 compile flag required
-	CALC_TYPE Y;  // this is only used inside the upcoming loop
+	CALC_TYPE Y;  // this is only used inside the loop, so no array needed
 
 /*
 MATLAB code that works:
@@ -290,20 +283,17 @@ void mcmc_model_transition_jump(
         mcmc_params_pointer_t params, mcmc_state_pointer_t state,
         mcmc_state_pointer_t new_state, uint32_t timestep) {
 	// loop over parameters and apply relevant jump_scale
-//	char buffer[1024];
+	// NOTE: do we want to set this up so Cholesky is
 
 	CALC_TYPE *parameters = state->parameters;
 	CALC_TYPE *jump_scale = params->jump_scale;
 	CALC_TYPE t_variate[PPOLYORDER+QPOLYORDER+2];
-	uint32_t p = PPOLYORDER;  // state->order_p;
-	uint32_t q = QPOLYORDER;  // state->order_q;
+	uint32_t p = PPOLYORDER;
+	uint32_t q = QPOLYORDER;
 	unsigned int i;
 
+	// Set value so function waits for state data to arrive back again
 	cholesky_result = 2;
-
-	// NOTE (16/2/18): this needs to use Cholesky decomposition to
-	// update the jump scale parameters
-//	log_info("ARMA: transition_jump function, timestep %d", timestep);
 
 	// send address of parameters to Cholesky and carry on with calculation
 	spin1_memcpy(model_state_address, parameters, state_n_bytes);
@@ -311,28 +301,18 @@ void mcmc_model_transition_jump(
 	// Send mc packet with payload of address value to wake up Cholesky
 	spin1_send_mc_packet(cholesky_key, model_state_address, WITH_PAYLOAD);
 
-//	log_info("ARMA: cholesky send model_state %d", model_state_address);
-
+	// Wait
 	while (cholesky_result == 2) {
 		spin1_wfi();
 	}
-
-	// For the first set of timesteps, the
-
-	// Cholesky decomposition happens every N timesteps, so I guess
-	// this should be a parameter in the jump function...
-	// Need to remember to make this start from 1...
-//	if ((timestep % NCHOLESKY) == 0) {
 
 	// Create a t_variate vector
 	for (i=0; i < p+q+2; i++) {
 		t_variate[i] = t_deviate();
 	}
 
-	// Reset this value again...
+	// Reset the value again to wait for t_variate vector this time
 	cholesky_result = 2;
-
-//	log_info("ARMA: cholesky_result send %d", model_params_address);
 
 	// send address of t_variate and carry on with calculation
 	spin1_memcpy(model_params_address, t_variate, params_n_bytes);
@@ -340,45 +320,25 @@ void mcmc_model_transition_jump(
 	// Send mc packet with the model params address this time
 	spin1_send_mc_packet(cholesky_key, model_params_address, WITH_PAYLOAD);
 
-	// When Cholesky has finished it returns the address of the location
-	// of the updated jump scale
+	// Wait
 	while (cholesky_result == 2) {
 		spin1_wfi();
 	}
 
-	// copy the returned values from memory
+	// When Cholesky has finished it returns the address of the location
+	// of the updated t_variate
 	spin1_memcpy(t_variate, cholesky_result, params_n_bytes);
-//	}
 
 	// Update polynomial coefficients
 	for (i=0; i < p+q+2; i++) {
 		if (timestep < NCHOLESKY) {
 			new_state->parameters[i] = parameters[i] +
 					(t_variate[i] * jump_scale[i]);
-//			log_info("jump_scale[%d] = %k", i, (accum) jump_scale[i]);
 		}
 		else {
 			new_state->parameters[i] = parameters[i] + t_variate[i];
 		}
-//		params->jump_scale[i] = jump_scale[i];
-//		new_state->parameters[i] = parameters[i] +
-//				(t_deviate() * params->jump_scale[i]);
 	}
-
-//	for (i=0; i < p; i++) {
-//		new_state->parameters[i] = parameters[i] +
-//				(t_deviate() * params->p_jump_scale[i]);
-//	}
-//	for (i=p; i < p+q; i++) {
-//		new_state->parameters[i] = parameters[i] +
-//				(t_deviate() * params->q_jump_scale[i-p]);
-//	}
-//
-//	// Update mu and sigma
-//	new_state->parameters[p+q] = parameters[p+q] +
-//			(t_deviate() * params->mu_jump_scale);
-//	new_state->parameters[p+q+1] = parameters[p+q+1] +
-//			(t_deviate() * params->sigma_jump_scale);
 }
 
 /*
@@ -399,7 +359,6 @@ void mcmc_exit_function() {
  set up addresses for sending information to root finder
  */
 void mcmc_get_address_and_key() {
-
 
 	// get address from data spec
 	address_t data_address = data_specification_get_data_address();
@@ -422,10 +381,7 @@ void mcmc_get_address_and_key() {
 	model_state_address = data_specification_get_region(
 	        MODEL_STATE, data_address);
 
-	// set up callback for results from root finder
+	// set up callback for results from root finder / Cholesky
 	spin1_callback_on(MCPL_PACKET_RECEIVED, result_callback, -1);
-
-	// set up callback for values from Cholesky
-	//spin1_callback_on(MCPL_PACKET_RECEIVED, cholesky_callback, -1);
 
 }

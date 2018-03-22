@@ -5,12 +5,15 @@
 #define FOR( i, n ) for( i = 0; i < (n); i++ )
 
 // Guessing that I need to define Mat and Vec somewhere here
-#define NCOVSAMPLES 700
+#define NCOVSAMPLES 500
+//#define NCOVSAMPLES 5000
 
 // Matrices and vectors are mainly defined by the number of state parameters
 typedef float Mat[PPOLYORDER+QPOLYORDER+2][PPOLYORDER+QPOLYORDER+2];
 typedef float Vec[PPOLYORDER+QPOLYORDER+2];
 // Except for this one which is defined by the number of samples
+// This needs a rethink if (approx) NCOVSAMPLES > 800 as it won't fit in DTCM
+// MH suggests (and JH's Matlab code uses) a value of NCOVSAMPLES = 5000
 typedef float DataMat[NCOVSAMPLES][PPOLYORDER+QPOLYORDER+2];
 
 // functions required to do cholesky decomposition
