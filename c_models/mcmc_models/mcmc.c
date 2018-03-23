@@ -351,6 +351,7 @@ void run(uint unused0, uint unused1) {
     unsigned int sample_count = 0;
     unsigned int accepted = 0;
     unsigned int likelihood_calls = 0;
+    unsigned int timestep = 0;
 
     // Try to copy data in to DTCM
     CALC_TYPE *data_ptr = (CALC_TYPE *) sark_tag_ptr(
@@ -394,6 +395,7 @@ void run(uint unused0, uint unused1) {
 
     // update likelihood function counter for diagnostics
     likelihood_calls++;
+    timestep++;
 
     // debug printing - of course the other option here is accum conversion
     // and direct print
@@ -411,10 +413,11 @@ void run(uint unused0, uint unused1) {
         // make a jump around parameter space using bivariate t distribution
         // with 3 degrees of freedom
         mcmc_model_transition_jump(params, state, new_state,
-        		likelihood_calls);
+        		timestep);
 
         // update likelihood function counter for diagnostics
         likelihood_calls++;
+        timestep++;
 
         // calculate joint probability at this point: remember now using log
         likelihood_value = full_data_set_likelihood(new_state);
@@ -439,6 +442,11 @@ void run(uint unused0, uint unused1) {
 
             // update acceptance count
             accepted++;
+
+            // debug printing, remove at some point...
+            if (likelihood_calls % 500 == 0) {
+            	log_info("accepted %d of %d", accepted, likelihood_calls);
+            }
         };
 
         if (burn_in) {
