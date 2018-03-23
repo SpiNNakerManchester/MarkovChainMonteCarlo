@@ -442,12 +442,12 @@ void run(uint unused0, uint unused1) {
 
             // update acceptance count
             accepted++;
-
-            // debug printing, remove at some point...
-            if (likelihood_calls % 500 == 0) {
-            	log_info("accepted %d of %d", accepted, likelihood_calls);
-            }
         };
+
+        // debug printing, remove at some point...
+        if (likelihood_calls % 500 == 0) {
+        	log_info("accepted %d of %d", accepted, likelihood_calls);
+        }
 
         if (burn_in) {
             if (likelihood_calls == parameters.burn_in) {

@@ -22,7 +22,7 @@ seed = None  # set this if you want to use a different seed on each core
 # ]
 
 # number of posterior samples required per core
-n_samples = 200  # 1000 (1000 will match matlab)
+n_samples = 200  # 1000 (10000 will match matlab)
 
 # mu and sigma values
 mu = 0.1
