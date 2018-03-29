@@ -135,7 +135,6 @@ class MCMCVertex(
         if self._is_receiver_placement(placement):
             key = routing_info.get_first_key_from_pre_vertex(
                 placement.vertex, self._result_partition_name)
-            print('result key is ', key)
             return key
         return 0
 
@@ -151,7 +150,6 @@ class MCMCVertex(
         if self._is_cholesky_receiver_placement(placement):
             key = routing_info.get_first_key_from_pre_vertex(
                 placement.vertex, self._cholesky_result_partition_name)
-            print('cholesky result key is ', key)
             return key
         return 0
 

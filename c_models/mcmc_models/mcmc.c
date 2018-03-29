@@ -406,6 +406,9 @@ void run(uint unused0, uint unused1) {
 //    log_info("%d %k %k %d %d", burn_in, (accum) prior_value,
 //    		(accum) likelihood_value, likelihood_calls, accepted);
 
+    // debug: output every timestep
+    recording_record(0, state, state_n_bytes);
+
     uint samples_to_go = parameters.thinning;
 
     // Main loop
@@ -444,10 +447,13 @@ void run(uint unused0, uint unused1) {
             accepted++;
         };
 
-        // debug printing, remove at some point...
-        if (likelihood_calls % 500 == 0) {
+        // Print the acceptance stats every 5000 timesteps
+        if (likelihood_calls % 5000 == 0) {
         	log_info("accepted %d of %d", accepted, likelihood_calls);
         }
+
+        // debug: output every timestep
+//        recording_record(0, state, state_n_bytes);
 
         if (burn_in) {
             if (likelihood_calls == parameters.burn_in) {
@@ -571,19 +577,19 @@ void c_main() {
     log_info("Thinning = %d", parameters.thinning);
     log_info("N Samples = %d", parameters.n_samples);
     log_info("N Data Points = %d", parameters.n_data_points);
-    log_info("Data Window Size = %d", parameters.data_window_size);
-    log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
+//    log_info("Data Window Size = %d", parameters.data_window_size);
+//    log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
     log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
-    log_info("Data tag = %d", parameters.data_tag);
-    log_info("Timer = %d", parameters.timer);
+//    log_info("Data tag = %d", parameters.data_tag);
+//    log_info("Timer = %d", parameters.timer);
     log_info("Key = 0x%08x", parameters.key);
     log_info("Cholesky key = 0x%08x", parameters.cholesky_key);
-#if TYPE_SELECT == 2
-    log_info("Degrees of freedom = %k", parameters.degrees_of_freedom);
-#else
-    print_value(parameters.degrees_of_freedom, buffer);
-    log_info("Degrees of freedom = %s", buffer);
-#endif
+//#if TYPE_SELECT == 2
+//    log_info("Degrees of freedom = %k", parameters.degrees_of_freedom);
+//#else
+//    print_value(parameters.degrees_of_freedom, buffer);
+//    log_info("Degrees of freedom = %s", buffer);
+//#endif
 
     // Allocate the data receive space if this is the nominated receiver
     if (parameters.data_window_size > 0) {

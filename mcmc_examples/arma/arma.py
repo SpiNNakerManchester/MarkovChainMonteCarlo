@@ -22,7 +22,7 @@ seed = None  # set this if you want to use a different seed on each core
 # ]
 
 # number of posterior samples required per core
-n_samples = 200  # 1000 (10000 will match matlab)
+n_samples = 20000  # 400 1000 (20000 will match matlab)
 
 # mu and sigma values
 mu = 0.1
@@ -43,7 +43,7 @@ jump_scale = []
 for i in range(0,np):
     parameters.append(0.01)
     jump_scale.append(0.0001)
- #   p_jump_scale.append(0.0001)
+    #   p_jump_scale.append(0.0001)
 
 # add q polynomial to parameters array
 # scaling of t transition distribution for MH jumps in q direction
@@ -73,7 +73,7 @@ model = ARMAFloatModel(parameters, jump_scale)  # note: this sets both True
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
 samples = mcmc_framework.run_mcmc(
-    model, data_points, n_samples, burn_in=5000, thinning=100,
+    model, data_points, n_samples, burn_in=5000, thinning=50,
     degrees_of_freedom=6.0, seed=seed, n_chips=3*43)
 #    root_finder=True, cholesky=False)  # n_chips=23*48)
 

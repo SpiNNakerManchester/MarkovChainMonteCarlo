@@ -329,7 +329,7 @@ void run(uint unused0, uint unused1) {
 			// (element-wise) calculation instead... but it can't be done here
 			// so prepare send it back for the main ARMA vertex to deal with
 
-			for (ii=1; ii<n ; ii++) {
+			for (ii=0; ii<n ; ii++) {
 				rot_scaled_t_variate[ii] = t_variate[ii];
 			}
 		}
