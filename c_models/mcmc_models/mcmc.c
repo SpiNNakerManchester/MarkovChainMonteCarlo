@@ -407,7 +407,7 @@ void run(uint unused0, uint unused1) {
 //    		(accum) likelihood_value, likelihood_calls, accepted);
 
     // debug: output every timestep
-    recording_record(0, state, state_n_bytes);
+    //recording_record(0, state, state_n_bytes);
 
     uint samples_to_go = parameters.thinning;
 
