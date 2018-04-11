@@ -214,6 +214,8 @@ void run(uint unused0, uint unused1) {
     n = p+q+2;
 
     CALC_TYPE state_parameters[n];
+    CALC_TYPE t_variate_data[n];
+    CALC_TYPE rot_t_variate_data[n];
 
     // Build up the sample
 	state_n_bytes = mcmc_model_get_state_n_bytes();
@@ -292,13 +294,23 @@ void run(uint unused0, uint unused1) {
 
 		// get the t_variate from memory
 		params_n_bytes = mcmc_model_get_params_n_bytes();
-		spin1_memcpy(t_variate, t_variate_ptr[0], params_n_bytes);
+		// Data that arrives here is CALC_TYPE (i.e. float)
+		spin1_memcpy(t_variate_data, t_variate_ptr[0], params_n_bytes);
+		// Convert to LA_TYPE
+		for (i=0; i<n; i++) {
+			t_variate[i] = (LA_TYPE) t_variate_data[i];
+		}
 
 		// generate a new t_variate vector
 		vec_times_mat_scaled(t_variate, cov, rot_scaled_t_variate, 0.25f, n);
 
+		// Convert back to CALC_TYPE again
+		for (i=0; i<n; i++) {
+			rot_t_variate_data[i] = (CALC_TYPE) rot_scaled_t_variate[i];
+		}
+
 		// Copy this to relevant location
-		spin1_memcpy(t_variate_ptr[0], rot_scaled_t_variate, params_n_bytes);
+		spin1_memcpy(t_variate_ptr[0], rot_t_variate_data, params_n_bytes);
 
 		// send ptr back to the main vertex?
 		while (!spin1_send_mc_packet(ack_key, t_variate_ptr[0],
@@ -319,29 +331,36 @@ void run(uint unused0, uint unused1) {
 
 		// Get the t_variate from memory
 		params_n_bytes = mcmc_model_get_params_n_bytes();
-		spin1_memcpy(t_variate, t_variate_ptr[0], params_n_bytes);
+		spin1_memcpy(t_variate_data, t_variate_ptr[0], params_n_bytes);
 
 		// If we are over N timesteps then this uses the covariance matrix
 		if (do_calculation_using_cov_matrix) {
-			// Simple covariance
+			// Convert to LA_TYPE
+			for (i=0; i<n; i++) {
+				t_variate[i] = (LA_TYPE) t_variate_data[i];
+			}
 
 			// generate a new t_variate vector using covariance
 			vec_times_mat_scaled(t_variate, cov,
 					rot_scaled_t_variate, LA_QUARTER, n);
 
+			// Convert back to CALC_TYPE again
+			for (i=0; i<n; i++) {
+				rot_t_variate_data[i] = (CALC_TYPE) rot_scaled_t_variate[i];
+			}
 		}
 		else {
 			// We are under N timesteps overall so this is a vector*vector
 			// (element-wise) calculation instead... but it can't be done here
-			// so prepare send it back for the main ARMA vertex to deal with
+			// so send it back for the main ARMA vertex to deal with
 
-			for (ii=0; ii<n ; ii++) {
-				rot_scaled_t_variate[ii] = t_variate[ii];
+			for (ii=0; ii<n; ii++) {
+				rot_t_variate_data[ii] = t_variate_data[ii];
 			}
 		}
 
 		// Copy this to relevant location
-		spin1_memcpy(t_variate_ptr[0], rot_scaled_t_variate, params_n_bytes);
+		spin1_memcpy(t_variate_ptr[0], rot_t_variate_data, params_n_bytes);
 
 		// send ptr back to the main vertex?
 		while (!spin1_send_mc_packet(ack_key, t_variate_ptr[0],
