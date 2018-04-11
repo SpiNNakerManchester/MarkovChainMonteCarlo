@@ -76,13 +76,13 @@ void zero_upper_triang(Mat A, uint32_t size) {
 
 	FOR( i, size )
 		for( j = i+1; j < size; j++ )
-			A[i][j] = 0.0f;
+			A[i][j] = LA_ZERO;
 }
 
 void cholesky(Mat A, const uint32_t size, bool zero_upper) {
 	uint32_t i, j;
 	int32_t k;
-	float sum;
+	LA_TYPE sum;
 
 	FOR( i, size ) {
 		for( j = i; j < size; j++ ) {
@@ -91,12 +91,18 @@ void cholesky(Mat A, const uint32_t size, bool zero_upper) {
 			}
 
 			if ( i == j ) {
-				if ( sum <= 0.0f ) { // the other possibility here is to fail with an error
+				// 1) try everything with doubles (reduce small positive value accordingly)
+
+				// 2) output more diagnostics (A matrix, i, etc.?)
+
+				// 3) fail by exiting at this point and spitting out information
+				//    (with some method to tell the gatherer not to include this sample)
+				if ( sum <= LA_ZERO ) { // the other possibility here is to fail with an error
 					log_info("Warning: possible non-pds matrix in cholesky()\n");
-					A[i][i] = 1.0e-30f;  // i.e. very small positive value perhaps float epsilon * 10
+					A[i][i] = LA_SMALL;  // i.e. very small positive value perhaps float epsilon * 10
 				}
 				else
-					A[i][i] = sqrtf( sum );
+					A[i][i] = LA_SQRT( sum );
 			}
 			else
 				A[j][i] = sum / A[i][i];
@@ -111,12 +117,12 @@ void cholesky(Mat A, const uint32_t size, bool zero_upper) {
 //void vec_times_mat_scaled(const Vec restrict vec, const Mat restrict mat,
 //		Vec res, const float scale, const uint32_t size) {
 void vec_times_mat_scaled(const Vec vec, const Mat mat, Vec res,
-		const float scale, const uint32_t size) {
-	float sum;
+		const LA_TYPE scale, const uint32_t size) {
+	LA_TYPE sum;
 	uint32_t i, j;
 
 	FOR( i, size ) {
-		sum = 0.0f;
+		sum = LA_ZERO;
 		FOR( j, size )
 			sum += vec[j] * mat[j][i];  // need to check if this correct way around! i.e. it could be mat[i][j]
 
@@ -127,9 +133,9 @@ void vec_times_mat_scaled(const Vec vec, const Mat mat, Vec res,
 void mean_covar_of_mat_n(float **data, Vec mean, Mat cov,
 		const uint32_t n, const uint32_t d) {
 	uint32_t i, j, k;
-	float 	sum, xi, xj, covar;
+	LA_TYPE sum, xi, xj, covar;
 
-	char buffer[1024];
+//	char buffer[1024];
 
 //	print_value_ch(data[0][0], buffer);
 //	log_info("mean_covar: data[0][0] = %k, hex is %s", (accum) data[0][0],
@@ -139,16 +145,16 @@ void mean_covar_of_mat_n(float **data, Vec mean, Mat cov,
 //			buffer);
 
 	FOR( i, d ) {									// calculate means
-		for ( sum = 0.0f, j = 0; j < n; j++ )
+		for ( sum = LA_ZERO, j = 0; j < n; j++ )
 			sum += data[j][i];
 
-		mean[i] = sum / (float)n;
+		mean[i] = sum / (LA_TYPE)n;
 
 	}
 
 	FOR( i, d ) {
 		for ( j = i; j < d; j++ ) {
-			covar = 0.0f;
+			covar = LA_ZERO;
 
 			if( i == j )
 				FOR( k, n ) {			// calculate variances on diagonal
@@ -162,7 +168,7 @@ void mean_covar_of_mat_n(float **data, Vec mean, Mat cov,
 					covar += xi * xj;
 				}
 
-			cov[i][j] = covar / ( (float)n - 1.0f ); // n must be > 1
+			cov[i][j] = covar / ( (LA_TYPE)n - LA_ONE ); // n must be > 1
 
 			if( i != j )
 				cov[j][i] = cov[i][j];
@@ -321,7 +327,7 @@ void run(uint unused0, uint unused1) {
 
 			// generate a new t_variate vector using covariance
 			vec_times_mat_scaled(t_variate, cov,
-					rot_scaled_t_variate, 0.25f, n);
+					rot_scaled_t_variate, LA_QUARTER, n);
 
 		}
 		else {
