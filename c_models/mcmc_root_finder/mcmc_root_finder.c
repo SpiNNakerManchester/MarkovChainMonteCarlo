@@ -125,6 +125,7 @@ void laguerre_poly_root( complex float a[], int m, complex float *x, int *its )
 		}
 
 	// Note: Not sure this is necessary, but could be a log_info to see if it ever occurs
+	//log_info("Too many iterations in laguerre_poly_root()");
 //	printf("Too many iterations in laguerre_poly_root()"); exit(1); // very unusual and only for complex roots
 
 	return;
@@ -210,7 +211,7 @@ void run(uint unused0, uint unused1) {
     // for debug writing values
     char buffer[1024];
 
-    uint8_t i, p, q;
+    uint32_t i, p, q;
     CALC_TYPE state_parameters[PPOLYORDER+QPOLYORDER+2];
 
 //    log_info("ROOTFINDER: running root finder");
@@ -263,7 +264,7 @@ void run(uint unused0, uint unused1) {
 	zroots( MA_param, q, MA_rt, true);
 
 	// Set the return value
-	uint8_t returnval = 0;
+	uint32_t returnval = 0;
 
 	// test for root magnitude <= 1 and if so return a fail result
 	// zroots returns values from array index 1 upwards

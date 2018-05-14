@@ -1,4 +1,3 @@
-// compile with gcc -std=c99 -O3 -fcx-limited-range root_finder.c -l m -o rf
 #include "../mcmc_models/examples/arma/arma.h"
 #include <stdbool.h>
 
@@ -9,7 +8,8 @@
 #define LA_QUARTER 0.25  // 0.25f
 #define LA_SMALL 1.0e-300  // 1.0e-30f
 #define LA_SQRT sqrt  // sqrtf
-#define NCOVSAMPLES 5000
+#define LA_SCALE 0.25  // LA_QUARTER
+#define NCOVSAMPLES 5000 // 30000
 
 // Matrices and vectors are mainly defined by the number of state parameters
 typedef LA_TYPE Mat[PPOLYORDER+QPOLYORDER+2][PPOLYORDER+QPOLYORDER+2];
@@ -29,5 +29,4 @@ void cholesky(Mat A, const uint32_t size, bool zero_upper);
 void vec_times_mat_scaled(const Vec vec, const Mat mat, Vec res,
 		const LA_TYPE scale, const uint32_t size);
 
-void mean_covar_of_mat_n(float **data, Vec mean, Mat cov,
-		const uint32_t n, const uint32_t d);
+void mean_covar_of_mat_n(const uint32_t n, const uint32_t d);

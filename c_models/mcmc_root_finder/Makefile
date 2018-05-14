@@ -11,8 +11,8 @@ APP_OUTPUT_DIR = ../../mcmc/model_binaries/
 # Directory to place compilation artefacts (must include trailing slash)
 BUILD_DIR = ./build/
 
-CFLAGS += ${OTIME}  # check list to add here
-LFLAGS += ${OTIME}
+CFLAGS += ${OTIME} -fcx-limited-range  # check list to add here
+LFLAGS += ${OTIME} -fcx-limited-range
 
 SOURCE_DIRS = .
 SOURCES = mcmc_root_finder.c

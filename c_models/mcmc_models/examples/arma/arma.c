@@ -4,8 +4,8 @@
 #include <debug.h>
 #include <data_specification.h>
 
-#define ROOT_FAIL CONCAT(-1000.000000, SUFFIX)		// how bad is a root failure
-#define REAL float
+#define ROOT_FAIL CONCAT(-1000.000000, SUFFIX)	// how bad is a root failure
+//#define REAL float
 #define NCHOLESKY 5000
 //#define NCHOLESKY 1000
 
@@ -112,7 +112,7 @@ uint32_t mcmc_model_get_state_n_bytes() {
 //}
 //#endif
 
-uint8_t result_value;
+uint32_t result_value;
 uint32_t cholesky_result;
 
 void result_callback(uint key, uint payload) {
@@ -136,17 +136,30 @@ CALC_TYPE mcmc_model_likelihood(
 //	char buffer[1024];
 
 	// read in AR and MA parameter dimensions
-	uint8_t p = PPOLYORDER;  // state->order_p;
-	uint8_t q = QPOLYORDER;  // state->order_q;
-	uint8_t j;
+	uint32_t p = PPOLYORDER;  // state->order_p;
+	uint32_t q = QPOLYORDER;  // state->order_q;
+	uint32_t j;
 	uint32_t i;
 	uint32_t N = n_pts;
 
 	uint32_t error_length = N + q;  // check this and all indexing below!
-	CALC_TYPE err[error_length];
 
-	// get parameters array from state struct
-	CALC_TYPE *state_parameters = state->parameters;
+//	log_info("loglikelihood, N = %d", N);
+//
+//	uint space = sark_heap_max(sark.heap, 0);
+//
+//	log_info("space on sark.heap is %d", space);
+//
+//	uint spacesd = sark_heap_max(sv->sdram_heap, 0);
+//
+//	log_info("space on sv->sdram_heap is %d", spacesd);
+
+	// Allocate the error memory on SDRAM (for now)
+	// Note: it won't fit in DTCM for N=10000 (which is what we're using)
+	//       as the data (which is size N) is already in there
+	//       (using up 10000*4=40k worth of the 64k available)
+	CALC_TYPE *err = sark_xalloc(sv->sdram_heap,
+			error_length*sizeof(CALC_TYPE), 0, ALLOC_LOCK);
 
 	// temp storage for dot products in later loop
 	CALC_TYPE tempdotp = ZERO; // REAL_CONST( 0.0 );
@@ -154,8 +167,8 @@ CALC_TYPE mcmc_model_likelihood(
 
 	// mu is the penultimate element of the parameters
 	// sigma is the last element of the parameters
-	CALC_TYPE mu = state_parameters[p+q];
-	CALC_TYPE sigma = state_parameters[p+q+1];
+	CALC_TYPE mu = state->parameters[p+q];
+	CALC_TYPE sigma = state->parameters[p+q+1];
 
 /*
 err is all zeros with size of (N+q)*1
@@ -170,6 +183,8 @@ err=zeros(N+q,1); % this vector will become non-zero from the p+q+1
 */
 	//REAL Y[N]; // C99 compile flag required
 	CALC_TYPE Y;  // this is only used inside the loop, so no array needed
+	              // at the moment: this would have to change if this array
+	              // was needed elsewhere (and take care: won't fit in DTCM)
 
 /*
 MATLAB code that works:
@@ -189,11 +204,11 @@ end
 	for(i=p; i < N; i++) {
 		// loop over p for parameters * data dot product
 		for (j=0; j < p; j++) {
-			tempdotp += state_parameters[j] * data[(i-1)-j]; // check this
+			tempdotp += state->parameters[j] * data[(i-1)-j]; // check this
 		}
 		// loop over q for parameters * err dot product
 		for (j=0; j < q; j++) {
-			tempdotq += state_parameters[p+j] * err[(i+q-1)-j]; // check this
+			tempdotq += state->parameters[p+j] * err[(i+q-1)-j]; // check this
 		}
 
 		// Combine two results together plus mean
@@ -217,17 +232,22 @@ lglikelihood=-sum(err(p+q+1:end).^2)/(2*sigma^2)-0.5*(N-p)*log(sigma^2);
 */
 	CALC_TYPE sum = ZERO; // REAL_CONST( 0.0 );
 	CALC_TYPE temp;
-	CALC_TYPE denominator = TWO*SQR(sigma);
+	CALC_TYPE denominator = TWO*SQR( sigma );
 	CALC_TYPE Nminusp = (CALC_TYPE) (N-p);
-	CALC_TYPE temp2 = HALF*Nminusp*LN(SQR(sigma));
+	CALC_TYPE temp2 = HALF*Nminusp*LN(SQR( sigma ));
 	CALC_TYPE divisor = ONE / denominator;
 	// Check value of divisor here (similar to in transition_jump??
 
-	// Loop to do sum
+	// Loop to do sum - I tried moving this into the earlier loop
+	//                  but for some reason it didn't work; it would
+	//                  save some time if it could be made to work
 	for(i=p+q; i < N+q; i++) { // check
 		temp = err[i];
-		sum += temp * temp;  // might be better using SQR here?
+		sum += SQR( temp );  // might be better using SQR here?
 	}
+
+	// Free up the memory used by the error array
+	sark_xfree(sv->sdram_heap, err, ALLOC_LOCK);
 
 	// possibly add some error checking in case divisor is stupid value
 	return (-sum * divisor) - temp2;
@@ -246,19 +266,19 @@ CALC_TYPE mcmc_model_prior_prob(
 	result_value = 2;  // 1.0f;
 
 	// read in AR and MA parameter dimensions
-	uint8_t p = PPOLYORDER;  // state->order_p;
-	uint8_t q = QPOLYORDER;  // state->order_q;
+	uint32_t p = PPOLYORDER;  // state->order_p;
+	uint32_t q = QPOLYORDER;  // state->order_q;
 
 	// Get the sigma value
-	CALC_TYPE *state_parameters;
-	state_parameters = state->parameters;
-	CALC_TYPE sigma = state_parameters[p+q+1];  // last entry in vector
+//	CALC_TYPE *state_parameters;
+//	state_parameters = state->parameters;
+	CALC_TYPE sigma = state->parameters[p+q+1];  // last entry in vector
 
 	// If sigma is less than zero then we can exit without using root_finder
 	if( sigma <= ZERO ) return ROOT_FAIL;
 
     // If we're still going, we need to copy state parameters to sdram
-	spin1_memcpy(model_state_address, state_parameters, state_n_bytes);
+	spin1_memcpy(model_state_address, state->parameters, state_n_bytes);
 
 	// Send mc packet with payload of address value to wake up root_finder
 	spin1_send_mc_packet(key, model_state_address, WITH_PAYLOAD);
@@ -284,20 +304,20 @@ void mcmc_model_transition_jump(
         mcmc_params_pointer_t params, mcmc_state_pointer_t state,
         mcmc_state_pointer_t new_state, uint32_t timestep) {
 	// loop over parameters and apply relevant jump_scale
-	// NOTE: do we want to set this up so Cholesky is
-
-	CALC_TYPE *parameters = state->parameters;
-	CALC_TYPE *jump_scale = params->jump_scale;
-	CALC_TYPE t_variate[PPOLYORDER+QPOLYORDER+2];
+	//CALC_TYPE *parameters = state->parameters;
+	//CALC_TYPE *jump_scale = params->jump_scale;
+	CALC_TYPE *t_variate = sark_alloc(
+			PPOLYORDER+QPOLYORDER+2, sizeof(CALC_TYPE));
 	uint32_t p = PPOLYORDER;
 	uint32_t q = QPOLYORDER;
-	unsigned int i;
+	uint32_t i;
+	//unsigned int i;
 
 	// Set value so function waits for state data to arrive back again
 	cholesky_result = 2;
 
 	// send address of parameters to Cholesky and carry on with calculation
-	spin1_memcpy(model_state_address, parameters, state_n_bytes);
+	spin1_memcpy(model_state_address, state->parameters, state_n_bytes);
 
 	// Send mc packet with payload of address value to wake up Cholesky
 	spin1_send_mc_packet(cholesky_key, model_state_address, WITH_PAYLOAD);
@@ -332,18 +352,22 @@ void mcmc_model_transition_jump(
 
 	// Update polynomial coefficients
 	for (i=0; i < p+q+2; i++) {
+		// If we are in the "burn-in" period then use the defined jump scale
 		if (timestep < NCHOLESKY) {
-			new_state->parameters[i] = parameters[i] +
-					(t_variate[i] * jump_scale[i]);
+			new_state->parameters[i] = state->parameters[i] +
+					(t_variate[i] * params->jump_scale[i]);
 		}
+		// If we are not in burn-in then just use the returned t_variate vector
 		else {
-			new_state->parameters[i] = parameters[i] + t_variate[i];
+			new_state->parameters[i] = state->parameters[i] + t_variate[i];
 		}
 	}
+
+	sark_free(t_variate);
 }
 
 /*
- exit function: send message to root finder to exit, then exit
+ exit function: send message to root finder, cholesky to exit, then exit
  */
 void mcmc_exit_function() {
 	// send message to root finder

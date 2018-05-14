@@ -7,32 +7,29 @@
 #include <debug.h>
 #include <data_specification.h>
 
-
-// Value of the pointer to the location in SDRAM to get parameters
-uint32_t *parameter_rec_ptr;  // will need something like this...
-
+// Value of the pointers to the location in SDRAM to get parameters
+uint32_t *parameter_rec_ptr;
 uint32_t *t_variate_ptr;
-
 uint32_t t_var_global;
 
 // Functions required to print floats as hex values (uncomment for debug)
-struct double_uint {
-    uint first_word;
-    uint second_word;
-};
-
-union double_to_ints {
-    CALC_TYPE double_value;
-    struct double_uint int_values;
-};
-
-void print_value_ch(CALC_TYPE d_value, char *buffer) {
-    union double_to_ints converter;
-    converter.double_value = d_value;
-    io_printf(
-        buffer, "0x%08x%08x",
-        converter.int_values.second_word, converter.int_values.first_word);
-}
+//struct double_uint {
+//    uint first_word;
+//    uint second_word;
+//};
+//
+//union double_to_ints {
+//    CALC_TYPE double_value;
+//    struct double_uint int_values;
+//};
+//
+//void print_value_ch(LA_TYPE d_value, char *buffer) {
+//    union double_to_ints converter;
+//    converter.double_value = d_value;
+//    io_printf(
+//        buffer, "0x%08x%08x",
+//        converter.int_values.second_word, converter.int_values.first_word);
+//}
 
 enum regions {
 	// add a recording region if required
@@ -53,11 +50,11 @@ struct cholesky_parameters cholesky_parameters;
 uint32_t ack_key;
 
 // Global variable for samples? Needs a rethink for large NCOVSAMPLES > 800
-//DataMat samples;
-
 float** sample_data;
 
-//float *dtcm_params;
+// Global variable for covariance matrix (which gets reused each step after
+// the first burn-in period, so it needs to be global!)
+Mat covariance;
 
 // Global variable for number of samples so far
 uint32_t n_samples_read;
@@ -80,33 +77,29 @@ void zero_upper_triang(Mat A, uint32_t size) {
 }
 
 void cholesky(Mat A, const uint32_t size, bool zero_upper) {
+	char buffer[1024];
 	uint32_t i, j;
 	int32_t k;
 	LA_TYPE sum;
 
 	FOR( i, size ) {
 		for( j = i; j < size; j++ ) {
-			for( sum = A[i][j], k = i-1; k >= 0; k-- ) {
-				sum -= A[i][k] * A[j][k];
+			for( sum = A[j][i], k = i-1; k >= 0; k-- ) {
+				sum -= A[j][k] * A[i][k];
 			}
 
 			if ( i == j ) {
-				// 1) try everything with doubles (reduce small positive value accordingly)
-
-				// 2) output more diagnostics (A matrix, i, etc.?)
-
-				// 3) fail by exiting at this point and spitting out information
-				//    (with some method to tell the gatherer not to include this sample)
-				if ( sum <= LA_ZERO ) { // the other possibility here is to fail with an error
+				if ( sum <= LA_ZERO ) {
+					// do we fail by exiting at this point and spitting out information?
+					// (with some method to tell the gatherer not to include this sample)
 					log_info("Warning: possible non-pds matrix in cholesky()\n");
-					A[i][i] = LA_SMALL;  // i.e. very small positive value perhaps float epsilon * 10
+					A[i][i] = LA_SMALL;  // i.e. very small positive value
 				}
 				else
 					A[i][i] = LA_SQRT( sum );
 			}
 			else
 				A[j][i] = sum / A[i][i];
-
 		}
 	}
 
@@ -114,8 +107,6 @@ void cholesky(Mat A, const uint32_t size, bool zero_upper) {
 		zero_upper_triang( A, size ); 	// zero upper triangle if necessary - for our application it is
 }
 
-//void vec_times_mat_scaled(const Vec restrict vec, const Mat restrict mat,
-//		Vec res, const float scale, const uint32_t size) {
 void vec_times_mat_scaled(const Vec vec, const Mat mat, Vec res,
 		const LA_TYPE scale, const uint32_t size) {
 	LA_TYPE sum;
@@ -124,29 +115,24 @@ void vec_times_mat_scaled(const Vec vec, const Mat mat, Vec res,
 	FOR( i, size ) {
 		sum = LA_ZERO;
 		FOR( j, size )
-			sum += vec[j] * mat[j][i];  // need to check if this correct way around! i.e. it could be mat[i][j]
+			sum += vec[j] * mat[i][j];
+		// need to check if this correct way around! i.e. it could be mat[j][i]
+		// (I think this is the correct way round: it's a bit confusing compared
+		//  directly to MATLAB as the cholesky command there gives an upper-
+		//  triangular matrix whereas this (correctly) uses a lower-triangular)
 
 		res[i] = sum * scale;
 	}
 }
 
-void mean_covar_of_mat_n(float **data, Vec mean, Mat cov,
-		const uint32_t n, const uint32_t d) {
+void mean_covar_of_mat_n(const uint32_t n, const uint32_t d) {
 	uint32_t i, j, k;
 	LA_TYPE sum, xi, xj, covar;
-
-//	char buffer[1024];
-
-//	print_value_ch(data[0][0], buffer);
-//	log_info("mean_covar: data[0][0] = %k, hex is %s", (accum) data[0][0],
-//			buffer);
-//	print_value_ch(data[10][10], buffer);
-//	log_info("mean_covar: data[10][10] = %k, hex is %s", (accum) data[10][10],
-//			buffer);
+	Vec mean;
 
 	FOR( i, d ) {									// calculate means
 		for ( sum = LA_ZERO, j = 0; j < n; j++ )
-			sum += data[j][i];
+			sum += sample_data[j][i];
 
 		mean[i] = sum / (LA_TYPE)n;
 
@@ -158,27 +144,23 @@ void mean_covar_of_mat_n(float **data, Vec mean, Mat cov,
 
 			if( i == j )
 				FOR( k, n ) {			// calculate variances on diagonal
-					xi = data[k][i] - mean[i];
+					xi = sample_data[k][i] - mean[i];
 					covar += xi * xi;
 				}
 			else
 				FOR( k, n ) {					// covariances off diagonal
-					xi = data[k][i] - mean[i];
-					xj = data[k][j] - mean[j];
+					xi = sample_data[k][i] - mean[i];
+					xj = sample_data[k][j] - mean[j];
 					covar += xi * xj;
 				}
 
-			cov[i][j] = covar / ( (LA_TYPE)n - LA_ONE ); // n must be > 1
+			covariance[i][j] = covar / ( (LA_TYPE)n - LA_ONE ); // n must be > 1
 
 			if( i != j )
-				cov[j][i] = cov[i][j];
-
+				covariance[j][i] = covariance[i][j];
 		}
 	}
-
 }
-
-
 
 // Sensible to get this size if it's directly available to us
 uint32_t mcmc_model_get_params_n_bytes() {
@@ -204,8 +186,7 @@ void run(uint unused0, uint unused1) {
 
     uint32_t params_n_bytes, state_n_bytes, n;
     uint32_t p, q, i, ii;
-    Vec mean, rot_scaled_t_variate, t_variate;
-    Mat cov;
+    Vec rot_scaled_t_variate, t_variate;
 
     // p and q defined in header
     p = PPOLYORDER;
@@ -221,21 +202,6 @@ void run(uint unused0, uint unused1) {
 	state_n_bytes = mcmc_model_get_state_n_bytes();
 	spin1_memcpy(state_parameters, parameter_rec_ptr[0], state_n_bytes);
 
-
-//	// samples is going to be what size now?
-//	sample_data = (CALC_TYPE *) spin1_malloc(1*state_n_bytes);
-//	log_info("sample data(1) is %d", sample_data);
-//
-//	sample_data = (CALC_TYPE *) spin1_malloc(100*state_n_bytes);
-//	log_info("sample data(100) is %d", sample_data);
-//
-//	sample_data = (CALC_TYPE *) spin1_malloc(1000*state_n_bytes);
-//	log_info("sample data(1000) is %d", sample_data);
-//
-//	sample_data = (CALC_TYPE *) spin1_malloc(5000*state_n_bytes);
-//	log_info("sample data(5000) is %d", sample_data);
-
-
 	// Store this sample data in DTCM if possible, but if the size of this
 	// vector is going to end up bigger than DTCM can handle
 	// (i.e. NCOVSAMPLES is (approx) greater than 65536 / (20 * 4) = 819),
@@ -248,21 +214,19 @@ void run(uint unused0, uint unused1) {
 //	}
 //	spin1_dma_transfer(DMA_WRITE, sample_data[n_samples_read],
 //			dtcm_params, DMA_WRITE, state_n_bytes);
+
+	// The allocation is done in main(), I've left the useful comment for now
+
 	for (i=0; i<n; i++) {
 		sample_data[n_samples_read][i] = state_parameters[i];
 	}
 
-//	log_info("Cholesky, n_samples read: %d", n_samples_read);
 
 	// send ptr back to the main vertex?
 	while (!spin1_send_mc_packet(ack_key, parameter_rec_ptr[0],
 			WITH_PAYLOAD)) {
 		spin1_delay_us(1);
 	}
-
-//	print_value_ch(sample_data[n_samples_read][1], buffer);
-//	log_info("Cholesky: sample_data[%d][1] = %k, hex is %s", n_samples_read,
-//			(accum) sample_data[n_samples_read][1], buffer);
 
 	// We have now read in this sample
 	n_samples_read++;
@@ -283,26 +247,30 @@ void run(uint unused0, uint unused1) {
 
 	// Do the work here every NCOVSAMPLES timesteps
 	if (n_samples_read == NCOVSAMPLES) {
-
+		// Print out so we know it's got here
 		log_info("Performing Cholesky decomposition");
 
 		// Get the mean and covariance of the samples matrix
-		mean_covar_of_mat_n(sample_data, mean, cov, n_samples_read, n);
+		mean_covar_of_mat_n(n_samples_read, n);
+		// Note: there's no need to "return" the mean here, as it isn't used
 
 		// Do the Cholesky decomposition
-		cholesky(cov, n, zero_upper);
+		cholesky(covariance, n, zero_upper);
 
 		// get the t_variate from memory
 		params_n_bytes = mcmc_model_get_params_n_bytes();
+
 		// Data that arrives here is CALC_TYPE (i.e. float)
 		spin1_memcpy(t_variate_data, t_variate_ptr[0], params_n_bytes);
+
 		// Convert to LA_TYPE
 		for (i=0; i<n; i++) {
 			t_variate[i] = (LA_TYPE) t_variate_data[i];
 		}
 
 		// generate a new t_variate vector
-		vec_times_mat_scaled(t_variate, cov, rot_scaled_t_variate, 0.25f, n);
+		vec_times_mat_scaled(t_variate, covariance,
+				rot_scaled_t_variate, LA_SCALE, n);
 
 		// Convert back to CALC_TYPE again
 		for (i=0; i<n; i++) {
@@ -312,7 +280,7 @@ void run(uint unused0, uint unused1) {
 		// Copy this to relevant location
 		spin1_memcpy(t_variate_ptr[0], rot_t_variate_data, params_n_bytes);
 
-		// send ptr back to the main vertex?
+		// send ptr back to the main vertex
 		while (!spin1_send_mc_packet(ack_key, t_variate_ptr[0],
 				WITH_PAYLOAD)) {
 			spin1_delay_us(1);
@@ -340,9 +308,9 @@ void run(uint unused0, uint unused1) {
 				t_variate[i] = (LA_TYPE) t_variate_data[i];
 			}
 
-			// generate a new t_variate vector using covariance
-			vec_times_mat_scaled(t_variate, cov,
-					rot_scaled_t_variate, LA_QUARTER, n);
+			// generate a new t_variate vector using cholesky covariance
+			vec_times_mat_scaled(t_variate, covariance,
+					rot_scaled_t_variate, LA_SCALE, n);
 
 			// Convert back to CALC_TYPE again
 			for (i=0; i<n; i++) {
@@ -352,8 +320,7 @@ void run(uint unused0, uint unused1) {
 		else {
 			// We are under N timesteps overall so this is a vector*vector
 			// (element-wise) calculation instead... but it can't be done here
-			// so send it back for the main ARMA vertex to deal with
-
+			// so send the vector back for the main ARMA vertex to deal with
 			for (ii=0; ii<n; ii++) {
 				rot_t_variate_data[ii] = t_variate_data[ii];
 			}
@@ -394,6 +361,68 @@ void end_callback(uint unused0, uint unused1) {
 }
 
 void c_main() {
+
+//	Testing Cholesky: note, you will need to alter the cholesky function to
+//	take double[test_size][test_size] to make this one work instead of Mat
+//
+//  (Using examples from https://rosettacode.org/wiki/Cholesky_decomposition)
+//	uint32_t i, j;
+//	char buffer[1024];
+//	bool zero_upper = true;
+//
+////	log_info("Cholesky test matrix (25 15 -5, 15 18 0, -5 0 11)");
+//	log_info("Cholesky test matrix (18 22 54 42, 22 70 86 62, 54 86 174 134,",
+//			" 42 62 134 106");
+//
+//	uint32_t test_size = 4; // 3;
+//
+//    double test_matrix[test_size][test_size];
+//    test_matrix[0][0]=18.0;  // this one works, tested ADG 04/05/18
+//    test_matrix[1][0]=22.0;
+//    test_matrix[2][0]=54.0;
+//    test_matrix[3][0]=42.0;
+//    test_matrix[0][1]=22.0;
+//    test_matrix[1][1]=70.0;
+//    test_matrix[2][1]=86.0;
+//    test_matrix[3][1]=62.0;
+//    test_matrix[0][2]=54.0;
+//    test_matrix[1][2]=86.0;
+//    test_matrix[2][2]=174.0;
+//    test_matrix[3][2]=134.0;
+//    test_matrix[0][3]=42.0;
+//    test_matrix[1][3]=62.0;
+//    test_matrix[2][3]=134.0;
+//    test_matrix[3][3]=106.0;
+//
+////    test_matrix[0][0]=25.0;  // this one works, tested ADG 02/05/18
+////    test_matrix[1][0]=15.0;
+////    test_matrix[2][0]=-5.0;
+////    test_matrix[0][1]=15.0;
+////    test_matrix[1][1]=18.0;
+////    test_matrix[2][1]=0.0;
+////    test_matrix[0][2]=-5.0;
+////    test_matrix[1][2]=0.0;
+////    test_matrix[2][2]=11.0;
+//
+//    // What's in test_matrix now?
+//	for (i=0; i<test_size; i++) {
+//		for (j=0; j<test_size; j++) {
+//			print_value_ch(test_matrix[j][i], buffer);
+//			log_info("pre test_matrix[%u][%u] = %s ", j, i, buffer);
+//		}
+//	}
+//
+//    // Cholesky on this
+//    cholesky(test_matrix, test_size, zero_upper);
+//
+//    // What's in test_matrix now?
+//	for (i=0; i<test_size; i++) {
+//		for (j=0; j<test_size; j++) {
+//			print_value_ch(test_matrix[j][i], buffer);
+//			log_info("test_matrix[%u][%u] = %s ", j, i, buffer);
+//		}
+//	}
+
 	// Get the acknowledge key from rf_parameters
 	address_t data_address = data_specification_get_data_address();
 	address_t cholesky_parameters_address = data_specification_get_region(
@@ -407,7 +436,7 @@ void c_main() {
 
 	log_info("ack_key = 0x%08x", ack_key);
 
-	// sample_data is going to be what size now?
+	// sample_data is going to be what size?
 	uint32_t ii;
 	uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
 //	sample_data = (CALC_TYPE **) spin1_malloc(NCOVSAMPLES*state_n_bytes);

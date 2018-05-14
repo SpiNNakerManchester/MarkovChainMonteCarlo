@@ -202,7 +202,7 @@ CALC_TYPE t_deviate() {
 #if TYPE_SELECT == 2
         	}
 #endif
-        	v = (ONE / SQR(x)) * u1;
+        	v = (ONE / SQR( x )) * u1;
         } else {
         	x = FOUR * u - THREE;
         	v = u1;
@@ -330,8 +330,11 @@ void run(uint unused0, uint unused1) {
     use(unused0);
     use(unused1);
 
-    char buffer[1024];
-    char buffer2[1024];
+//    char buffer[1024];
+//    char buffer2[1024];
+//	uint space = sark_heap_max(sark.heap, 0);
+//
+//	log_info("space on sark.heap is %d", space);
 
     // Create a new state pointer
     uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
@@ -414,7 +417,7 @@ void run(uint unused0, uint unused1) {
     // Main loop
     do {
         // make a jump around parameter space using bivariate t distribution
-        // with 3 degrees of freedom
+        // with df degrees of freedom
         mcmc_model_transition_jump(params, state, new_state,
         		timestep);
 
@@ -456,7 +459,16 @@ void run(uint unused0, uint unused1) {
 //        recording_record(0, state, state_n_bytes);
 
         if (burn_in) {
-            if (likelihood_calls == parameters.burn_in) {
+        	// Debug: testing this against the MATLAB code during burn-in
+            // output every THINNING samples
+            if (samples_to_go == 0) {
+                recording_record(0, state, state_n_bytes);
+                sample_count++;
+                samples_to_go = parameters.thinning;
+            }
+            samples_to_go--;
+
+        	if (likelihood_calls == parameters.burn_in) {
                 log_info(
                     "Burn-in accepted %d of %d", accepted, likelihood_calls);
 
@@ -524,9 +536,9 @@ void trigger_run(uint unused0, uint unused1) {
 */
 
 void c_main() {
-#if TYPE_SELECT != 2
-    char buffer[1024];
-#endif
+//#if TYPE_SELECT != 2
+//    char buffer[1024];
+//#endif
 
     // Read the data specification header
     address_t data_address = data_specification_get_data_address();
@@ -590,6 +602,10 @@ void c_main() {
 //    print_value(parameters.degrees_of_freedom, buffer);
 //    log_info("Degrees of freedom = %s", buffer);
 //#endif
+
+//	uint space = sark_heap_max(sark.heap, 0);
+//
+//	log_info("space on sark.heap is %d", space);
 
     // Allocate the data receive space if this is the nominated receiver
     if (parameters.data_window_size > 0) {
