@@ -22,11 +22,11 @@ seed = None  # set this if you want to use a different seed on each core
 #    123456789, 234567891, 345678912, 456789123, 0
 # ]
 
-# set number of samples to get and number of boards to use
+# set number of posterior samples to get and number of boards to use
 n_samples = 20000
 n_boards = 3
 
-# get n_samples and n_boards from command line arguments
+# get n_samples and n_boards from command line arguments if specified
 if (len(sys.argv)==2):
     n_samples = sys.argv[1]
 elif (len(sys.argv)==3):
@@ -35,9 +35,6 @@ elif (len(sys.argv)==3):
 
 print("Running ARMA MCMC on ", n_boards, " boards, and collecting ",
       n_samples, " samples")
-
-# number of posterior samples required per core
-n_samples = 20  # 000  # 400 1000 (20000 will match matlab)
 
 # mu and sigma values
 mu = 0.1
@@ -87,7 +84,6 @@ model = ARMAFloatModel(parameters, jump_scale)  # note: this sets both True
 #model = ARMAFixedPointModel(
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
-n_boards = 120
 samples = mcmc_framework.run_mcmc(
     model, data_points, n_samples, burn_in=5000, thinning=50,
     degrees_of_freedom=6.0, seed=seed, n_chips=n_boards*43)
