@@ -28,10 +28,10 @@ n_boards = 3
 
 # get n_samples and n_boards from command line arguments if specified
 if (len(sys.argv)==2):
-    n_samples = sys.argv[1]
+    n_samples = int(sys.argv[1])
 elif (len(sys.argv)==3):
-    n_samples = sys.argv[1]
-    n_boards = sys.argv[2]
+    n_samples = int(sys.argv[1])
+    n_boards = int(sys.argv[2])
 
 print("Running ARMA MCMC on ", n_boards, " boards, and collecting ",
       n_samples, " samples")
