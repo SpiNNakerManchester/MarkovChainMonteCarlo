@@ -22,7 +22,7 @@ from spinn_front_end_common.interface.buffer_management \
 from spinn_front_end_common.utilities.utility_objs.executable_type \
     import ExecutableType
 
-from spinn_machine.utilities.progress_bar import ProgressBar
+from spinn_utilities.progress_bar import ProgressBar
 
 from enum import Enum
 

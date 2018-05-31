@@ -20,7 +20,7 @@ from spinn_front_end_common.abstract_models\
 from spinn_front_end_common.utilities.utility_objs.executable_type \
     import ExecutableType
 
-from spinn_machine.utilities.progress_bar import ProgressBar
+from spinn_utilities.progress_bar import ProgressBar
 
 import numpy
 import random
