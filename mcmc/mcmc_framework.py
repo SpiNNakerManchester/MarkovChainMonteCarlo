@@ -44,8 +44,8 @@ def run_mcmc(
         The number of degrees of freedom to jump around with
     :param seed: The random seed to use
     :param n_chips: The number of chips to run the model on
-#    :param root_finder: Use the root finder by adding root finder vertices
-#    :param cholesky: Use the Cholesky algorithm by adding Cholesky vertices
+    :param root_finder: Use the root finder by adding root finder vertices
+    :param cholesky: Use the Cholesky algorithm by adding Cholesky vertices
 
     :return: The samples read
     :rtype: A numpy array with fields for each model state variable
