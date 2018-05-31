@@ -96,6 +96,7 @@ samples = mcmc_framework.run_mcmc(
 print 'samples: ', samples
 
 # Save the results
-numpy.save("results.npy", samples)
+fname="results_nboards"+str(n_boards)+"_n_samples"+str(n_samples)
+numpy.save(fname+".npy", samples)
 # numpy.savetxt("results.csv", samples, fmt="%f", delimiter=",")
-numpy.savetxt("results.csv", samples, fmt="%f", delimiter=",")
+numpy.savetxt(fname+".csv", samples, fmt="%f", delimiter=",")
