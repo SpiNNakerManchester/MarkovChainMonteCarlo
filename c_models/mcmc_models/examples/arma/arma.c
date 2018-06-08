@@ -249,6 +249,8 @@ lglikelihood=-sum(err(p+q+1:end).^2)/(2*sigma^2)-0.5*(N-p)*log(sigma^2);
 	// Free up the memory used by the error array
 	sark_xfree(sv->sdram_heap, err, ALLOC_LOCK);
 
+//	log_info("returning from ARMA mcmc_model_likelihood");
+
 	// possibly add some error checking in case divisor is stupid value
 	return (-sum * divisor) - temp2;
 }
@@ -282,6 +284,9 @@ CALC_TYPE mcmc_model_prior_prob(
 
 	// Send mc packet with payload of address value to wake up root_finder
 	spin1_send_mc_packet(key, model_state_address, WITH_PAYLOAD);
+
+//	log_info("ARMA: sent state parameters to rootfinder, waiting");
+//	log_info("ARMA: key %d, model_state_address %d", key, model_state_address);
 
 	// Wait here for the result to come back
 	while (result_value==2) {

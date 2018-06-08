@@ -106,8 +106,10 @@ def run_mcmc(
         eth_y = chip.nearest_ethernet_y
         coordinator = coordinators.get((eth_x, eth_y))
         if coordinator is None:
-            print "Warning - couldn't find {}, {}".format(eth_x, eth_y)
+            print("Warning - couldn't find {}, {} for chip {}, {}".format(
+                eth_x, eth_y, chip.x, chip.y))
             coordinator = coordinators[0, 0]
+            print("Using coordinator ", coordinator)
 
         # hard-code remove some cores (chip power monitor etc.) just
         # to see what happens

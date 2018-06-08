@@ -274,6 +274,8 @@ void run(uint unused0, uint unused1) {
 	for(i=1; i <= q; i++)
 		if( cabsf(MA_rt[i]) <= ONE ) returnval = ROOT_FAIL;
 
+//	log_info("ROOTFINDER send returnval %d back", returnval);
+
 	// At this point send returnval to normal ARMA vertex:
 	// wait here until packet is acknowledged/sent...
 	while (!spin1_send_mc_packet(ack_key, returnval, WITH_PAYLOAD)) {
@@ -286,6 +288,7 @@ void run(uint unused0, uint unused1) {
 
 void trigger_run(uint key, uint payload) {
 	use(key);
+//	log_info("ROOTFINDER trigger_run");
 	// Get the pointer value to the location in SDRAM
 	parameter_rec_ptr[0] = payload;
 	// Get ready to run the root_finder algorithm
@@ -314,7 +317,7 @@ void c_main() {
 
 	ack_key = rf_parameters.acknowledge_key;
 
-	log_info("ack_key = 0x%08x", ack_key);
+	log_info("ROOTFINDER ack_key = 0x%08x", ack_key);
 
 	// register for the start message
     spin1_callback_on(MCPL_PACKET_RECEIVED, trigger_run, -1);
