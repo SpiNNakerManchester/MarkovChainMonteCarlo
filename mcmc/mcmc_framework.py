@@ -185,6 +185,13 @@ def run_mcmc(
 
     start_computing_time = time.time()
 
+    logger.info("n_chips_on_machine {}".format(n_chips_on_machine))
+    logger.info("Running {} worker cores".format(n_workers))
+    if (model.root_finder):
+        logger.info("Running {} root finder cores".format(n_root_finders))
+    if (model.cholesky):
+        logger.info("Running {} Cholesky cores".format(n_cholesky))
+
     # Run the simulation
     #g.run(None)
     g.run_until_complete()
