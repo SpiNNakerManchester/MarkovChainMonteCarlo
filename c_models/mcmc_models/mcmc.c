@@ -330,13 +330,6 @@ void run(uint unused0, uint unused1) {
     use(unused0);
     use(unused1);
 
-//    char buffer[1024];
-//    char buffer2[1024];
-//	uint space = sark_heap_max(sark.heap, 0);
-//
-//	log_info("space on sark.heap is %d", space);
-    log_info("MCMC run");
-
     // Create a new state pointer
     uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
     mcmc_state_pointer_t new_state = (mcmc_state_pointer_t) spin1_malloc(
@@ -390,8 +383,6 @@ void run(uint unused0, uint unused1) {
     // Set up address and keys for posterior calculation (if needed)
     mcmc_get_address_and_key();
 
-    log_info("MCMC run, now collect first prior and likelihood values");
-
     // Collect the likelihood and prior and add them (log!)
     likelihood_value = full_data_set_likelihood(state);
     prior_value = mcmc_model_prior_prob(params, state);
@@ -414,7 +405,6 @@ void run(uint unused0, uint unused1) {
 
     // debug: output every timestep
     //recording_record(0, state, state_n_bytes);
-    log_info("MCMC run: going into main loop");
 
     uint samples_to_go = parameters.thinning;
 
