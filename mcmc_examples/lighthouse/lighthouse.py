@@ -213,7 +213,7 @@ data_1000 = [
 
 data_points = data_50
 
-print 'data_points: ', data_points
+print('data_points: ', data_points)
 
 seed = None  # set this if you want to use a different seed on each core
 # seed = [  # use this for the same seed on each core

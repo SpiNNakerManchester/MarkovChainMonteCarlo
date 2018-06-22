@@ -214,7 +214,7 @@ def run_mcmc(
                 error, watchdog)
             raise Exception(error_msg)
         running = txrx.get_core_state_count(app_id, CPUState.RUNNING)
-        print 'running: ', running
+        print('running: ', running)
 
     finish_computing_time = time.time()
 

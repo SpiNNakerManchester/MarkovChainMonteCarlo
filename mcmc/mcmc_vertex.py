@@ -332,8 +332,8 @@ class MCMCVertex(
             convert = numpy.zeros_like(
                 data_view, dtype=numpy.float64).view(output_format)
 
-            for i in xrange(data_view.size):
-                for j in xrange(len(numpy_format)):
+            for i in range(data_view.size):
+                for j in range(len(numpy_format)):
                     convert[i][j] = float(
                         data_view[i][j]) / float(DataType.S1615.scale)
 
