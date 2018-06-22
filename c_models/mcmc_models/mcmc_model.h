@@ -3,8 +3,8 @@
 #define TYPE_SELECT 1 // 0 - double, 1 - float, 2 - accum
 
 // Concatenate to add suffix to type where required
-#define CONCAT_HELPER(a,b) a ## b
-#define CONCAT(a,b) CONCAT_HELPER(a,b)
+#define CONCAT_HELPER(a, b) a ## b
+#define CONCAT(a, b) CONCAT_HELPER(a, b)
 
 #if TYPE_SELECT == 0
 
@@ -100,4 +100,3 @@ void mcmc_exit_function();
 
 // !\brief Get the address and key required for communication (multi-core exec.)
 void mcmc_get_address_and_key();
-

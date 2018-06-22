@@ -84,6 +84,3 @@ void mcmc_exit_function() {
 void mcmc_get_address_and_key() {
 
 }
-
-
-

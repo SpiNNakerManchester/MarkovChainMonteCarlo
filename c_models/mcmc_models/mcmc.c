@@ -239,12 +239,15 @@ CALC_TYPE t_deviate() {
 bool MH_MCMC_keep_new_point(CALC_TYPE old_pt_posterior_prob,
         CALC_TYPE new_pt_posterior_prob, uniform_seed seed) {
 	// Using log-likelihood, so we need to do exponential for test vs random
-	if (new_pt_posterior_prob > old_pt_posterior_prob)
+	if (new_pt_posterior_prob > old_pt_posterior_prob) {
 		return true;
-	else if (EXP(new_pt_posterior_prob-old_pt_posterior_prob) > uniform(seed))
+	}
+	else if (EXP(new_pt_posterior_prob-old_pt_posterior_prob) > uniform(seed)) {
         return true;
-    else
+	}
+    else {
         return false;
+    }
 }
 
 void do_transfer(CALC_TYPE *dataptr, uint bytes) {
@@ -299,7 +302,6 @@ CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
             dataptr = &(dataptr[points]);
             do_transfer(dataptr, bytes);
         } else {
-
             // If the data is all processed, to the first transfer for the next
             // calculation
             do_transfer(data, DMA_BUFFER_SIZE);
@@ -628,4 +630,3 @@ void c_main() {
 
     spin1_start(SYNC_WAIT);
 }
-

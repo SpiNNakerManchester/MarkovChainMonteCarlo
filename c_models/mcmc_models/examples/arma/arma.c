@@ -174,7 +174,7 @@ CALC_TYPE mcmc_model_likelihood(
 err is all zeros with size of (N+q)*1
 err=zeros(N+q,1); % this vector will become non-zero from the p+q+1
 */
-	for(i=0; i < error_length; i++) {
+	for (i=0; i < error_length; i++) {
 		err[i] = ZERO;  // REAL_CONST( 0.0 );
 	}
 
@@ -201,7 +201,7 @@ end
 */
 
 	// OK this is the part that is slightly complex to understand - very careful about indexing here
-	for(i=p; i < N; i++) {
+	for (i=p; i < N; i++) {
 		// loop over p for parameters * data dot product
 		for (j=0; j < p; j++) {
 			tempdotp += state->parameters[j] * data[(i-1)-j]; // check this
@@ -223,9 +223,10 @@ end
 
 /*
 
-% The first part of log of likelihood equals the negative sum of square error and then divided
-% by double of square sigma. The second part is half the number of (N-p) times the log of square sigma.
-% The substraction between the first part and the second part equals the lglikelihood.
+% The first part of log of likelihood equals the negative sum of square error and
+% then divided by double of square sigma. The second part is half the number of (N-p)
+% times the log of square sigma. The substraction between the first part and the
+% second part equals the lglikelihood.
 
 lglikelihood=-sum(err(p+q+1:end).^2)/(2*sigma^2)-0.5*(N-p)*log(sigma^2);
 
@@ -241,7 +242,7 @@ lglikelihood=-sum(err(p+q+1:end).^2)/(2*sigma^2)-0.5*(N-p)*log(sigma^2);
 	// Loop to do sum - I tried moving this into the earlier loop
 	//                  but for some reason it didn't work; it would
 	//                  save some time if it could be made to work
-	for(i=p+q; i < N+q; i++) { // check
+	for (i=p+q; i < N+q; i++) { // check
 		temp = err[i];
 		sum += SQR( temp );  // might be better using SQR here?
 	}
@@ -277,7 +278,9 @@ CALC_TYPE mcmc_model_prior_prob(
 	CALC_TYPE sigma = state->parameters[p+q+1];  // last entry in vector
 
 	// If sigma is less than zero then we can exit without using root_finder
-	if( sigma <= ZERO ) return ROOT_FAIL;
+	if ( sigma <= ZERO ) {
+		return ROOT_FAIL;
+	}
 
     // If we're still going, we need to copy state parameters to sdram
 	spin1_memcpy(model_state_address, state->parameters, state_n_bytes);
@@ -295,7 +298,9 @@ CALC_TYPE mcmc_model_prior_prob(
 
 	// Read the result and return it
 	CALC_TYPE returnval = ZERO;
-	if (result_value==1) returnval = ROOT_FAIL;
+	if (result_value==1) {
+		returnval = ROOT_FAIL;
+	}
 	return returnval;
 
 }
