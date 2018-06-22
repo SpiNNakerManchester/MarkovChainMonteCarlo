@@ -13,7 +13,7 @@ class LightHouseFixedPointModel(MCMCModel):
 
     def __init__(
             self, alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale,
-            beta_min, beta_max):
+            beta_min, beta_max, root_finder=False, cholesky=False):
         """
         :param alpha_jump_scale:\
             scaling of t transition distribution for MH jumps in alpha\
@@ -32,6 +32,8 @@ class LightHouseFixedPointModel(MCMCModel):
         self._beta_jump_scale = beta_jump_scale
         self._beta_min = beta_min
         self._beta_max = beta_max
+        self._root_finder = root_finder
+        self._cholesky = cholesky
 
     @overrides(MCMCModel.get_binary_name)
     def get_binary_name(self):
@@ -54,3 +56,11 @@ class LightHouseFixedPointModel(MCMCModel):
             MCMCStateVariable("alpha", 0.0, DataType.S1615),
             MCMCStateVariable("beta", 1.0, DataType.S1615)
         ]
+
+    @property
+    def root_finder(self):
+        return self._root_finder
+
+    @property
+    def cholesky(self):
+        return self._cholesky
