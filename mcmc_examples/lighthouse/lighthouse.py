@@ -6,7 +6,6 @@ from mcmc_examples.lighthouse.lighthouse_float_model \
 #from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #     import LightHouseFixedPointModel
 
-
 # Data to use for 50 data points
 data_50 = [
     2.37706, 4.51142, 0.406605, 0.909418, 0.642899,
@@ -256,7 +255,7 @@ samples = mcmc_framework.run_mcmc(
     model, data_points, n_samples,
     degrees_of_freedom=3.0, seed=seed, n_chips=3*44)  # n_chips=23*48)
 
-print 'samples: ', samples
+print('samples: ', samples)
 
 # Save the results
 numpy.save("results.npy", samples)
