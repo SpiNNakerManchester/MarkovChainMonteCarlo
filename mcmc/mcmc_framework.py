@@ -8,8 +8,6 @@ from . import model_binaries
 
 from pacman.model.constraints.placer_constraints\
     .chip_and_core_constraint import ChipAndCoreConstraint
-from pacman.model.constraints.placer_constraints\
-    .same_chip_as_constraint import SameChipAsConstraint
 from pacman.model.graphs.machine import MachineEdge
 
 from spinnman.model.enums.cpu_state import CPUState
@@ -28,8 +26,6 @@ logger = logging.getLogger(__name__)
 def run_mcmc(
         model, data, n_samples, burn_in=2000, thinning=5,
         degrees_of_freedom=3.0, seed=None, n_chips=None):
-#    , root_finder=False,
-#        cholesky=False):
     """ Executes an MCMC model, returning the received samples
 
     :param model: The MCMCModel to be used
@@ -152,13 +148,13 @@ def run_mcmc(
                 # to "send" the data - need to work this out
                 g.add_machine_edge_instance(
                     MachineEdge(vertex, rf_vertex),
-                    vertex.parameter_partition_name)  # key set here!
+                    vertex.parameter_partition_name)
 
                 # Add edge from root finder vertex back to mcmc vertex
                 # to send acknowledgement / result - need to work this out
                 g.add_machine_edge_instance(
                     MachineEdge(rf_vertex, vertex),
-                    vertex.result_partition_name)  # "acknowledge key" set here
+                    vertex.result_partition_name)
 
             if (model.cholesky):
                 # Create a Cholesky vertex
@@ -175,13 +171,13 @@ def run_mcmc(
                 # to "send" the data - need to work this out
                 g.add_machine_edge_instance(
                     MachineEdge(vertex, cholesky_vertex),
-                    vertex.cholesky_partition_name)  # key set here!
+                    vertex.cholesky_partition_name)
 
                 # Add edge from Cholesky vertex back to mcmc vertex
                 # to send acknowledgement / result - need to work this out
                 g.add_machine_edge_instance(
                     MachineEdge(cholesky_vertex, vertex),
-                    vertex.cholesky_result_partition_name)  # "acknowledge key" set here
+                    vertex.cholesky_result_partition_name)
 
     start_computing_time = time.time()
 
@@ -209,7 +205,7 @@ def run_mcmc(
     logger.info("Waiting for application to finish...")
     running = txrx.get_core_state_count(app_id, CPUState.RUNNING)
     # there are now cores doing extra_monitor etc.
-    non_worker_cores = n_chips_on_machine + (2 * len(boards))  # extra_monitor + coordinator
+    non_worker_cores = n_chips_on_machine + (2 * len(boards))
     while running > non_worker_cores:
         time.sleep(0.5)
         error = txrx.get_core_state_count(app_id, CPUState.RUN_TIME_EXCEPTION)

@@ -64,4 +64,3 @@ class LightHouseFloatModel(MCMCModel):
     @property
     def cholesky(self):
         return self._cholesky
-

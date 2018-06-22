@@ -255,9 +255,11 @@ class MCMCCoordinatorVertex(
         if (self._model.get_parameters()[0].data_type is DataType.S1615):
             data_convert = [int(x * float(DataType.S1615.scale))
                             for x in self._data]
-            data = numpy.array(data_convert, dtype=self._numpy_data_element_type)
+            data = numpy.array(data_convert,
+                               dtype=self._numpy_data_element_type)
         else:
-            data = numpy.array(self._data, dtype=self._numpy_data_element_type)
+            data = numpy.array(self._data,
+                               dtype=self._numpy_data_element_type)
 
         spec.write_array(data.view(numpy.uint32))
 
@@ -277,11 +279,10 @@ class MCMCCoordinatorVertex(
         progress = ProgressBar(len(self._mcmc_placements), "Reading results")
         samples = list()
         for placement in self._mcmc_placements:
-
             # Read the data recorded
             sample = placement.vertex.read_samples(buffer_manager, placement)
             if sample is not None:
-                samples.append(sample);
+                samples.append(sample)
             progress.update()
         progress.end()
 

@@ -7,24 +7,16 @@ from pacman.model.resources.cpu_cycles_per_tick_resource \
 from pacman.model.decorators.overrides import overrides
 from pacman.executor.injection_decorator import inject_items
 
-from data_specification.enums.data_type import DataType
-
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models\
     .abstract_generates_data_specification \
     import AbstractGeneratesDataSpecification
-from spinn_front_end_common.interface.buffer_management.buffer_models\
-    .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
-from spinn_front_end_common.utilities import helpful_functions
-from spinn_front_end_common.interface.buffer_management \
-    import recording_utilities
 from spinn_front_end_common.utilities.utility_objs.executable_type \
     import ExecutableType
 
-from spinn_utilities.progress_bar import ProgressBar
-
 from enum import Enum
+
 
 class MCMCCholeskyRegions(Enum):
     """ Regions in the MCMCCholesky Data
@@ -35,8 +27,7 @@ class MCMCCholeskyRegions(Enum):
 
 class MCMCCholeskyVertex(
         MachineVertex, AbstractHasAssociatedBinary,
-        AbstractGeneratesDataSpecification):  #, AbstractReceiveBuffersToHost):
-#        AbstractProvidesNKeysForPartition):
+        AbstractGeneratesDataSpecification):
     """ A vertex that runs the (MCMC) Cholesky algorithm
     """
 

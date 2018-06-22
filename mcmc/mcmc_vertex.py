@@ -281,11 +281,11 @@ class MCMCVertex(
 
         # Write the degrees of freedom
         if (self._model.get_parameters()[0].data_type is numpy.float64):
-            spec.write_value(
-                self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_64)
+            spec.write_value(self._coordinator.degrees_of_freedom,
+                             data_type=DataType.FLOAT_64)
         elif (self._model.get_parameters()[0].data_type is numpy.float32):
-            spec.write_value(
-                self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_32)
+            spec.write_value(self._coordinator.degrees_of_freedom,
+                             data_type=DataType.FLOAT_32)
         elif (self._model.get_parameters()[0].data_type is DataType.S1615):
             degrees_of_freedom = int(
                 self._coordinator.degrees_of_freedom * float(
