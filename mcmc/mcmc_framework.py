@@ -189,7 +189,6 @@ def run_mcmc(
         logger.info("Running {} Cholesky cores".format(n_cholesky))
 
     # Run the simulation
-    #g.run(None)
     g.run_until_complete()
 
     mid_computing_time = time.time()

@@ -52,13 +52,13 @@ nq = 9
 # and scaling of t transition distribution for MH jumps in p direction
 parameters = []
 jump_scale = []
-for i in range(0,np):
+for i in range(0, np):
     parameters.append(0.01)
     jump_scale.append(0.0001)
 
 # add q polynomial to parameters array
 # scaling of t transition distribution for MH jumps in q direction
-for i in range(0,nq):
+for i in range(0, nq):
     parameters.append(0.01)
     jump_scale.append(0.0001)
 
