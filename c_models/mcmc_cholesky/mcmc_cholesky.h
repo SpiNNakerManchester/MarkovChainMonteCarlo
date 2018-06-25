@@ -12,8 +12,7 @@
 #define NCOVSAMPLES 5000 // 30000
 
 // Matrices and vectors are defined by the number of state parameters
-typedef LA_TYPE Mat[PPOLYORDER+QPOLYORDER+2][PPOLYORDER+QPOLYORDER+2];
-
+typedef LA_TYPE Mat[(PPOLYORDER+QPOLYORDER+2)][(PPOLYORDER+QPOLYORDER+2)];
 typedef LA_TYPE Vec[PPOLYORDER+QPOLYORDER+2];
 
 // functions required to do cholesky decomposition
