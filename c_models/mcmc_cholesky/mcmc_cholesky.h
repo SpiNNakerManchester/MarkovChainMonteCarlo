@@ -9,11 +9,12 @@
 #define LA_SMALL 1.0e-300  // 1.0e-30f
 #define LA_SQRT sqrt  // sqrtf
 #define LA_SCALE 0.25  // LA_QUARTER
-#define NCOVSAMPLES 5000 // 30000
+#define NCOVSAMPLES 5000  // 30000
+#define MATDIM PPOLYORDER+QPOLYORDER+2
 
 // Matrices and vectors are defined by the number of state parameters
-typedef LA_TYPE Mat[(PPOLYORDER+QPOLYORDER+2)][(PPOLYORDER+QPOLYORDER+2)];
-typedef LA_TYPE Vec[PPOLYORDER+QPOLYORDER+2];
+typedef LA_TYPE Vec[MATDIM];
+typedef LA_TYPE Mat[MATDIM][MATDIM];
 
 // functions required to do cholesky decomposition
 void zero_upper_triang(Mat A, uint32_t size);

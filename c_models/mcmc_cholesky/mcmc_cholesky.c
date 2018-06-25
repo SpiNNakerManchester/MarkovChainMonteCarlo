@@ -196,11 +196,8 @@ void run(uint unused0, uint unused1) {
     uint32_t p, q, i, ii;
     Vec rot_scaled_t_variate, t_variate;
 
-    // p and q defined in header
-    p = PPOLYORDER;
-    q = QPOLYORDER;
-
-    n = p+q+2;
+    // vector/matrix dimension defined in header
+    n = MATDIM;
 
     CALC_TYPE state_parameters[n];
     CALC_TYPE t_variate_data[n];
@@ -468,7 +465,7 @@ void c_main() {
 	//dtcm_params = (CALC_TYPE *) sark_alloc(param_size, sizeof(CALC_TYPE));
 	// Set pointers for the remaining rows
 	for (ii=1; ii<n_samples; ii++) {
-		sample_data[ii] = sample_data[ii-1]+(PPOLYORDER+QPOLYORDER+2);
+		sample_data[ii] = sample_data[ii-1]+(MATDIM);
 	}
 	sdram_cholesky = 1;
 //	}
