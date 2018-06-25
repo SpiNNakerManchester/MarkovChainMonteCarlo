@@ -267,7 +267,7 @@ void do_transfer(CALC_TYPE *dataptr, uint bytes) {
 
  */
 CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
-    CALC_TYPE l = ZERO;
+    CALC_TYPE lhood = ZERO;
     if (!dma_likelihood) {
     	// process all the data inside the application-specific likelihood
     	return mcmc_model_likelihood(
@@ -308,12 +308,12 @@ CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
         }
 
         // Process the points in the buffer
-        l += mcmc_model_likelihood(
+        lhood += mcmc_model_likelihood(
         		dma_buffers[dma_process_buffer], points, params, state_to_use);
 
         points_to_process -= points;
     }
-    return l;
+    return lhood;
 }
 
 void dma_callback(uint unused0, uint unused1) {

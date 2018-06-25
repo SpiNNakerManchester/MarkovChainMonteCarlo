@@ -11,13 +11,10 @@
 #define LA_SCALE 0.25  // LA_QUARTER
 #define NCOVSAMPLES 5000 // 30000
 
-// Matrices and vectors are mainly defined by the number of state parameters
+// Matrices and vectors are defined by the number of state parameters
 typedef LA_TYPE Mat[PPOLYORDER+QPOLYORDER+2][PPOLYORDER+QPOLYORDER+2];
+
 typedef LA_TYPE Vec[PPOLYORDER+QPOLYORDER+2];
-// Except for this one which is defined by the number of samples
-// This needs a rethink if (approx) NCOVSAMPLES > 800 as it won't fit in DTCM
-// MH suggests (and JH's Matlab code uses) a value of NCOVSAMPLES = 5000
-//typedef float DataMat[NCOVSAMPLES][PPOLYORDER+QPOLYORDER+2];
 
 // functions required to do cholesky decomposition
 void zero_upper_triang(Mat A, uint32_t size);

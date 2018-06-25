@@ -198,11 +198,12 @@ void zroots( complex float a[], int m, complex float roots[], bool polish )
 		}
 	}
 
-	if ( polish )
+	if ( polish ) {
 		for ( j = 1; j <= m; j++ ) {
 			// polish roots using undeflated coeffs
 			laguerre_poly_root( a, m, &roots[j], &its );
 		}
+	}
 
 	for ( j = 2; j <= m; j++ ) {		// sort roots by their real parts
 
@@ -289,13 +290,13 @@ void run(uint unused0, uint unused1) {
 
 	// test for root magnitude <= 1 and if so return a fail result
 	// zroots returns values from array index 1 upwards
-	for (i=1; i <= p; i++)
-		if( cabsf(AR_rt[i]) <= ONE ) returnval = ROOT_FAIL;
+	for (i=1; i <= p; i++) {
+		if ( cabsf(AR_rt[i]) <= ONE ) { returnval = ROOT_FAIL; }
+	}
 
-	for (i=1; i <= q; i++)
-		if( cabsf(MA_rt[i]) <= ONE ) returnval = ROOT_FAIL;
-
-//	log_info("ROOTFINDER send returnval %d back", returnval);
+	for (i=1; i <= q; i++) {
+		if ( cabsf(MA_rt[i]) <= ONE ) { returnval = ROOT_FAIL; }
+	}
 
 	// At this point send returnval to normal ARMA vertex:
 	// wait here until packet is acknowledged/sent...
@@ -309,7 +310,6 @@ void run(uint unused0, uint unused1) {
 
 void trigger_run(uint key, uint payload) {
 	use(key);
-//	log_info("ROOTFINDER trigger_run");
 	// Get the pointer value to the location in SDRAM
 	parameter_rec_ptr[0] = payload;
 	// Get ready to run the root_finder algorithm
@@ -321,7 +321,7 @@ void end_callback(uint unused0, uint unused1) {
 	use(unused0);
 	use(unused1);
 	// End message has arrived from other vertex, so exit
-//	log_info("Root finder: exit");
+	log_info("Root finder: exit");
 	spin1_exit(0);
 }
 
@@ -349,12 +349,12 @@ void c_main() {
     spin1_start(SYNC_WAIT);
 }
 
-//#define ORDER 18
-
 /*
 	This is a test program - set up some polynomial coefficients and find their complex roots
 	seems to works up to high orders but needs testing on some real ARMA coefficients
 */
+//#define ORDER 18
+//
 //int test_main( void )
 //int main( void )
 //{
