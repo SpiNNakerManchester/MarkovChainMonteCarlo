@@ -29,7 +29,6 @@
 #include <simulation.h>
 #include <recording.h>
 #include "mcmc_model.h"
-//#include "examples/lighthouse/lighthouse.h"
 
 // Define spin1_wfi
 extern void spin1_wfi();
@@ -76,6 +75,9 @@ struct parameters {
 
     // Key for sending parameters
     uint32_t key;
+
+    // Cholesky key for sending parameters
+    uint32_t cholesky_key;
 
     // The random seed
     uniform_seed seed;
@@ -200,7 +202,7 @@ CALC_TYPE t_deviate() {
 #if TYPE_SELECT == 2
         	}
 #endif
-        	v = (ONE / SQR(x)) * u1;
+        	v = (ONE / SQR( x )) * u1;
         } else {
         	x = FOUR * u - THREE;
         	v = u1;
@@ -237,12 +239,15 @@ CALC_TYPE t_deviate() {
 bool MH_MCMC_keep_new_point(CALC_TYPE old_pt_posterior_prob,
         CALC_TYPE new_pt_posterior_prob, uniform_seed seed) {
 	// Using log-likelihood, so we need to do exponential for test vs random
-	if (new_pt_posterior_prob > old_pt_posterior_prob)
+	if (new_pt_posterior_prob > old_pt_posterior_prob) {
 		return true;
-	else if (EXP(new_pt_posterior_prob-old_pt_posterior_prob) > uniform(seed))
+	}
+	else if (EXP(new_pt_posterior_prob-old_pt_posterior_prob) > uniform(seed)) {
         return true;
-    else
+	}
+    else {
         return false;
+    }
 }
 
 void do_transfer(CALC_TYPE *dataptr, uint bytes) {
@@ -262,7 +267,7 @@ void do_transfer(CALC_TYPE *dataptr, uint bytes) {
 
  */
 CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
-    CALC_TYPE l = ZERO;
+    CALC_TYPE lhood = ZERO;
     if (!dma_likelihood) {
     	// process all the data inside the application-specific likelihood
     	return mcmc_model_likelihood(
@@ -297,19 +302,18 @@ CALC_TYPE full_data_set_likelihood(mcmc_state_pointer_t state_to_use) {
             dataptr = &(dataptr[points]);
             do_transfer(dataptr, bytes);
         } else {
-
             // If the data is all processed, to the first transfer for the next
             // calculation
             do_transfer(data, DMA_BUFFER_SIZE);
         }
 
         // Process the points in the buffer
-        l += mcmc_model_likelihood(
+        lhood += mcmc_model_likelihood(
         		dma_buffers[dma_process_buffer], points, params, state_to_use);
 
         points_to_process -= points;
     }
-    return l;
+    return lhood;
 }
 
 void dma_callback(uint unused0, uint unused1) {
@@ -327,9 +331,6 @@ void dma_callback(uint unused0, uint unused1) {
 void run(uint unused0, uint unused1) {
     use(unused0);
     use(unused1);
-
-    char buffer[1024];
-    char buffer2[1024];
 
     // Create a new state pointer
     uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
@@ -349,6 +350,7 @@ void run(uint unused0, uint unused1) {
     unsigned int sample_count = 0;
     unsigned int accepted = 0;
     unsigned int likelihood_calls = 0;
+    unsigned int timestep = 0;
 
     // Try to copy data in to DTCM
     CALC_TYPE *data_ptr = (CALC_TYPE *) sark_tag_ptr(
@@ -392,6 +394,7 @@ void run(uint unused0, uint unused1) {
 
     // update likelihood function counter for diagnostics
     likelihood_calls++;
+    timestep++;
 
     // debug printing - of course the other option here is accum conversion
     // and direct print
@@ -402,16 +405,21 @@ void run(uint unused0, uint unused1) {
 //    log_info("%d %k %k %d %d", burn_in, (accum) prior_value,
 //    		(accum) likelihood_value, likelihood_calls, accepted);
 
+    // debug: output every timestep
+    //recording_record(0, state, state_n_bytes);
+
     uint samples_to_go = parameters.thinning;
 
     // Main loop
     do {
         // make a jump around parameter space using bivariate t distribution
-        // with 3 degrees of freedom
-        mcmc_model_transition_jump(params, state, new_state);
+        // with df degrees of freedom
+        mcmc_model_transition_jump(params, state, new_state,
+        		timestep);
 
         // update likelihood function counter for diagnostics
         likelihood_calls++;
+        timestep++;
 
         // calculate joint probability at this point: remember now using log
         likelihood_value = full_data_set_likelihood(new_state);
@@ -438,8 +446,25 @@ void run(uint unused0, uint unused1) {
             accepted++;
         };
 
+        // Print the acceptance stats every 5000 timesteps
+        if (likelihood_calls % 5000 == 0) {
+        	log_info("accepted %d of %d", accepted, likelihood_calls);
+        }
+
+        // debug: output every timestep
+//        recording_record(0, state, state_n_bytes);
+
         if (burn_in) {
-            if (likelihood_calls == parameters.burn_in) {
+        	// Debug: testing this against the MATLAB code during burn-in
+            // output every THINNING samples
+            if (samples_to_go == 0) {
+                recording_record(0, state, state_n_bytes);
+                sample_count++;
+                samples_to_go = parameters.thinning;
+            }
+            samples_to_go--;
+
+        	if (likelihood_calls == parameters.burn_in) {
                 log_info(
                     "Burn-in accepted %d of %d", accepted, likelihood_calls);
 
@@ -507,9 +532,9 @@ void trigger_run(uint unused0, uint unused1) {
 */
 
 void c_main() {
-#if TYPE_SELECT != 2
-    char buffer[1024];
-#endif
+//#if TYPE_SELECT != 2
+//    char buffer[1024];
+//#endif
 
     // Read the data specification header
     address_t data_address = data_specification_get_data_address();
@@ -560,18 +585,23 @@ void c_main() {
     log_info("Thinning = %d", parameters.thinning);
     log_info("N Samples = %d", parameters.n_samples);
     log_info("N Data Points = %d", parameters.n_data_points);
-    log_info("Data Window Size = %d", parameters.data_window_size);
-    log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
+//    log_info("Data Window Size = %d", parameters.data_window_size);
+//    log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
     log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
-    log_info("Data tag = %d", parameters.data_tag);
-    log_info("Timer = %d", parameters.timer);
+//    log_info("Data tag = %d", parameters.data_tag);
+//    log_info("Timer = %d", parameters.timer);
     log_info("Key = 0x%08x", parameters.key);
-#if TYPE_SELECT == 2
-    log_info("Degrees of freedom = %k", parameters.degrees_of_freedom);
-#else
-    print_value(parameters.degrees_of_freedom, buffer);
-    log_info("Degrees of freedom = %s", buffer);
-#endif
+    log_info("Cholesky key = 0x%08x", parameters.cholesky_key);
+//#if TYPE_SELECT == 2
+//    log_info("Degrees of freedom = %k", parameters.degrees_of_freedom);
+//#else
+//    print_value(parameters.degrees_of_freedom, buffer);
+//    log_info("Degrees of freedom = %s", buffer);
+//#endif
+
+//	uint space = sark_heap_max(sark.heap, 0);
+//
+//	log_info("space on sark.heap is %d", space);
 
     // Allocate the data receive space if this is the nominated receiver
     if (parameters.data_window_size > 0) {
@@ -600,4 +630,3 @@ void c_main() {
 
     spin1_start(SYNC_WAIT);
 }
-

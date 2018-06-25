@@ -18,16 +18,17 @@ from spinn_front_end_common.utilities.utility_objs.executable_type \
 from enum import Enum
 
 
-class MCMCRootFinderRegions(Enum):
-    """ Regions in the MCMCRootFinder Data
+class MCMCCholeskyRegions(Enum):
+    """ Regions in the MCMCCholesky Data
     """
     PARAMETERS = 0
+    # Note: recording region may also be necessary in order to read history
 
 
-class MCMCRootFinderVertex(
+class MCMCCholeskyVertex(
         MachineVertex, AbstractHasAssociatedBinary,
         AbstractGeneratesDataSpecification):
-    """ A vertex that runs the (MCMC) root finder algorithm
+    """ A vertex that runs the (MCMC) Cholesky algorithm
     """
 
     def __init__(
@@ -37,13 +38,14 @@ class MCMCRootFinderVertex(
         :param model: The model being simulated
         """
 
-        MachineVertex.__init__(self, label="MCMC RF Node", constraints=None)
+        MachineVertex.__init__(self, label="MCMC Cholesky Node",
+                               constraints=None)
         self._vertex = vertex
         self._model = model
 
         vertex.coordinator.register_processor(self)
 
-        # Other parameters need to be added here
+        # Other parameters may need to be added here
         self._n_other_params = 1
 
         self._n_parameter_bytes = self._n_other_params * 4
@@ -63,7 +65,7 @@ class MCMCRootFinderVertex(
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        return "mcmc_root_finder.aplx"
+        return "mcmc_cholesky.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):
@@ -79,11 +81,13 @@ class MCMCRootFinderVertex(
 
         # Reserve and write the parameters region
         spec.reserve_memory_region(
-            MCMCRootFinderRegions.PARAMETERS.value, self._n_parameter_bytes)
-        spec.switch_write_focus(MCMCRootFinderRegions.PARAMETERS.value)
+            MCMCCholeskyRegions.PARAMETERS.value, self._n_parameter_bytes)
+        spec.switch_write_focus(MCMCCholeskyRegions.PARAMETERS.value)
+
+        # We may need the recording region in this instance as well?
 
         # Write the acknowledge key
-        spec.write_value(self._vertex.get_result_key(
+        spec.write_value(self._vertex.get_cholesky_result_key(
             placement, routing_info))
 
         # End the specification
@@ -92,5 +96,5 @@ class MCMCRootFinderVertex(
     def read_samples(self, buffer_manager, placement):
         """ Read back the samples (dummy call)
         """
-#        print 'There are no samples to read back on a root finder vertex'
+#        print 'There are no samples to read back on a Cholesky vertex'
         return None

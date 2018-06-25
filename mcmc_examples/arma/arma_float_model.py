@@ -12,26 +12,17 @@ class ARMAFloatModel(MCMCModel):
     """
 
     def __init__(
-            self, parameters, p_jump_scale, q_jump_scale, mu_jump_scale,
-            sigma_jump_scale):
+            self, parameters, jump_scale, root_finder=True, cholesky=True):
         """
         :param parameters:\
             array of coefficients of polynomials, plus mu and sigma
-        :param p_jump_scale:\
-            array of scale values for polynomial coefficients for p
-        :param q_jump_scale:\
-            array of scale values for polynomial coefficients for q
-        :param mu_jump_scale:\
-            scale value for mu
-        :param sigma_jump_scale:\
-            scale value for sigma
+        :param jump_scale:\
+            array of jump scale values for parameters
         """
-
         self._parameters = parameters
-        self._p_jump_scale = p_jump_scale
-        self._q_jump_scale = q_jump_scale
-        self._mu_jump_scale = mu_jump_scale
-        self._sigma_jump_scale = sigma_jump_scale
+        self._jump_scale = jump_scale
+        self._root_finder = root_finder
+        self._cholesky = cholesky
 
     @overrides(MCMCModel.get_binary_name)
     def get_binary_name(self):
@@ -39,26 +30,17 @@ class ARMAFloatModel(MCMCModel):
 
     @overrides(MCMCModel.get_parameters)
     def get_parameters(self):
-        # It's probably best here to convert the arrays into individual values?
+        # Best here to convert the arrays into individual values
         return_params = []
-        for i in range(len(self._p_jump_scale)):
+        for i in range(len(self._jump_scale)):
             return_params.append(
-                MCMCParameter(self._p_jump_scale[i], numpy.float32))
-        for i in range(len(self._q_jump_scale)):
-            return_params.append(
-                MCMCParameter(self._q_jump_scale[i], numpy.float32))
-
-        # Append mu and sigma scales to the end of this array
-        return_params.append(
-            MCMCParameter(self._mu_jump_scale, numpy.float32))
-        return_params.append(
-            MCMCParameter(self._sigma_jump_scale, numpy.float32))
+                MCMCParameter(self._jump_scale[i], numpy.float32))
 
         return return_params
 
     @overrides(MCMCModel.get_state_variables)
     def get_state_variables(self):
-        # It's probably best here to convert the arrays into individual values?
+        # Best here to convert the arrays into individual values
         return_state_vars = []
         for i in range(len(self._parameters)):
             return_state_vars.append(
@@ -66,3 +48,11 @@ class ARMAFloatModel(MCMCModel):
                                   self._parameters[i], numpy.float32))
 
         return return_state_vars
+
+    @property
+    def root_finder(self):
+        return self._root_finder
+
+    @property
+    def cholesky(self):
+        return self._cholesky

@@ -1,4 +1,4 @@
-DIRS = mcmc_models mcmc_coordinator mcmc_root_finder
+DIRS = mcmc_models mcmc_coordinator mcmc_root_finder mcmc_cholesky
 
 all: $(DIRS)
 	@for d in $(DIRS); do $(MAKE) -C $$d || exit $$?; done

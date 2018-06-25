@@ -2,7 +2,6 @@
 **/.settings
 **/.cproject
 *.aplx
-*.txt
 **/build/
 **/.pydevproject
 **/application_generated_data_files/

@@ -43,7 +43,9 @@ class MCMCVertex(
 
     def __init__(self, coordinator, model,
                  parameter_partition_name="MCMCParameter",
-                 result_partition_name="MCMCResultAck"):
+                 result_partition_name="MCMCResultAck",
+                 cholesky_partition_name="MCMCCholeskyParameter",
+                 cholesky_result_partition_name="MCMCCholeskyResultAck"):
         """
 
         :param coordinator: The coordinator vertex
@@ -55,6 +57,8 @@ class MCMCVertex(
         self._model = model
         self._parameter_partition_name = parameter_partition_name
         self._result_partition_name = result_partition_name
+        self._cholesky_partition_name = cholesky_partition_name
+        self._cholesky_result_partition_name = cholesky_result_partition_name
 
         self._coordinator.register_processor(self)
 
@@ -64,12 +68,12 @@ class MCMCVertex(
         params = self._get_model_parameters_array()
 
         # The number of bytes for the parameters
-        # (10 * uint32) + (5 * seed array) + (1 * d.o.f.)
+        # (11 * uint32) + (5 * seed array) + (1 * d.o.f.)
         self._n_parameter_bytes = 0
         if (model.get_parameters()[0].data_type is numpy.float64):
-            self._n_parameter_bytes = (10 * 4) + (5 * 4) + (1 * 8)
+            self._n_parameter_bytes = (11 * 4) + (5 * 4) + (1 * 8)
         else:
-            self._n_parameter_bytes = (10 * 4) + (5 * 4) + (1 * 4)
+            self._n_parameter_bytes = (11 * 4) + (5 * 4) + (1 * 4)
 
         self._sdram_usage = (
             self._n_parameter_bytes + self._recording_size +
@@ -78,6 +82,7 @@ class MCMCVertex(
             )
 
         self._data_receiver = dict()
+        self._cholesky_data_receiver = dict()
 
     def _get_model_parameters_array(self):
         parameters = self._model.get_parameters()
@@ -141,6 +146,21 @@ class MCMCVertex(
             return True
         return self._data_receiver[(x, y)] == placement.p
 
+    def get_cholesky_result_key(self, placement, routing_info):
+        if self._is_cholesky_receiver_placement(placement):
+            key = routing_info.get_first_key_from_pre_vertex(
+                placement.vertex, self._cholesky_result_partition_name)
+            return key
+        return 0
+
+    def _is_cholesky_receiver_placement(self, placement):
+        x = placement.x
+        y = placement.y
+        if (x, y) not in self._cholesky_data_receiver:
+            self._cholesky_data_receiver[x, y] = placement.p
+            return True
+        return self._cholesky_data_receiver[(x, y)] == placement.p
+
     @property
     def coordinator(self):
         return self._coordinator
@@ -152,6 +172,14 @@ class MCMCVertex(
     @property
     def result_partition_name(self):
         return self._result_partition_name
+
+    @property
+    def cholesky_partition_name(self):
+        return self._cholesky_partition_name
+
+    @property
+    def cholesky_result_partition_name(self):
+        return self._cholesky_result_partition_name
 
     @property
     @overrides(MachineVertex.resources_required)
@@ -227,10 +255,19 @@ class MCMCVertex(
         spec.write_value(self._coordinator.acknowledge_timer)
 
         # Write the (first) key for sending parameter data, if needed
-        routing_info = routing_info.get_routing_info_from_pre_vertex(
-            self, self._parameter_partition_name)
-        if (routing_info is not None):
-            spec.write_value(routing_info.first_key, data_type=DataType.UINT32)
+        if (self._model.root_finder):
+            routing_info_rf = routing_info.get_routing_info_from_pre_vertex(
+                self, self._parameter_partition_name)
+            spec.write_value(routing_info_rf.first_key,
+                             data_type=DataType.UINT32)
+        else:
+            spec.write_value(0, data_type=DataType.UINT32)
+
+        if (self._model.cholesky):
+            routing_info_ch = routing_info.get_routing_info_from_pre_vertex(
+                self, self._cholesky_partition_name)
+            spec.write_value(routing_info_ch.first_key,
+                             data_type=DataType.UINT32)
         else:
             spec.write_value(0, data_type=DataType.UINT32)
 
@@ -244,11 +281,11 @@ class MCMCVertex(
 
         # Write the degrees of freedom
         if (self._model.get_parameters()[0].data_type is numpy.float64):
-            spec.write_value(
-                self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_64)
+            spec.write_value(self._coordinator.degrees_of_freedom,
+                             data_type=DataType.FLOAT_64)
         elif (self._model.get_parameters()[0].data_type is numpy.float32):
-            spec.write_value(
-                self._coordinator.degrees_of_freedom, data_type=DataType.FLOAT_32)
+            spec.write_value(self._coordinator.degrees_of_freedom,
+                             data_type=DataType.FLOAT_32)
         elif (self._model.get_parameters()[0].data_type is DataType.S1615):
             degrees_of_freedom = int(
                 self._coordinator.degrees_of_freedom * float(
@@ -295,8 +332,8 @@ class MCMCVertex(
             convert = numpy.zeros_like(
                 data_view, dtype=numpy.float64).view(output_format)
 
-            for i in xrange(data_view.size):
-                for j in xrange(len(numpy_format)):
+            for i in range(data_view.size):
+                for j in range(len(numpy_format)):
                     convert[i][j] = float(
                         data_view[i][j]) / float(DataType.S1615.scale)
 

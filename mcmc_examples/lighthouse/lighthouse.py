@@ -1,11 +1,10 @@
 import numpy
 from mcmc import mcmc_framework
-#from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
+# from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
 from mcmc_examples.lighthouse.lighthouse_float_model \
      import LightHouseFloatModel
-#from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
+# from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #     import LightHouseFixedPointModel
-
 
 # Data to use for 50 data points
 data_50 = [
@@ -214,12 +213,12 @@ data_1000 = [
 
 data_points = data_50
 
-print 'data_points: ', data_points
+print('data_points: ', data_points)
 
 seed = None  # set this if you want to use a different seed on each core
-#seed = [  # use this for the same seed on each core
+# seed = [  # use this for the same seed on each core
 #    123456789, 234567891, 345678912, 456789123, 0
-#]
+# ]
 
 # number of posterior samples required per core
 n_samples = 100
@@ -243,20 +242,20 @@ beta_min = 0.2
 beta_max = 2.0
 
 # Run and get the samples
-#model = LightHouseModel(
+# model = LightHouseModel(
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
 model = LightHouseFloatModel(
     alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
     beta_max)
-#model = LightHouseFixedPointModel(
+# model = LightHouseFixedPointModel(
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
 samples = mcmc_framework.run_mcmc(
     model, data_points, n_samples,
     degrees_of_freedom=3.0, seed=seed, n_chips=3*44)  # n_chips=23*48)
 
-print 'samples: ', samples
+print('samples: ', samples)
 
 # Save the results
 numpy.save("results.npy", samples)

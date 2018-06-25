@@ -3,8 +3,8 @@
 #define TYPE_SELECT 1 // 0 - double, 1 - float, 2 - accum
 
 // Concatenate to add suffix to type where required
-#define CONCAT_HELPER(a,b) a ## b
-#define CONCAT(a,b) CONCAT_HELPER(a,b)
+#define CONCAT_HELPER(a, b) a ## b
+#define CONCAT(a, b) CONCAT_HELPER(a, b)
 
 #if TYPE_SELECT == 0
 
@@ -93,11 +93,10 @@ CALC_TYPE mcmc_model_prior_prob(
 // !\brief Jump to a new state from the current state
 void mcmc_model_transition_jump(
     mcmc_params_pointer_t params, mcmc_state_pointer_t state,
-    mcmc_state_pointer_t new_state);
+    mcmc_state_pointer_t new_state, uint32_t timestep);
 
 // !\brief Define the exit function from MCMC
 void mcmc_exit_function();
 
 // !\brief Get the address and key required for communication (multi-core exec.)
 void mcmc_get_address_and_key();
-

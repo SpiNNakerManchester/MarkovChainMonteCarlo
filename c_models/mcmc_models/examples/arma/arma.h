@@ -6,10 +6,11 @@
 struct mcmc_params {
 
     // scaling of transition distribution for MH jumps
-    CALC_TYPE p_jump_scale[PPOLYORDER];
-    CALC_TYPE q_jump_scale[QPOLYORDER];
-    CALC_TYPE mu_jump_scale;
-    CALC_TYPE sigma_jump_scale;
+	CALC_TYPE jump_scale[PPOLYORDER+QPOLYORDER+2];
+//    CALC_TYPE p_jump_scale[PPOLYORDER];
+//    CALC_TYPE q_jump_scale[QPOLYORDER];
+//    CALC_TYPE mu_jump_scale;
+//    CALC_TYPE sigma_jump_scale;
 
 };
 

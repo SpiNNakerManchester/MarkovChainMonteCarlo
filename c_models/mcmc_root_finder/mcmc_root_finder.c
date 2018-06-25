@@ -68,13 +68,14 @@ complex float RCmul( float x, complex float a )
 #define MT 10
 #define MAXIT (MT*MR)
 /*
-	Given degree m and the m+1 complex coefficients a[0..m] of the polynomial a[i]*x^i and a complex value x,
-	this function improves x by Laguerre's method until it converges - within the achievable roundoff limit -
-	to a root of the given polynomial. Number of iterations taken is returned as its
+	Given degree m and the m+1 complex coefficients a[0..m] of the polynomial a[i]*x^i
+	and a complex value x, this function improves x by Laguerre's method until it
+	converges - within the achievable roundoff limit - to a root of the given
+	polynomial. Number of iterations taken is returned as its
 */
 void laguerre_poly_root( complex float a[], int m, complex float *x, int *its )
 {
-	int 				iter,j;
+	int 				iter, j;
 	float 			abx, abp, abm, err;
 	complex float	dx, x1, b, d, f, g, h, sq, gp, gm, g2;
 	static float 	frac[MR+1] = { 0.0, 0.5, 0.25, 0.75, 0.13, 0.38, 0.62, 0.88, 1.0 };
@@ -95,7 +96,9 @@ void laguerre_poly_root( complex float a[], int m, complex float *x, int *its )
 
 		err *= EPSS;	// estimate of roundoff error in evaluating polynomial
 
-		if ( cabsf( b ) <= err ) return;	// we are on the root
+		if ( cabsf( b ) <= err ) {
+			return;	// we are on the root
+		}
 
 		g = d / b;								// the generic case so use Laguerre's formula
 		g2 = g * g;
@@ -107,7 +110,9 @@ void laguerre_poly_root( complex float a[], int m, complex float *x, int *its )
 		abp = cabsf( gp );
 		abm = cabsf( gm );
 
-		if ( abp < abm ) gp = gm;
+		if ( abp < abm ) {
+			gp = gm;
+		}
 
 		dx = FMAX( abp, abm ) > 0.0f ? ( ((float) m ) + 0.0f * I ) / gp :
 		RCmul( 1.0f + abx, cosf((float)iter) + sinf((float)iter) * I );
@@ -116,16 +121,23 @@ void laguerre_poly_root( complex float a[], int m, complex float *x, int *its )
 
 		x1 = *x - dx;
 
-		if ( crealf(*x) == crealf(x1) && cimagf(*x) == cimagf(x1) ) return; // converged
-
-		if ( iter % MT )
-			*x = x1;
-		else
-			*x = *x - RCmul( frac[ iter / MT ], dx ); // occasionally take fractional step to break rare limit cycle
+		if ( crealf(*x) == crealf(x1) && cimagf(*x) == cimagf(x1) ) {
+			return; // converged
 		}
 
+		if ( iter % MT ) {
+			*x = x1;
+		}
+		else {
+			// occasionally take fractional step to break rare limit cycle
+			*x = *x - RCmul( frac[ iter / MT ], dx );
+		}
+	}
+
 	// Note: Not sure this is necessary, but could be a log_info to see if it ever occurs
-//	printf("Too many iterations in laguerre_poly_root()"); exit(1); // very unusual and only for complex roots
+	// log_info("Too many iterations in laguerre_poly_root()");
+	// very unusual and only for complex roots
+	// printf("Too many iterations in laguerre_poly_root()"); exit(1);
 
 	return;
 }
@@ -147,16 +159,19 @@ void laguerre_poly_root( complex float a[], int m, complex float *x, int *its )
 #define EPS 2.0e-6
 #define MAXM 100
 /*
-	Given the degree m and m+1 complex coefficients a[0..m] of the polynomial a[i]*x^i this function
-	successively calls laguerre_poly_root() and finds all m complex roots in roots[1..m]. The bool
-	polish should be input as true if polishing is desired (i.e. almost always)
+	Given the degree m and m+1 complex coefficients a[0..m] of the polynomial a[i]*x^i
+	this function successively calls laguerre_poly_root() and finds all m complex
+	roots in roots[1..m]. The bool polish should be input as true if polishing is
+	desired (i.e. almost always)
 */
 void zroots( complex float a[], int m, complex float roots[], bool polish )
 {
 	int 				i, its, j, jj;
 	complex float 	x, b, c, ad[MAXM];
 
-	for ( j = 0; j <= m; j++ ) ad[j] = a[j]; // copy coeffs for successive deflation
+	for ( j = 0; j <= m; j++ ) {
+		ad[j] = a[j]; // copy coeffs for successive deflation
+	}
 
 	for ( j = m; j >= 1; j-- ) {	// loop over each root to be found
 
@@ -165,10 +180,12 @@ void zroots( complex float a[], int m, complex float roots[], bool polish )
 
 		laguerre_poly_root( ad, j, &x, &its );
 
-		if ( fabs(cimagf(x)) <= 2.0f * EPS * fabs(crealf(x)))
+		if ( fabs(cimagf(x)) <= 2.0f * EPS * fabs(crealf(x))) {
 			x = crealf(x) + 0.0f * I; // set imaginary part to zero
-//		if ( fabs(cimagf(x)) <= TWO * EPS * fabs(crealf(x)))
+		}
+//		if ( fabs(cimagf(x)) <= TWO * EPS * fabs(crealf(x))) {
 //			x = crealf(x) + ZERO * I; // set imaginary part to zero
+//		}
 
 		roots[j] = x;
 
@@ -178,23 +195,29 @@ void zroots( complex float a[], int m, complex float roots[], bool polish )
 			c = ad[jj];
 			ad[jj] = b;
 			b = (x * b) + c;
-			}
 		}
+	}
 
-	if ( polish )
-		for ( j = 1; j <= m; j++ )  	// polish roots using undeflated coeffs
+	if ( polish ) {
+		for ( j = 1; j <= m; j++ ) {
+			// polish roots using undeflated coeffs
 			laguerre_poly_root( a, m, &roots[j], &its );
+		}
+	}
 
 	for ( j = 2; j <= m; j++ ) {		// sort roots by their real parts
 
 		x = roots[j];
 
 		for ( i = j-1; i >= 1; i-- ) {
-			if ( crealf(roots[i]) <= crealf(x) ) break;
-			roots[i+1] = roots[i];
+			if ( crealf(roots[i]) <= crealf(x) ) {
+				break;
 			}
-		roots[i+1] = x;
+			roots[i+1] = roots[i];
 		}
+
+		roots[i+1] = x;
+	}
 }
 
 // Sensible to get this size if it's directly available to us
@@ -210,8 +233,10 @@ void run(uint unused0, uint unused1) {
     // for debug writing values
     char buffer[1024];
 
-    uint8_t i, p, q;
+    uint32_t i, p, q;
     CALC_TYPE state_parameters[PPOLYORDER+QPOLYORDER+2];
+
+//    log_info("ROOTFINDER: running root finder");
 
     // p and q defined in header
     p = PPOLYORDER;
@@ -234,24 +259,24 @@ void run(uint unused0, uint unused1) {
 
 	// zroots needs them in order from lowest power to highest
 	AR_eq[0] = ONE;
-	for(i=0; i < p; i++) {
+	for (i=0; i < p; i++) {
 		AR_eq[i+1] = -state_parameters[i];
 	}
 
 	// Create an array with the coefficients for the characteristic MA equation
 	// The characteristic equation is -b_q*x^q-b_(q-1)*x^(q-1)-...+1=0;
 	MA_eq[0] = ONE;
-	for(i=0; i < q; i++) {
+	for (i=0; i < q; i++) {
 		MA_eq[i+1] = -state_parameters[p+i];
 	}
 
 	// read parameters into complex vectors so that we can calculate roots - from 0?
-	for(i=0; i <= p; i++) {
+	for (i=0; i <= p; i++) {
 		// only real part relevant - so imaginary part = 0
 		AR_param[i] = (float)AR_eq[i] + ZERO * I;
 	}
 
-	for( i = 0; i <= q; i++ ) {
+	for (i=0; i <= q; i++ ) {
 		// only real part relevant - so imaginary part = 0
 		MA_param[i] = (float)MA_eq[i] + ZERO * I;
 	}
@@ -261,15 +286,17 @@ void run(uint unused0, uint unused1) {
 	zroots( MA_param, q, MA_rt, true);
 
 	// Set the return value
-	uint8_t returnval = 0;
+	uint32_t returnval = 0;
 
 	// test for root magnitude <= 1 and if so return a fail result
 	// zroots returns values from array index 1 upwards
-	for(i=1; i <= p; i++)
-		if( cabsf(AR_rt[i]) <= ONE ) returnval = ROOT_FAIL;
+	for (i=1; i <= p; i++) {
+		if ( cabsf(AR_rt[i]) <= ONE ) { returnval = ROOT_FAIL; }
+	}
 
-	for(i=1; i <= q; i++)
-		if( cabsf(MA_rt[i]) <= ONE ) returnval = ROOT_FAIL;
+	for (i=1; i <= q; i++) {
+		if ( cabsf(MA_rt[i]) <= ONE ) { returnval = ROOT_FAIL; }
+	}
 
 	// At this point send returnval to normal ARMA vertex:
 	// wait here until packet is acknowledged/sent...
@@ -294,9 +321,8 @@ void end_callback(uint unused0, uint unused1) {
 	use(unused0);
 	use(unused1);
 	// End message has arrived from other vertex, so exit
-//	log_info("Root finder: exit");
+	log_info("Root finder: exit");
 	spin1_exit(0);
-
 }
 
 void c_main() {
@@ -311,7 +337,7 @@ void c_main() {
 
 	ack_key = rf_parameters.acknowledge_key;
 
-	log_info("ack_key = 0x%08x", ack_key);
+	log_info("ROOTFINDER ack_key = 0x%08x", ack_key);
 
 	// register for the start message
     spin1_callback_on(MCPL_PACKET_RECEIVED, trigger_run, -1);
@@ -323,12 +349,12 @@ void c_main() {
     spin1_start(SYNC_WAIT);
 }
 
-//#define ORDER 18
-
 /*
 	This is a test program - set up some polynomial coefficients and find their complex roots
 	seems to works up to high orders but needs testing on some real ARMA coefficients
 */
+//#define ORDER 18
+//
 //int test_main( void )
 //int main( void )
 //{
