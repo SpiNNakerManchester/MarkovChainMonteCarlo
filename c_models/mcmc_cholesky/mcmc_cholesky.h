@@ -1,7 +1,7 @@
 #include "../mcmc_models/examples/arma/arma.h"
 #include <stdbool.h>
 
-#define FOR( i, n ) for ( i = 0; i < (n); i++ )
+//#define FOR( i, n ) for ( i = 0; i < (n); i++ )
 #define LA_TYPE double  // float
 #define LA_ZERO 0.0  // 0.0f
 #define LA_ONE 1.0  // 1.0f

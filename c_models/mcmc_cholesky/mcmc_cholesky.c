@@ -71,10 +71,11 @@ void trigger_run(uint key, uint payload);
 void zero_upper_triang(Mat A, uint32_t size) {
 	uint32_t i, j;
 
-	FOR( i, size )
-		for ( j = i+1; j < size; j++ ) {
+	for (i=0; i<size; i++) {
+		for (j=i+1; j<size; j++) {
 			A[i][j] = LA_ZERO;
 		}
+	}
 }
 
 void cholesky(Mat A, const uint32_t size, bool zero_upper) {
@@ -83,21 +84,21 @@ void cholesky(Mat A, const uint32_t size, bool zero_upper) {
 	int32_t k;
 	LA_TYPE sum;
 
-	FOR( i, size ) {
-		for ( j = i; j < size; j++ ) {
-			for ( sum = A[j][i], k = i-1; k >= 0; k-- ) {
+	for (i=0; i<size; i++) {
+		for (j=i; j<size; j++) {
+			for (sum=A[j][i], k=i-1; k>=0; k--) {
 				sum -= A[j][k] * A[i][k];
 			}
 
-			if ( i == j ) {
-				if ( sum <= LA_ZERO ) {
+			if (i == j) {
+				if (sum <= LA_ZERO) {
 					// do we fail by exiting at this point and spitting out information?
 					// (with some method to tell the gatherer not to include this sample)
 					log_info("Warning: possible non-pds matrix in cholesky()\n");
 					A[i][i] = LA_SMALL;  // i.e. very small positive value
 				}
 				else {
-					A[i][i] = LA_SQRT( sum );
+					A[i][i] = LA_SQRT(sum);
 				}
 			}
 			else {
@@ -106,8 +107,8 @@ void cholesky(Mat A, const uint32_t size, bool zero_upper) {
 		}
 	}
 
-	if ( zero_upper ) {
-		zero_upper_triang( A, size ); 	// zero upper triangle if necessary - for our application it is
+	if (zero_upper) {
+		zero_upper_triang(A, size); 	// zero upper triangle if necessary - for our application it is
 	}
 }
 
@@ -116,10 +117,11 @@ void vec_times_mat_scaled(const Vec vec, const Mat mat, Vec res,
 	LA_TYPE sum;
 	uint32_t i, j;
 
-	FOR( i, size ) {
+	for (i=0; i<size; i++) {
 		sum = LA_ZERO;
-		FOR( j, size )
+		for (j=0; j<size; j++) {
 			sum += vec[j] * mat[i][j];
+		}
 		// need to check if this correct way around! i.e. it could be mat[j][i]
 		// (I think this is the correct way round: it's a bit confusing compared
 		//  directly to MATLAB as the cholesky command there gives an upper-
@@ -134,8 +136,8 @@ void mean_covar_of_mat_n(const uint32_t n, const uint32_t d) {
 	LA_TYPE sum, xi, xj, covar;
 	Vec mean;
 
-	FOR( i, d ) {									// calculate means
-		for ( sum = LA_ZERO, j = 0; j < n; j++ ) {
+	for (i=0; i<d; i++) {									// calculate means
+		for (sum=LA_ZERO, j=0; j<n; j++) {
 			sum += sample_data[j][i];
 		}
 
@@ -143,27 +145,27 @@ void mean_covar_of_mat_n(const uint32_t n, const uint32_t d) {
 
 	}
 
-	FOR( i, d ) {
-		for ( j = i; j < d; j++ ) {
+	for (i=0; i<d; i++) {
+		for (j=i; j<d; j++) {
 			covar = LA_ZERO;
 
-			if ( i == j ) {
-				FOR( k, n ) {			// calculate variances on diagonal
+			if (i == j) {
+				for (k=0; k<n; k++) {			// calculate variances on diagonal
 					xi = sample_data[k][i] - mean[i];
 					covar += xi * xi;
 				}
 			}
 			else {
-				FOR( k, n ) {					// covariances off diagonal
+				for (k=0; k<n; k++) {					// covariances off diagonal
 					xi = sample_data[k][i] - mean[i];
 					xj = sample_data[k][j] - mean[j];
 					covar += xi * xj;
 				}
 			}
 
-			covariance[i][j] = covar / ( (LA_TYPE)n - LA_ONE ); // n must be > 1
+			covariance[i][j] = covar / ((LA_TYPE)n-LA_ONE); // n must be > 1
 
-			if ( i != j ) {
+			if (i != j) {
 				covariance[j][i] = covariance[i][j];
 			}
 		}
