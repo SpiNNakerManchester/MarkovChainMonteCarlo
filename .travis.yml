@@ -68,7 +68,10 @@ script:
   - flake8 mcmc_examples
   # C
   - make -C c_models
-  - support/run-vera.sh c_models
+  - support/run-vera.sh c_models/mcmc_models
+  - support/run-vera.sh c_models/mcmc_coordinator
+  - support/run-vera.sh c_models/mcmc_root_finder
+  - support/run-vera.sh c_models/mcmc_cholesky/mcmc_cholesky.c
   # Documentation build check
   #- cd doc/source
   #- sphinx-build -T -E -b html -d _build/doctrees-readthedocsdirhtml -D language=en . _build/html
