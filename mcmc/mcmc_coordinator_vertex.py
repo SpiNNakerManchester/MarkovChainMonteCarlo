@@ -230,7 +230,7 @@ class MCMCCoordinatorVertex(
 
         # Write the data size in words
         spec.write_value(
-            len(self._data) * (float(self._data_element_type.size) / 4.0),
+            int(len(self._data) * (float(self._data_element_type.size) / 4.0)),
             data_type=self._DATA_COUNT_TYPE)
 
         # Write the number of chips
