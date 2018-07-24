@@ -14,6 +14,8 @@ from spinnman.model.enums.cpu_state import CPUState
 
 from spinn_front_end_common.utilities import globals_variables
 
+from six import itervalues
+
 import numpy
 import logging
 import time
@@ -86,16 +88,16 @@ def run_mcmc(
             n_cores -= 3  # coordinator and extra_monitor_support (2)
             if (model.root_finder):
                 if (model.cholesky):
-                    n_cores = n_cores / 3
+                    n_cores = n_cores // 3
                 else:
-                    n_cores = n_cores / 2
+                    n_cores = n_cores // 2
         else:
             n_cores -= 1  # just extra_monitor_support
             if (model.root_finder):
                 if (model.cholesky):
-                    n_cores = n_cores / 3
+                    n_cores = n_cores // 3
                 else:
-                    n_cores = n_cores / 2
+                    n_cores = n_cores // 2
 
         # Find the coordinator for the board (or 0, 0 if it is missing)
         eth_x = chip.nearest_ethernet_x
@@ -220,7 +222,7 @@ def run_mcmc(
 
     # Get the data back
     samples = list()
-    for coordinator in coordinators.itervalues():
+    for coordinator in itervalues(coordinators):
         samples.append(coordinator.read_samples(g.buffer_manager()))
 
     samples = numpy.hstack(samples)
