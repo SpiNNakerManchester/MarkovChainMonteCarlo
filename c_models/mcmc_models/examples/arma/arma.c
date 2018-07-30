@@ -8,6 +8,7 @@
 //#define REAL float
 #define NCHOLESKY 5000
 //#define NCHOLESKY 1000
+#define MAX_WAIT 1000
 
 enum regions {
     RECORDING,
@@ -292,9 +293,18 @@ CALC_TYPE mcmc_model_prior_prob(
 //	log_info("ARMA: key %d, model_state_address %d", key, model_state_address);
 
 	// Wait here for the result to come back
+	uint32_t i_count = 0;
 	while (result_value==2) {
 		spin1_wfi();
+		if (i_count < MAX_WAIT) {
+			i_count++;
+		} else { // have waited too long, call the exit function
+			log_info("waited %u for message from RF that never arrived", i_count);
+			mcmc_exit_function();
+		}
 	}
+
+//	log_info("from root finder, i_count = %u", i_count);
 
 	// Read the result and return it
 	CALC_TYPE returnval = ZERO;
@@ -333,9 +343,18 @@ void mcmc_model_transition_jump(
 	spin1_send_mc_packet(cholesky_key, model_state_address, WITH_PAYLOAD);
 
 	// Wait
+	uint32_t i_count = 0;
 	while (cholesky_result == 2) {
 		spin1_wfi();
+		if (i_count < MAX_WAIT) {
+			i_count++;
+		} else { // have waited too long, call the exit function
+			log_info("waited %u for message (1) from CH that never arrived", i_count);
+			mcmc_exit_function();
+		}
 	}
+
+//	log_info("from cholesky (1), i_count = %u", i_count);
 
 	// Create a t_variate vector
 	for (i=0; i < p+q+2; i++) {
@@ -352,9 +371,18 @@ void mcmc_model_transition_jump(
 	spin1_send_mc_packet(cholesky_key, model_params_address, WITH_PAYLOAD);
 
 	// Wait
+	i_count = 0;
 	while (cholesky_result == 2) {
 		spin1_wfi();
+		if (i_count < MAX_WAIT) {
+			i_count++;
+		} else { // have waited too long, call the exit function
+			log_info("waited %u for message (2) from CH that never arrived", i_count);
+			mcmc_exit_function();
+		}
 	}
+
+//	log_info("from cholesky (2), i_count = %u", i_count);
 
 	// When Cholesky has finished it returns the address of the location
 	// of the updated t_variate
