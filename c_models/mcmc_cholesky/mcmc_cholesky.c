@@ -46,6 +46,9 @@ struct cholesky_parameters {
 // The general parameters
 struct cholesky_parameters cholesky_parameters;
 
+// Define spin1_wfi
+extern void spin1_wfi();
+
 // Acknowledge key global variable
 uint32_t ack_key;
 
@@ -79,7 +82,7 @@ void zero_upper_triang(Mat A, uint32_t size) {
 }
 
 void cholesky(Mat A, const uint32_t size, bool zero_upper) {
-	char buffer[1024];
+//	char buffer[1024]; // uncomment to print values if needed
 	uint32_t i, j;
 	int32_t k;
 	LA_TYPE sum;
@@ -191,11 +194,11 @@ void run(uint unused0, uint unused1) {
     use(unused0);
     use(unused1);
 
-    char buffer[1024];
+//    char buffer[1024];  // uncomment to print values if needed
     bool zero_upper = true;
 
     uint32_t params_n_bytes, state_n_bytes, n;
-    uint32_t p, q, i, ii;
+    uint32_t i, ii;
     Vec rot_scaled_t_variate, t_variate;
 
     // vector/matrix dimension defined in header

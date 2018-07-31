@@ -8,7 +8,7 @@
 //#define REAL float
 #define NCHOLESKY 5000
 //#define NCHOLESKY 1000
-#define MAX_WAIT 1000
+#define MAX_WAIT 10000
 
 enum regions {
     RECORDING,

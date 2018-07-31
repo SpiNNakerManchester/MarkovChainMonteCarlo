@@ -49,6 +49,9 @@ struct rf_parameters {
 // The general parameters
 struct rf_parameters rf_parameters;
 
+// Define spin1_wfi
+extern void spin1_wfi();
+
 // Acknowledge key global variable
 uint32_t ack_key;
 
@@ -230,8 +233,8 @@ void run(uint unused0, uint unused1) {
     use(unused0);
     use(unused1);
 
-    // for debug writing values
-    char buffer[1024];
+    // for debug writing values - uncomment if needed
+//    char buffer[1024];
 
     uint32_t i, p, q;
     CALC_TYPE state_parameters[PPOLYORDER+QPOLYORDER+2];

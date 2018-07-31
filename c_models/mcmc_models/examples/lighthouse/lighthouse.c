@@ -1,6 +1,12 @@
 #include "../../mcmc_model.h"
 #include "lighthouse.h"
 
+#include <spin1_api.h>
+
+#ifndef use
+#define use(x) do {} while ((x)!=(x))
+#endif
+
 uint32_t mcmc_model_get_params_n_bytes() {
     return sizeof(struct mcmc_params);
 }
@@ -22,6 +28,7 @@ uint32_t mcmc_model_get_state_n_bytes() {
 CALC_TYPE mcmc_model_likelihood(
         CALC_TYPE *data, uint32_t n_pts, mcmc_params_pointer_t params,
 		mcmc_state_pointer_t state) {
+	use(params);
 	CALC_TYPE beta = state->beta;
 	// Need to do the loop in here now
 	CALC_TYPE sum = ZERO;
@@ -66,7 +73,7 @@ CALC_TYPE mcmc_model_prior_prob(
 void mcmc_model_transition_jump(
         mcmc_params_pointer_t params, mcmc_state_pointer_t state,
         mcmc_state_pointer_t new_state, uint32_t timestep) {
-	//use(timestep);
+	use(timestep);
     new_state->alpha = state->alpha + (t_deviate() * params->alpha_jump_scale);
     new_state->beta = state->beta + (t_deviate() * params->beta_jump_scale);
 }
