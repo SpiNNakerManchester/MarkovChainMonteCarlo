@@ -299,6 +299,7 @@ CALC_TYPE mcmc_model_prior_prob(
 		if (i_count < MAX_WAIT) {
 			i_count++;
 		} else { // have waited too long, call the exit function
+			spin1_callback_off(MCPL_PACKET_RECEIVED);
 			log_info("waited %u for message from RF that never arrived", i_count);
 			mcmc_exit_function();
 		}
@@ -349,6 +350,7 @@ void mcmc_model_transition_jump(
 		if (i_count < MAX_WAIT) {
 			i_count++;
 		} else { // have waited too long, call the exit function
+			spin1_callback_off(MCPL_PACKET_RECEIVED);
 			log_info("waited %u for message (1) from CH that never arrived", i_count);
 			mcmc_exit_function();
 		}
@@ -377,6 +379,7 @@ void mcmc_model_transition_jump(
 		if (i_count < MAX_WAIT) {
 			i_count++;
 		} else { // have waited too long, call the exit function
+			spin1_callback_off(MCPL_PACKET_RECEIVED);
 			log_info("waited %u for message (2) from CH that never arrived", i_count);
 			mcmc_exit_function();
 		}
