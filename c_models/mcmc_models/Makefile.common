@@ -16,6 +16,6 @@ APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR))/../../mcmc/model_binaries/
 SOURCES += $(SOURCE_DIR)/mcmc.c
 
 # The spinnaker_tools standard makefile
-include $(SPINN_DIRS)/make/Makefile.SpiNNFrontEndCommon
+include $(SPINN_DIRS)/make/FrontEndCommon.mk
 
 all: $(APP_OUTPUT_DIR)$(APP).aplx

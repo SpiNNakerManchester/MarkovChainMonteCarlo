@@ -18,6 +18,6 @@ SOURCE_DIRS = .
 SOURCES = mcmc_coordinator.c
 
 # The spinnaker_tools standard makefile
-include $(SPINN_DIRS)/make/Makefile.SpiNNFrontEndCommon
+include $(SPINN_DIRS)/make/FrontEndCommon.mk
 
 all: $(APP_OUTPUT_DIR)$(APP).aplx
