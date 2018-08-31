@@ -349,6 +349,7 @@ void run(uint unused0, uint unused1) {
 
     unsigned int sample_count = 0;
     unsigned int accepted = 0;
+    unsigned int previous_accepted = 0;
     unsigned int likelihood_calls = 0;
     unsigned int timestep = 0;
 
@@ -449,6 +450,21 @@ void run(uint unused0, uint unused1) {
         // Print the acceptance stats every 5000 timesteps
         if (likelihood_calls % 5000 == 0) {
         	log_info("accepted %d of %d", accepted, likelihood_calls);
+        	if (previous_accepted == accepted) {
+        		// There has been no change: the easiest thing to do now
+        		// is to record the remaining samples and exit
+        		do {
+        			// record the current state for the remaining samples
+        			recording_record(0, state, state_n_bytes);
+        			sample_count++;
+        			// record one less than needed as we need to exit
+        			// the outer while loop with the correct n_samples
+        		} while (sample_count < parameters.n_samples - 1);
+
+        	} else {
+        		// Set previous to current total and continue
+        		previous_accepted = accepted;
+        	}
         }
 
         // debug: output every timestep
@@ -470,6 +486,7 @@ void run(uint unused0, uint unused1) {
 
                 // reset diagnostic statistics
                 accepted = 0;
+                previous_accepted = 0;
                 likelihood_calls = 0;
                 burn_in = false;
             }
