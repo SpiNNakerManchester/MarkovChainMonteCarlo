@@ -237,13 +237,16 @@ void run(uint unused0, uint unused1) {
 //    char buffer[1024];
 
     uint32_t i, p, q;
-    CALC_TYPE state_parameters[PPOLYORDER+QPOLYORDER+2];
-
-//    log_info("ROOTFINDER: running root finder");
 
     // p and q defined in header
     p = PPOLYORDER;
     q = QPOLYORDER;
+
+    // allocate some DTCM for this array
+	CALC_TYPE *state_parameters = spin1_malloc((p+q+2)*sizeof(CALC_TYPE));
+//	CALC_TYPE state_parameters[p+q+2];
+
+//    log_info("ROOTFINDER: running root finder");
 
     // Get the size of the state parameters
 	uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
@@ -254,8 +257,16 @@ void run(uint unused0, uint unused1) {
 	// Set up data structures for the coefficients of a polynomial
 	// characteristic equation for AR and MA model respectively.
 	// C99 compile flag required for complex type and variable length arrays
-	CALC_TYPE AR_eq[p+1], MA_eq[q+1];
-	complex float AR_param[p+1], MA_param[q+1], AR_rt[p+1], MA_rt[q+1];
+	// Trying to do this using memory allocation rather than on the fly
+	CALC_TYPE *AR_eq = spin1_malloc((p+1)*sizeof(CALC_TYPE));
+	CALC_TYPE *MA_eq = spin1_malloc((q+1)*sizeof(CALC_TYPE));
+
+	//log_info("ROOTFINDER: sizeof(complex float)=%u", sizeof(complex float));
+	complex float *AR_param = spin1_malloc((p+1)*sizeof(complex float));
+	complex float *MA_param = spin1_malloc((q+1)*sizeof(complex float));
+	complex float *AR_rt = spin1_malloc((p+1)*sizeof(complex float));
+	complex float *MA_rt = spin1_malloc((q+1)*sizeof(complex float));
+	//complex float AR_param[p+1], MA_param[q+1], AR_rt[p+1], MA_rt[q+1];
 
 	// Create an array with the coefficients for the characteristic AR equation
 	// The characteristic equation is -a_p*x^p-a_(p-1)*x^(p-1)-...+1=0;
@@ -306,6 +317,15 @@ void run(uint unused0, uint unused1) {
 	while (!spin1_send_mc_packet(ack_key, returnval, WITH_PAYLOAD)) {
 		spin1_delay_us(1);
 	}
+
+	// free up memory
+	sark_free(state_parameters);
+	sark_free(AR_eq);
+	sark_free(MA_eq);
+	sark_free(AR_param);
+	sark_free(MA_param);
+	sark_free(AR_rt);
+	sark_free(MA_rt);
 
 	// End of required functions
 
