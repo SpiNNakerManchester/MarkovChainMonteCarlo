@@ -1,4 +1,4 @@
-#include "../../mcmc_model.h"
+#include "../../../src/mcmc_model.h"
 
 #define PPOLYORDER 9
 #define QPOLYORDER 9

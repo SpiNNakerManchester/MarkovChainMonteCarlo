@@ -253,7 +253,7 @@ model = LightHouseFloatModel(
 #    beta_max)
 samples = mcmc_framework.run_mcmc(
     model, data_points, n_samples,
-    degrees_of_freedom=3.0, seed=seed, n_chips=3*44)  # n_chips=23*48)
+    degrees_of_freedom=3.0, seed=seed, n_chips=4)  # n_chips=3*44)  # n_chips=23*48)
 
 print('samples: ', samples)
 

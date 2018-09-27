@@ -1,5 +1,5 @@
 #include "mcmc_cholesky.h"
-#include "../mcmc_models/mcmc_model.h"
+#include "../../mcmc_models/src/mcmc_model.h"
 
 #include <spin1_api.h>
 #include <stdint.h>

@@ -1,4 +1,4 @@
-#include "../../mcmc_model.h"
+#include "../../../src/mcmc_model.h"
 #include "lighthouse.h"
 
 uint32_t mcmc_model_get_params_n_bytes() {

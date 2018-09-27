@@ -1,4 +1,4 @@
-#include "../../mcmc_model.h"
+#include "../../../src/mcmc_model.h"
 #include "arma.h"
 #include <spin1_api.h>
 #include <debug.h>

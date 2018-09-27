@@ -14,10 +14,10 @@ BUILD_DIR = ./build/
 CFLAGS += ${OTIME} -fcx-limited-range  # check list to add here
 LFLAGS += ${OTIME} -fcx-limited-range
 
-SOURCE_DIRS = .
+# SOURCE_DIRS = .
 SOURCES = mcmc_root_finder.c
 
 # The spinnaker_tools standard makefile
-include $(SPINN_DIRS)/make/Makefile.SpiNNFrontEndCommon
+include $(SPINN_DIRS)/make/local.mk
 
 all: $(APP_OUTPUT_DIR)$(APP).aplx

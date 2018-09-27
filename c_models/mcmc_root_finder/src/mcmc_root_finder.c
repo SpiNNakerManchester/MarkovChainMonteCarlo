@@ -2,8 +2,8 @@
 
 #include "mcmc_root_finder.h"
 
-#include "../mcmc_models/mcmc_model.h"
-#include "../mcmc_models/examples/arma/arma.h"
+#include "../../mcmc_models/src/mcmc_model.h"
+#include "../../mcmc_models/examples/arma/src/arma.h"
 
 #include <spin1_api.h>
 #include <stdint.h>

@@ -14,10 +14,10 @@ BUILD_DIR = ./build/
 CFLAGS += ${OTIME}  # check list to add here
 LFLAGS += ${OTIME}
 
-SOURCE_DIRS = .
+# SOURCE_DIRS = .
 SOURCES = mcmc_cholesky.c
 
 # The spinnaker_tools standard makefile
-include $(SPINN_DIRS)/make/Makefile.SpiNNFrontEndCommon
+include $(SPINN_DIRS)/make/local.mk
 
 all: $(APP_OUTPUT_DIR)$(APP).aplx
