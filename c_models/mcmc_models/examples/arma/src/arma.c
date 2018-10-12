@@ -1,4 +1,4 @@
-#include "../../mcmc_model.h"
+#include <mcmc_model.h>
 #include "arma.h"
 #include <spin1_api.h>
 #include <debug.h>
@@ -287,7 +287,7 @@ CALC_TYPE mcmc_model_prior_prob(
 	spin1_memcpy(model_state_address, state->parameters, state_n_bytes);
 
 	// Send mc packet with payload of address value to wake up root_finder
-//	spin1_send_mc_packet(key, model_state_address, WITH_PAYLOAD);
+	//	spin1_send_mc_packet(key, model_state_address, WITH_PAYLOAD);
 	while (!spin1_send_mc_packet(key, model_state_address, WITH_PAYLOAD)) {
 		spin1_delay_us(1);
 	}
@@ -296,19 +296,19 @@ CALC_TYPE mcmc_model_prior_prob(
 //	log_info("ARMA: key %d, model_state_address %d", key, model_state_address);
 
 	// Wait here for the result to come back
-//	uint32_t i_count = 0;
+	//	uint32_t i_count = 0;
 	while (result_value==2) {
 		spin1_wfi();
-//		if (i_count < MAX_WAIT) {
-//			i_count++;
-//		} else { // have waited too long, call the exit function
-//			spin1_callback_off(MCPL_PACKET_RECEIVED);
-//			log_info("waited %u for message from RF that never arrived", i_count);
-//			mcmc_exit_function();
-//		}
+		//		if (i_count < MAX_WAIT) {
+		//			i_count++;
+		//		} else { // have waited too long, call the exit function
+		//			spin1_callback_off(MCPL_PACKET_RECEIVED);
+		//			log_info("waited %u for message from RF that never arrived", i_count);
+		//			mcmc_exit_function();
+		//		}
 	}
 
-//	log_info("from root finder, i_count = %u", i_count);
+	//	log_info("from root finder, i_count = %u", i_count);
 
 	// Read the result and return it
 	CALC_TYPE returnval = ZERO;
@@ -344,26 +344,26 @@ void mcmc_model_transition_jump(
 	spin1_memcpy(model_state_address, state->parameters, state_n_bytes);
 
 	// Send mc packet with payload of address value to wake up Cholesky
-//	spin1_send_mc_packet(cholesky_key, model_state_address, WITH_PAYLOAD);
+	//	spin1_send_mc_packet(cholesky_key, model_state_address, WITH_PAYLOAD);
 	while (!spin1_send_mc_packet(cholesky_key, model_state_address,
 			WITH_PAYLOAD)) {
 		spin1_delay_us(1);
 	}
 
 	// Wait
-//	uint32_t i_count = 0;
+	//	uint32_t i_count = 0;
 	while (cholesky_result == 2) {
 		spin1_wfi();
-//		if (i_count < MAX_WAIT) {
-//			i_count++;
-//		} else { // have waited too long, call the exit function
-//			spin1_callback_off(MCPL_PACKET_RECEIVED);
-//			log_info("waited %u for message (1) from CH that never arrived", i_count);
-//			mcmc_exit_function();
-//		}
+		//		if (i_count < MAX_WAIT) {
+		//			i_count++;
+		//		} else { // have waited too long, call the exit function
+		//			spin1_callback_off(MCPL_PACKET_RECEIVED);
+		//			log_info("waited %u for message (1) from CH that never arrived", i_count);
+		//			mcmc_exit_function();
+		//		}
 	}
 
-//	log_info("from cholesky (1), i_count = %u", i_count);
+	//	log_info("from cholesky (1), i_count = %u", i_count);
 
 	// Create a t_variate vector
 	for (i=0; i < p+q+2; i++) {
@@ -377,26 +377,26 @@ void mcmc_model_transition_jump(
 	spin1_memcpy(model_params_address, t_variate, params_n_bytes);
 
 	// Send mc packet with the model params address this time
-//	spin1_send_mc_packet(cholesky_key, model_params_address, WITH_PAYLOAD);
+	//	spin1_send_mc_packet(cholesky_key, model_params_address, WITH_PAYLOAD);
 	while (!spin1_send_mc_packet(cholesky_key, model_params_address,
 			WITH_PAYLOAD)) {
 		spin1_delay_us(1);
 	}
 
 	// Wait
-//	i_count = 0;
+	//	i_count = 0;
 	while (cholesky_result == 2) {
 		spin1_wfi();
-//		if (i_count < MAX_WAIT) {
-//			i_count++;
-//		} else { // have waited too long, call the exit function
-//			spin1_callback_off(MCPL_PACKET_RECEIVED);
-//			log_info("waited %u for message (2) from CH that never arrived", i_count);
-//			mcmc_exit_function();
-//		}
+		//		if (i_count < MAX_WAIT) {
+		//			i_count++;
+		//		} else { // have waited too long, call the exit function
+		//			spin1_callback_off(MCPL_PACKET_RECEIVED);
+		//			log_info("waited %u for message (2) from CH that never arrived", i_count);
+		//			mcmc_exit_function();
+		//		}
 	}
 
-//	log_info("from cholesky (2), i_count = %u", i_count);
+	//	log_info("from cholesky (2), i_count = %u", i_count);
 
 	// When Cholesky has finished it returns the address of the location
 	// of the updated t_variate

@@ -2,8 +2,8 @@
 
 #include "mcmc_root_finder.h"
 
-#include "../mcmc_models/mcmc_model.h"
-#include "../mcmc_models/examples/arma/arma.h"
+#include <mcmc_model.h>
+#include <arma.h>
 
 #include <spin1_api.h>
 #include <stdint.h>
@@ -233,8 +233,8 @@ void run(uint unused0, uint unused1) {
     use(unused0);
     use(unused1);
 
-    // for debug writing values - uncomment if needed
-//    char buffer[1024];
+    // for debug writing values
+    char buffer[1024];
 
     uint32_t i, p, q;
 

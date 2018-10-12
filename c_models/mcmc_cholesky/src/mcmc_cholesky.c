@@ -1,5 +1,5 @@
 #include "mcmc_cholesky.h"
-#include "../mcmc_models/mcmc_model.h"
+#include <mcmc_model.h>
 
 #include <spin1_api.h>
 #include <stdint.h>
@@ -82,7 +82,7 @@ void zero_upper_triang(Mat A, uint32_t size) {
 }
 
 void cholesky(Mat A, const uint32_t size, bool zero_upper) {
-//	char buffer[1024]; // uncomment to print values if needed
+	char buffer[1024];
 	uint32_t i, j;
 	int32_t k;
 	LA_TYPE sum;
@@ -194,11 +194,11 @@ void run(uint unused0, uint unused1) {
     use(unused0);
     use(unused1);
 
-//    char buffer[1024];  // uncomment to print values if needed
+    char buffer[1024];
     bool zero_upper = true;
 
     uint32_t params_n_bytes, state_n_bytes, n;
-    uint32_t i, ii;
+    uint32_t p, q, i, ii;
     Vec rot_scaled_t_variate, t_variate;
 
     // vector/matrix dimension defined in header

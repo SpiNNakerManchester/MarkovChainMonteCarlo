@@ -14,10 +14,10 @@ BUILD_DIR = ./build/
 CFLAGS += ${OTIME}
 LFLAGS += ${OTIME}
 
-SOURCE_DIRS = .
+# SOURCE_DIRS = .
 SOURCES = mcmc_coordinator.c
 
 # The spinnaker_tools standard makefile
-include $(SPINN_DIRS)/make/FrontEndCommon.mk
+include $(SPINN_DIRS)/make/local.mk
 
 all: $(APP_OUTPUT_DIR)$(APP).aplx

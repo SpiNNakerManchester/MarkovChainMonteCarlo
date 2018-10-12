@@ -6,7 +6,12 @@ APP = arma
 BUILD_DIR = ./build/
 
 # The sources to be compiled
-SOURCES = $(SOURCE_DIR)/examples/arma/arma.c
+MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+CURRENT_DIR := $(dir $(MAKEFILE_PATH))
+SOURCE_DIR := $(abspath $(CURRENT_DIR))/src
+SOURCE_DIRS := $(SOURCE_DIR)
+
+SOURCES = arma.c
 
 # will editing this here work to add -std=c99? yes but it doesn't help... 
 CFLAGS += -fcx-limited-range $(OSPACE) -l m

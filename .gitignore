@@ -9,3 +9,5 @@
 **/*.pyc
 **/results*
 **/*.txt
+**/*.dict
+**/modified_src
