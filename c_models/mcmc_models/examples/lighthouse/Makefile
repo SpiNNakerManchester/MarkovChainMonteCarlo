@@ -6,7 +6,12 @@ APP = lighthouse
 BUILD_DIR = ./build/
 
 # The sources to be compiled
-SOURCES = $(SOURCE_DIR)/examples/lighthouse/lighthouse.c
+MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+CURRENT_DIR := $(dir $(MAKEFILE_PATH))
+SOURCE_DIR := $(abspath $(CURRENT_DIR))/src
+SOURCE_DIRS := $(SOURCE_DIR)
+
+SOURCES = lighthouse.c
 
 CFLAGS += $(OTIME) 
 

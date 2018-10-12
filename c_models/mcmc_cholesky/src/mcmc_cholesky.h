@@ -1,4 +1,4 @@
-#include "../mcmc_models/examples/arma/arma.h"
+#include <arma.h>
 #include <stdbool.h>
 
 //#define FOR( i, n ) for ( i = 0; i < (n); i++ )
