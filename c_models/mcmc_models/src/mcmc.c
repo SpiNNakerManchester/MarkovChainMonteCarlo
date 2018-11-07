@@ -134,7 +134,7 @@ uint32_t dma_read_buffer = 0;
 uint likelihood_done = 0;
 
 // Set up print_value if we're not using fixed-point datatype
-#if TYPE_SELECT != 2
+/* #if TYPE_SELECT != 2
 struct double_uint {
     uint first_word;
     uint second_word;
@@ -152,7 +152,7 @@ void print_value(CALC_TYPE d_value, char *buffer) {
         buffer, "0x%08x%08x",
         converter.int_values.second_word, converter.int_values.first_word);
 }
-#endif
+#endif */
 
 // returns a high-quality Uniform[0,1] random variate -
 // Marsaglia KISS32 algorithm

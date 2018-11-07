@@ -20,6 +20,8 @@ SOURCES = mcmc_cholesky.c
 # SOURCE_DIRS is more than just src/ in this instance
 SOURCE_DIRS := src/ ../mcmc_models/src/ ../mcmc_models/examples/arma/src/
 
+# FEC_DEBUG := NDEBUG
+
 # The spinnaker_tools standard makefile
 include $(SPINN_DIRS)/make/local.mk
 

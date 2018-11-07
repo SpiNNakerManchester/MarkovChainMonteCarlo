@@ -82,7 +82,7 @@ void zero_upper_triang(Mat A, uint32_t size) {
 }
 
 void cholesky(Mat A, const uint32_t size, bool zero_upper) {
-	char buffer[1024];
+//	char buffer[1024];
 	uint32_t i, j;
 	int32_t k;
 	LA_TYPE sum;
@@ -194,11 +194,11 @@ void run(uint unused0, uint unused1) {
     use(unused0);
     use(unused1);
 
-    char buffer[1024];
+//    char buffer[1024];
     bool zero_upper = true;
 
     uint32_t params_n_bytes, state_n_bytes, n;
-    uint32_t p, q, i, ii;
+    uint32_t i, ii;
     Vec rot_scaled_t_variate, t_variate;
 
     // vector/matrix dimension defined in header
@@ -210,7 +210,8 @@ void run(uint unused0, uint unused1) {
 
     // Build up the sample
 	state_n_bytes = mcmc_model_get_state_n_bytes();
-	spin1_memcpy(state_parameters, parameter_rec_ptr[0], state_n_bytes);
+	uint32_t *param_ptr = (uint32_t *) &(parameter_rec_ptr[0]);
+	spin1_memcpy(state_parameters, param_ptr, state_n_bytes);
 
 	// Store this sample data in DTCM if possible, but if the size of this
 	// vector is going to end up bigger than DTCM can handle
@@ -271,7 +272,8 @@ void run(uint unused0, uint unused1) {
 		params_n_bytes = mcmc_model_get_params_n_bytes();
 
 		// Data that arrives here is CALC_TYPE (i.e. float)
-		spin1_memcpy(t_variate_data, t_variate_ptr[0], params_n_bytes);
+		uint32_t *t_var_ptr = (uint32_t *) &(t_variate_ptr[0]);
+		spin1_memcpy(t_variate_data, t_var_ptr, params_n_bytes);
 
 		// Convert to LA_TYPE
 		for (i=0; i<n; i++) {
@@ -288,7 +290,7 @@ void run(uint unused0, uint unused1) {
 		}
 
 		// Copy this to relevant location
-		spin1_memcpy(t_variate_ptr[0], rot_t_variate_data, params_n_bytes);
+		spin1_memcpy(t_var_ptr, rot_t_variate_data, params_n_bytes);
 
 		// send ptr back to the main vertex
 		while (!spin1_send_mc_packet(ack_key, t_variate_ptr[0],
@@ -309,7 +311,8 @@ void run(uint unused0, uint unused1) {
 
 		// Get the t_variate from memory
 		params_n_bytes = mcmc_model_get_params_n_bytes();
-		spin1_memcpy(t_variate_data, t_variate_ptr[0], params_n_bytes);
+		uint32_t *t_var_ptr = (uint32_t *) &(t_variate_ptr[0]);
+		spin1_memcpy(t_variate_data, t_var_ptr, params_n_bytes);
 
 		// If we are over N timesteps then this uses the covariance matrix
 		if (do_calculation_using_cov_matrix) {
@@ -337,7 +340,7 @@ void run(uint unused0, uint unused1) {
 		}
 
 		// Copy this to relevant location
-		spin1_memcpy(t_variate_ptr[0], rot_t_variate_data, params_n_bytes);
+		spin1_memcpy(t_var_ptr, rot_t_variate_data, params_n_bytes);
 
 		// send ptr back to the main vertex?
 		while (!spin1_send_mc_packet(ack_key, t_variate_ptr[0],

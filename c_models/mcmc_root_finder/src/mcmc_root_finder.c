@@ -234,7 +234,7 @@ void run(uint unused0, uint unused1) {
     use(unused1);
 
     // for debug writing values
-    char buffer[1024];
+//    char buffer[1024];
 
     uint32_t i, p, q;
 
@@ -252,7 +252,8 @@ void run(uint unused0, uint unused1) {
 	uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
 
 	// Get the parameters from SDRAM
-	spin1_memcpy(state_parameters, parameter_rec_ptr[0], state_n_bytes);
+	uint32_t *param_ptr = (uint32_t *) &(parameter_rec_ptr[0]);
+	spin1_memcpy(state_parameters, param_ptr, state_n_bytes);
 
 	// Set up data structures for the coefficients of a polynomial
 	// characteristic equation for AR and MA model respectively.
