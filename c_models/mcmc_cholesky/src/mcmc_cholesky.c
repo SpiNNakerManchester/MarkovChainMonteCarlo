@@ -7,9 +7,11 @@
 #include <debug.h>
 #include <data_specification.h>
 
-// Value of the pointers to the location in SDRAM to get parameters
-uint32_t *parameter_rec_ptr;
-uint32_t *t_variate_ptr;
+// Value of the locations in SDRAM to get parameters / t_variate data
+uint32_t parameter_rec_add;
+uint32_t t_variate_add;
+
+// Value to be received when waiting for t_variate data
 uint32_t t_var_global;
 
 // Functions required to print floats as hex values (uncomment for debug)
@@ -97,7 +99,8 @@ void cholesky(Mat A, const uint32_t size, bool zero_upper) {
 				if (sum <= LA_ZERO) {
 					// do we fail by exiting at this point and spitting out information?
 					// (with some method to tell the gatherer not to include this sample)
-					log_info("Warning: possible non-pds matrix in cholesky()\n");
+					//log_info("Warning: possible non-pds matrix in cholesky()\n");
+					io_printf(IO_BUF, "Warning: possible non-pds matrix in cholesky()\n");
 					A[i][i] = LA_SMALL;  // i.e. very small positive value
 				}
 				else {
@@ -185,7 +188,7 @@ uint32_t mcmc_model_get_state_n_bytes() {
 
 void t_variate_callback(uint key, uint payload) {
 	use(key);
-	t_variate_ptr[0] = payload;
+	t_variate_add = payload;
 	t_var_global = payload;
 }
 
@@ -210,7 +213,7 @@ void run(uint unused0, uint unused1) {
 
     // Build up the sample
 	state_n_bytes = mcmc_model_get_state_n_bytes();
-	uint32_t *param_ptr = (uint32_t *) &(parameter_rec_ptr[0]);
+	uint32_t *param_ptr = (uint32_t *) parameter_rec_add;
 	spin1_memcpy(state_parameters, param_ptr, state_n_bytes);
 
 	// Store this sample data in DTCM if possible, but if the size of this
@@ -227,14 +230,12 @@ void run(uint unused0, uint unused1) {
 //			dtcm_params, DMA_WRITE, state_n_bytes);
 
 	// The allocation is done in main(), I've left the useful comment for now
-
 	for (i=0; i<n; i++) {
 		sample_data[n_samples_read][i] = state_parameters[i];
 	}
 
-
-	// send ptr back to the main vertex?
-	while (!spin1_send_mc_packet(ack_key, parameter_rec_ptr[0],
+	// send ptr back to the main vertex
+	while (!spin1_send_mc_packet(ack_key, parameter_rec_add,
 			WITH_PAYLOAD)) {
 		spin1_delay_us(1);
 	}
@@ -259,7 +260,7 @@ void run(uint unused0, uint unused1) {
 	// Do the work here every NCOVSAMPLES timesteps
 	if (n_samples_read == NCOVSAMPLES) {
 		// Print out so we know it's got here
-		log_info("Performing Cholesky decomposition");
+		io_printf(IO_BUF, "Performing Cholesky decomposition \n");
 
 		// Get the mean and covariance of the samples matrix
 		mean_covar_of_mat_n(n_samples_read, n);
@@ -272,7 +273,7 @@ void run(uint unused0, uint unused1) {
 		params_n_bytes = mcmc_model_get_params_n_bytes();
 
 		// Data that arrives here is CALC_TYPE (i.e. float)
-		uint32_t *t_var_ptr = (uint32_t *) &(t_variate_ptr[0]);
+		uint32_t *t_var_ptr = (uint32_t *) t_variate_add;
 		spin1_memcpy(t_variate_data, t_var_ptr, params_n_bytes);
 
 		// Convert to LA_TYPE
@@ -293,7 +294,7 @@ void run(uint unused0, uint unused1) {
 		spin1_memcpy(t_var_ptr, rot_t_variate_data, params_n_bytes);
 
 		// send ptr back to the main vertex
-		while (!spin1_send_mc_packet(ack_key, t_variate_ptr[0],
+		while (!spin1_send_mc_packet(ack_key, t_variate_add,
 				WITH_PAYLOAD)) {
 			spin1_delay_us(1);
 		}
@@ -311,7 +312,7 @@ void run(uint unused0, uint unused1) {
 
 		// Get the t_variate from memory
 		params_n_bytes = mcmc_model_get_params_n_bytes();
-		uint32_t *t_var_ptr = (uint32_t *) &(t_variate_ptr[0]);
+		uint32_t *t_var_ptr = (uint32_t *) t_variate_add;
 		spin1_memcpy(t_variate_data, t_var_ptr, params_n_bytes);
 
 		// If we are over N timesteps then this uses the covariance matrix
@@ -342,8 +343,8 @@ void run(uint unused0, uint unused1) {
 		// Copy this to relevant location
 		spin1_memcpy(t_var_ptr, rot_t_variate_data, params_n_bytes);
 
-		// send ptr back to the main vertex?
-		while (!spin1_send_mc_packet(ack_key, t_variate_ptr[0],
+		// send ptr back to the main vertex
+		while (!spin1_send_mc_packet(ack_key, t_variate_add,
 				WITH_PAYLOAD)) {
 			spin1_delay_us(1);
 		}
@@ -359,7 +360,7 @@ void run(uint unused0, uint unused1) {
 void trigger_run(uint key, uint payload) {
 	use(key);
 	// Get the pointer value to the location in SDRAM
-	parameter_rec_ptr[0] = payload;
+	parameter_rec_add = payload;
 	spin1_callback_off(TIMER_TICK);
     spin1_schedule_callback(run, 0, 0, 2);
 }
@@ -482,7 +483,7 @@ void c_main() {
 	n_samples_read = 0;
 	do_calculation_using_cov_matrix = false;
 
-	// register for the start message ?
+	// register for the start message
     spin1_callback_on(MCPL_PACKET_RECEIVED, trigger_run, -1);
 
     // register for the shutdown message

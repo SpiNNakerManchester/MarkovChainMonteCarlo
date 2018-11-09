@@ -449,7 +449,8 @@ void run(uint unused0, uint unused1) {
 
         // Print the acceptance stats every 5000 timesteps
         if (likelihood_calls % 5000 == 0) {
-        	log_info("accepted %d of %d", accepted, likelihood_calls);
+//        	log_info("accepted %d of %d", accepted, likelihood_calls);
+        	io_printf(IO_BUF, "accepted %d of %d \n", accepted, likelihood_calls);
         	if (previous_accepted == accepted) {
         		// There has been no change: the easiest thing to do now
         		// is to record the remaining samples and exit

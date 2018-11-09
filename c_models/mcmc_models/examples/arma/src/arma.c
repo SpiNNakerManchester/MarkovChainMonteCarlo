@@ -291,6 +291,7 @@ CALC_TYPE mcmc_model_prior_prob(
 	//	spin1_send_mc_packet(key, model_state_address, WITH_PAYLOAD);
 	uint32_t m_s_add = (uint32_t) model_state_address;
 	while (!spin1_send_mc_packet(key, m_s_add, WITH_PAYLOAD)) {
+	//while (!spin1_send_mc_packet(key, model_state_address, WITH_PAYLOAD)) {
 		spin1_delay_us(1);
 	}
 
@@ -348,8 +349,11 @@ void mcmc_model_transition_jump(
 	// Send mc packet with payload of address value to wake up Cholesky
 	//	spin1_send_mc_packet(cholesky_key, model_state_address, WITH_PAYLOAD);
 	uint32_t m_s_add = (uint32_t) model_state_address;
-	while (!spin1_send_mc_packet(cholesky_key, m_s_add,
-			WITH_PAYLOAD)) {
+//	io_printf(IO_BUF, "m_s_add %d model_state_address %d\n",
+//			m_s_add, model_state_address);
+	while (!spin1_send_mc_packet(cholesky_key, m_s_add, WITH_PAYLOAD)) {
+//	while (!spin1_send_mc_packet(cholesky_key, model_state_address,
+//			WITH_PAYLOAD)) {
 		spin1_delay_us(1);
 	}
 
@@ -382,8 +386,11 @@ void mcmc_model_transition_jump(
 	// Send mc packet with the model params address this time
 	//	spin1_send_mc_packet(cholesky_key, model_params_address, WITH_PAYLOAD);
 	uint32_t m_p_add = (uint32_t) model_params_address;
-	while (!spin1_send_mc_packet(cholesky_key, m_p_add,
-			WITH_PAYLOAD)) {
+//	io_printf(IO_BUF, "m_p_add %d model_params_address %d\n",
+//			m_s_add, model_state_address);
+	while (!spin1_send_mc_packet(cholesky_key, m_p_add, WITH_PAYLOAD)) {
+//	while (!spin1_send_mc_packet(cholesky_key, model_params_address,
+//			WITH_PAYLOAD)) {
 		spin1_delay_us(1);
 	}
 
@@ -404,8 +411,9 @@ void mcmc_model_transition_jump(
 
 	// When Cholesky has finished it returns the address of the location
 	// of the updated t_variate
-	uint32_t *chol_ptr = (uint32_t *) &(cholesky_result);
+	uint32_t *chol_ptr = (uint32_t *) (cholesky_result);
 	spin1_memcpy(t_variate, chol_ptr, params_n_bytes);
+//	spin1_memcpy(t_variate, cholesky_result, params_n_bytes);
 
 	// Update polynomial coefficients
 	for (i=0; i < p+q+2; i++) {

@@ -12,8 +12,8 @@
 
 #define ROOT_FAIL 1 // define it this way here to send "boolean" back
 
-// Value of the pointer to the location in SDRAM to get parameters
-uint32_t *parameter_rec_ptr;
+// Value of the location in SDRAM to get parameters
+uint32_t parameter_rec_add;
 
 // Functions required to print floats as hex values (uncomment for debug)
 //struct double_uint {
@@ -252,7 +252,7 @@ void run(uint unused0, uint unused1) {
 	uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
 
 	// Get the parameters from SDRAM
-	uint32_t *param_ptr = (uint32_t *) &(parameter_rec_ptr[0]);
+	uint32_t *param_ptr = (uint32_t *) parameter_rec_add;
 	spin1_memcpy(state_parameters, param_ptr, state_n_bytes);
 
 	// Set up data structures for the coefficients of a polynomial
@@ -334,8 +334,8 @@ void run(uint unused0, uint unused1) {
 
 void trigger_run(uint key, uint payload) {
 	use(key);
-	// Get the pointer value to the location in SDRAM
-	parameter_rec_ptr[0] = payload;
+	// Get the value of the location in SDRAM
+	parameter_rec_add = payload;
 	// Get ready to run the root_finder algorithm
 	spin1_callback_off(TIMER_TICK);
     spin1_schedule_callback(run, 0, 0, 2);
