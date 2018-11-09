@@ -16,7 +16,6 @@ from spinn_front_end_common.utilities import globals_variables
 
 from six import iteritems
 
-import numpy
 import logging
 import time
 
@@ -223,7 +222,7 @@ def run_mcmc(
     # Get the data back
     samples = dict()
     for coord, coordinator in iteritems(coordinators):
-        samples[coord[0],coord[1]] = coordinator.read_samples(
+        samples[coord[0], coord[1]] = coordinator.read_samples(
             g.buffer_manager())
 
     # Close the machine
