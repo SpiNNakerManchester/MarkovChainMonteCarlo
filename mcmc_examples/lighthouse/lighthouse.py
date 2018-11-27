@@ -1,3 +1,4 @@
+import sys
 import numpy
 from mcmc import mcmc_framework
 # from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
@@ -5,6 +6,7 @@ from mcmc_examples.lighthouse.lighthouse_float_model \
      import LightHouseFloatModel
 # from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #     import LightHouseFixedPointModel
+from six import iteritems
 
 # Data to use for 50 data points
 data_50 = [
@@ -220,8 +222,19 @@ seed = None  # set this if you want to use a different seed on each core
 #    123456789, 234567891, 345678912, 456789123, 0
 # ]
 
-# number of posterior samples required per core
-n_samples = 100
+# set number of posterior samples to get and number of boards to use
+n_samples = 100  # 100 is the "default"
+n_boards = 3
+
+# get n_samples and n_boards from command line arguments if specified
+if (len(sys.argv) == 2):
+    n_samples = int(sys.argv[1])
+elif (len(sys.argv) == 3):
+    n_samples = int(sys.argv[1])
+    n_boards = int(sys.argv[2])
+
+print("Running MCMC lighthouse on ", n_boards, " boards, and collecting ",
+      n_samples, " samples")
 
 # scaling of t transition distribution for MH jumps in alpha direction
 alpha_jump_scale = 0.8
@@ -253,10 +266,12 @@ model = LightHouseFloatModel(
 #    beta_max)
 samples = mcmc_framework.run_mcmc(
     model, data_points, n_samples,
-    degrees_of_freedom=3.0, seed=seed, n_chips=4)  # n_chips=3*44)
+    degrees_of_freedom=3.0, seed=seed, n_chips=n_boards*44)  # n_chips=3*44)
 
 print('samples: ', samples)
 
-# Save the results
-numpy.save("results.npy", samples)
-numpy.savetxt("results.csv", samples, fmt="%f", delimiter=",")
+for coord, sample in iteritems(samples):
+    fname = "results_board_x"+str(coord[0])+"_y"+str(
+        coord[1])+"_n_samples"+str(n_samples)
+    numpy.save(fname+".npy", sample)
+    numpy.savetxt(fname+".csv", sample, fmt="%f", delimiter=",")
