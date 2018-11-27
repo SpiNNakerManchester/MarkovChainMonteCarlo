@@ -65,7 +65,8 @@ void send_callback(uint send_time, uint unused) {
 
     // If the data has all been sent, send a start message and quit
     if (data_size == 0) {
-        log_info("All data has been sent and confirmed");
+        // log_info("All data has been sent and confirmed");
+        io_printf(IO_BUF, "All data has been sent and confirmed");
         while (!spin1_send_mc_packet(key, 0, NO_PAYLOAD)) {
             spin1_delay_us(1);
         }
@@ -203,27 +204,33 @@ void c_main() {
 
     // Get the size of the data in words
     data_size = params[DATA_SIZE];
-    log_info("Data size = %d", data_size);
+    // log_info("Data size = %d", data_size);
+    io_printf(IO_BUF, "Data size = %d", data_size);
 
     // Get a count of the chips to load on to
     n_chips = params[N_CHIPS];
-    log_info("N chips = %d", n_chips);
+    // log_info("N chips = %d", n_chips);
+    io_printf(IO_BUF, "N chips = %d", n_chips);
 
     // Get the key to send the data with
     key = params[KEY];
-    log_info("Key = 0x%08x", key);
+    // log_info("Key = 0x%08x", key);
+    io_printf(IO_BUF, "Key = 0x%08x", key);
 
     // Get the number of packets to be sent at the same time
     window_size = params[WINDOW_SIZE];
-    log_info("Window size = %d", window_size);
+    // log_info("Window size = %d", window_size);
+    io_printf(IO_BUF, "Window size = %d", window_size);
 
     // Get the total number of window spaces available
     sequence_mask = params[SEQUENCE_MASK];
-    log_info("Sequence mask = 0x%08x", sequence_mask);
+    // log_info("Sequence mask = 0x%08x", sequence_mask);
+    io_printf(IO_BUF, "Sequence mask = 0x%08x", sequence_mask);
 
     // Get the timer tick
     uint timer = params[TIMER];
-    log_info("Timer = %d", timer);
+    // log_info("Timer = %d", timer);
+    io_printf(IO_BUF, "Timer = %d", timer);
 
     // Get a pointer to the data - not worth copying at present
     data = (uint *) &(params[DATA]);
