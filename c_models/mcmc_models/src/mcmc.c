@@ -485,7 +485,7 @@ void run(uint unused0, uint unused1) {
 //                log_info(
 //                    "Burn-in accepted %d of %d", accepted, likelihood_calls);
                 io_printf(IO_BUF,
-                    "Burn-in accepted %d of %d", accepted, likelihood_calls);
+                    "Burn-in accepted %d of %d \n", accepted, likelihood_calls);
 
                 // reset diagnostic statistics
                 accepted = 0;
@@ -509,7 +509,7 @@ void run(uint unused0, uint unused1) {
     recording_finalise();
 
 //    log_info("Sampling accepted %d of %d", accepted, likelihood_calls);
-    io_printf(IO_BUF, "Sampling accepted %d of %d", accepted, likelihood_calls);
+    io_printf(IO_BUF, "Sampling accepted %d of %d \n", accepted, likelihood_calls);
 
     // Finished: exit (application-specific)
     mcmc_exit_function();
@@ -603,23 +603,23 @@ void c_main() {
     spin1_memcpy(state, model_state_address, state_n_bytes);
 
 //    log_info("Burn in = %d", parameters.burn_in);
-    io_printf(IO_BUF, "Burn in = %d", parameters.burn_in);
+    io_printf(IO_BUF, "Burn in = %d \n", parameters.burn_in);
 //    log_info("Thinning = %d", parameters.thinning);
-    io_printf(IO_BUF, "Thinning = %d", parameters.thinning);
+    io_printf(IO_BUF, "Thinning = %d \n", parameters.thinning);
 //    log_info("N Samples = %d", parameters.n_samples);
-    io_printf(IO_BUF, "N Samples = %d", parameters.n_samples);
+    io_printf(IO_BUF, "N Samples = %d \n", parameters.n_samples);
 //    log_info("N Data Points = %d", parameters.n_data_points);
-    io_printf(IO_BUF, "N Data Points = %d", parameters.n_data_points);
+    io_printf(IO_BUF, "N Data Points = %d \n", parameters.n_data_points);
 //    log_info("Data Window Size = %d", parameters.data_window_size);
 //    log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
 //    log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
-    io_printf(IO_BUF, "Acknowledge key = 0x%08x", parameters.acknowledge_key);
+    io_printf(IO_BUF, "Acknowledge key = 0x%08x \n", parameters.acknowledge_key);
 //    log_info("Data tag = %d", parameters.data_tag);
 //    log_info("Timer = %d", parameters.timer);
 //    log_info("Key = 0x%08x", parameters.key);
-    io_printf(IO_BUF, "Key = 0x%08x", parameters.key);
+    io_printf(IO_BUF, "Key = 0x%08x \n", parameters.key);
 //    log_info("Cholesky key = 0x%08x", parameters.cholesky_key);
-    io_printf(IO_BUF, "Cholesky key = 0x%08x", parameters.cholesky_key);
+    io_printf(IO_BUF, "Cholesky key = 0x%08x \n", parameters.cholesky_key);
 //#if TYPE_SELECT == 2
 //    log_info("Degrees of freedom = %k", parameters.degrees_of_freedom);
 //#else
