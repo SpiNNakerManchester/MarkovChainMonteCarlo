@@ -95,6 +95,6 @@ samples = mcmc_framework.run_mcmc(
 # Save the results
 for coord, sample in iteritems(samples):
     fname = "results_board_x"+str(coord[0])+"_y"+str(
-        coord[1])+"_n_samples"+str(n_samples)
+        coord[1])+"_n_boards"+str(n_boards)+"_n_samples"+str(n_samples)
     numpy.save(fname+".npy", sample)
     numpy.savetxt(fname+".csv", sample, fmt="%f", delimiter=",")
