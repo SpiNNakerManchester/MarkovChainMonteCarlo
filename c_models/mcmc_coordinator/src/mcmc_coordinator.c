@@ -89,6 +89,7 @@ void send_callback(uint send_time, uint unused) {
     next_end_sequence_unwrapped = next_sequence + packets_to_send - 1;
     next_end_sequence = next_end_sequence_unwrapped & sequence_mask;
     send_timeout = send_time + TIMEOUT;
+    io_printf(IO_BUF, "send_timeout is now %d \n", send_timeout);
 }
 
 
