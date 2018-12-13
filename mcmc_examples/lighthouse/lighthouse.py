@@ -273,41 +273,30 @@ model = LightHouseFixedPointModel(
     alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
     beta_max)
 
-#class myThread(threading.Thread):
-#    def __init__(self, thread_id, model, data_points, n_samples, seed):
-#        threading.Thread.__init__(self)
-#        self.thread_id = thread_id
-#        self.model = model
-#        self.data_points = data_points
-#        self.n_samples = n_samples
-#        self.seed = seed
-#
-#    def run(self):
-#        print("Starting thread ", self.thread_id)
-#        run_job(self.thread_id, self.model, self.data_points,
-#                self.n_samples, self.seed)
-#        print("Exiting thread ", self.thread_id)
-    
 
-def run_job(thread_id, model=model, data_points=data_points, n_samples=n_samples, seed=seed):
+def run_job(thread_id, model=model, data_points=data_points,
+            n_samples=n_samples, seed=seed):
     samples = mcmc_framework.run_mcmc(
         model, data_points, n_samples,
-        degrees_of_freedom=3.0, seed=seed, n_chips=n_boards*44)  # n_chips=3*44)
+        degrees_of_freedom=3.0, seed=seed, n_chips=n_boards*44)
 
     print('samples: ', samples)
 
     for coord, sample in iteritems(samples):
-        fname = "results_thread_"+str(thread_id[0])+"_board_x"+str(coord[0])+"_y"+str(
-            coord[1])+"_n_boards"+str(n_boards)+"_n_samples"+str(n_samples)
+        fname = "results_th" + str(thread_id[0]) + "_board_x" + str(coord[0])\
+            + "_y" + str(coord[1]) + "_nboards" + str(n_boards) + "_nsamples"\
+            + str(n_samples)
         numpy.save(fname+".npy", sample)
         numpy.savetxt(fname+".csv", sample, fmt="%f", delimiter=",")
+
 
 # run threaded if requested
 if (n_threads == 1):
     # simply call the function run_job, don't run with threads
-    run_job(0, model, data_points, n_sampeles, seed)
+    run_job([0], model, data_points, n_samples, seed)
 else:
-    connection_threads = [[n, model, data_points, n_samples, seed] for n in range(n_threads)]
+    connection_threads = [[n, model, data_points, n_samples, seed]
+                          for n in range(n_threads)]
 
     pool = pathos.multiprocessing.Pool(processes=n_threads)
     pool.map(func=run_job, iterable=connection_threads)
