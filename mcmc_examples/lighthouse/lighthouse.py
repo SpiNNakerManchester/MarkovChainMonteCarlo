@@ -1,11 +1,12 @@
 import sys
+import pathos.multiprocessing
 import numpy
 from mcmc import mcmc_framework
 # from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
-from mcmc_examples.lighthouse.lighthouse_float_model \
-     import LightHouseFloatModel
-# from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
-#     import LightHouseFixedPointModel
+# from mcmc_examples.lighthouse.lighthouse_float_model \
+#      import LightHouseFloatModel
+from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
+     import LightHouseFixedPointModel
 from six import iteritems
 
 # Data to use for 50 data points
@@ -223,8 +224,11 @@ seed = None  # set this if you want to use a different seed on each core
 # ]
 
 # set number of posterior samples to get and number of boards to use
+# and number of threads to run (so this will run n_threads jobs each using
+# n_boards boards, and collect n_samples samples)
 n_samples = 100  # 100 is the "default"
 n_boards = 3
+n_threads = 1
 
 # get n_samples and n_boards from command line arguments if specified
 if (len(sys.argv) == 2):
@@ -232,6 +236,10 @@ if (len(sys.argv) == 2):
 elif (len(sys.argv) == 3):
     n_samples = int(sys.argv[1])
     n_boards = int(sys.argv[2])
+elif (len(sys.argv) == 4):
+    n_samples = int(sys.argv[1])
+    n_boards = int(sys.argv[2])
+    n_threads = int(sys.argv[3])
 
 print("Running MCMC lighthouse on ", n_boards, " boards, and collecting ",
       n_samples, " samples")
@@ -258,20 +266,50 @@ beta_max = 2.0
 # model = LightHouseModel(
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
-model = LightHouseFloatModel(
-    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
-    beta_max)
-# model = LightHouseFixedPointModel(
+# model = LightHouseFloatModel(
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
-samples = mcmc_framework.run_mcmc(
-    model, data_points, n_samples,
-    degrees_of_freedom=3.0, seed=seed, n_chips=n_boards*44)  # n_chips=3*44)
+model = LightHouseFixedPointModel(
+    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
+    beta_max)
 
-print('samples: ', samples)
+#class myThread(threading.Thread):
+#    def __init__(self, thread_id, model, data_points, n_samples, seed):
+#        threading.Thread.__init__(self)
+#        self.thread_id = thread_id
+#        self.model = model
+#        self.data_points = data_points
+#        self.n_samples = n_samples
+#        self.seed = seed
+#
+#    def run(self):
+#        print("Starting thread ", self.thread_id)
+#        run_job(self.thread_id, self.model, self.data_points,
+#                self.n_samples, self.seed)
+#        print("Exiting thread ", self.thread_id)
+    
 
-for coord, sample in iteritems(samples):
-    fname = "results_board_x"+str(coord[0])+"_y"+str(
-        coord[1])+"_n_boards"+str(n_boards)+"_n_samples"+str(n_samples)
-    numpy.save(fname+".npy", sample)
-    numpy.savetxt(fname+".csv", sample, fmt="%f", delimiter=",")
+def run_job(thread_id, model=model, data_points=data_points, n_samples=n_samples, seed=seed):
+    samples = mcmc_framework.run_mcmc(
+        model, data_points, n_samples,
+        degrees_of_freedom=3.0, seed=seed, n_chips=n_boards*44)  # n_chips=3*44)
+
+    print('samples: ', samples)
+
+    for coord, sample in iteritems(samples):
+        fname = "results_thread_"+str(thread_id[0])+"_board_x"+str(coord[0])+"_y"+str(
+            coord[1])+"_n_boards"+str(n_boards)+"_n_samples"+str(n_samples)
+        numpy.save(fname+".npy", sample)
+        numpy.savetxt(fname+".csv", sample, fmt="%f", delimiter=",")
+
+# run threaded if requested
+if (n_threads == 1):
+    # simply call the function run_job, don't run with threads
+    run_job(0, model, data_points, n_sampeles, seed)
+else:
+    connection_threads = [[n, model, data_points, n_samples, seed] for n in range(n_threads)]
+
+    pool = pathos.multiprocessing.Pool(processes=n_threads)
+    pool.map(func=run_job, iterable=connection_threads)
+
+    print("exit main thread")
