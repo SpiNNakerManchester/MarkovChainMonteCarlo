@@ -24,7 +24,7 @@ seed = None  # set this if you want to use a different seed on each core
 # ]
 
 # set number of posterior samples to get and number of boards to use
-n_samples = 1  # 20000
+n_samples = 100  # 20000
 n_boards = 3
 
 # get n_samples and n_boards from command line arguments if specified

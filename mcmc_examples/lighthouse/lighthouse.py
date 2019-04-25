@@ -3,10 +3,10 @@ import pathos.multiprocessing
 import numpy
 from mcmc import mcmc_framework
 # from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
-# from mcmc_examples.lighthouse.lighthouse_float_model \
-#      import LightHouseFloatModel
-from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
-     import LightHouseFixedPointModel
+from mcmc_examples.lighthouse.lighthouse_float_model \
+     import LightHouseFloatModel
+# from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
+#      import LightHouseFixedPointModel
 from six import iteritems
 
 # Data to use for 50 data points
@@ -266,19 +266,20 @@ beta_max = 2.0
 # model = LightHouseModel(
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
-# model = LightHouseFloatModel(
-#    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
-#    beta_max)
-model = LightHouseFixedPointModel(
-    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
-    beta_max)
+model = LightHouseFloatModel(
+   alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
+   beta_max)
+# model = LightHouseFixedPointModel(
+#     alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
+#     beta_max)
 
 
 def run_job(thread_id, model=model, data_points=data_points,
             n_samples=n_samples, seed=seed):
     samples = mcmc_framework.run_mcmc(
         model, data_points, n_samples,
-        degrees_of_freedom=3.0, seed=seed, n_chips=n_boards*44)
+        degrees_of_freedom=3.0, seed=seed, n_chips=4)  # use this line for 4-node spinn-3 board
+#        degrees_of_freedom=3.0, seed=seed, n_chips=n_boards*44)
 
     print('samples: ', samples)
 
