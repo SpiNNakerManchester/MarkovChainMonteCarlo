@@ -278,7 +278,7 @@ def run_job(thread_id, model=model, data_points=data_points,
             n_samples=n_samples, seed=seed):
     samples = mcmc_framework.run_mcmc(
         model, data_points, n_samples,
-        degrees_of_freedom=3.0, seed=seed, n_chips=4)  # use this line for 4-node spinn-3 board
+        degrees_of_freedom=3.0, seed=seed, n_chips=4)  # spinn-3 board
 #        degrees_of_freedom=3.0, seed=seed, n_chips=n_boards*44)
 
     print('samples: ', samples)
