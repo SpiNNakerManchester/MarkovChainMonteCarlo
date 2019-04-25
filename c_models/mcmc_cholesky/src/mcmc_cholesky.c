@@ -55,7 +55,7 @@ extern void spin1_wfi();
 uint32_t ack_key;
 
 // Global variable for samples? Needs a rethink for large NCOVSAMPLES > 800
-float** sample_data;
+CALC_TYPE** sample_data;
 
 // Global variable for covariance matrix (which gets reused each step after
 // the first burn-in period, so it needs to be global!)
