@@ -1,7 +1,7 @@
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.dtcm_resource import DTCMResource
-from pacman.model.resources.sdram_resource import SDRAMResource
+from pacman.model.resources.constant_sdram import ConstantSDRAM
 from pacman.model.resources.cpu_cycles_per_tick_resource \
     import CPUCyclesPerTickResource
 from pacman.model.decorators.overrides import overrides
@@ -187,7 +187,7 @@ class MCMCVertex(
 
         resources = ResourceContainer(
             dtcm=DTCMResource(0),
-            sdram=SDRAMResource(self._sdram_usage),
+            sdram=ConstantSDRAM(self._sdram_usage),
             cpu_cycles=CPUCyclesPerTickResource(0),
             iptags=[], reverse_iptags=[])
         return resources
@@ -314,8 +314,7 @@ class MCMCVertex(
         """
 
         # Read the data recorded
-        data_values, _ = buffer_manager.get_data_for_vertex(placement, 0)
-        data = data_values.read_all()
+        data, _ = buffer_manager.get_data_by_placement(placement, 0)
 
         numpy_format = list()
         output_format = list()
@@ -340,13 +339,6 @@ class MCMCVertex(
             return convert
         else:
             return numpy.array(data, dtype=numpy.uint8).view(numpy_format)
-
-    def get_minimum_buffer_sdram_usage(self):
-        return 1024
-
-    def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
-        return recording_utilities.get_n_timesteps_in_buffer_space(
-            buffer_space, 4)
 
     def get_recorded_region_ids(self):
         return [0]
