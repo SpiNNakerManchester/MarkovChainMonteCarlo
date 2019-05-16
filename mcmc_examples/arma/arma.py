@@ -88,7 +88,7 @@ samples = mcmc_framework.run_mcmc(
 # spinn-3 run
 # samples = mcmc_framework.run_mcmc(
 #     model, data_points, n_samples, burn_in=5000, thinning=50,
-#     degrees_of_freedom=6.0, seed=seed, n_chips=n_boards*4)
+#     degrees_of_freedom=6.0, seed=seed, n_chips=4)
 
 # print('samples: ', samples)
 
