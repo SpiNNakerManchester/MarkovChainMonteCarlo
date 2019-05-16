@@ -314,8 +314,7 @@ class MCMCVertex(
         """
 
         # Read the data recorded
-        data_values, _ = buffer_manager.get_data_for_vertex(placement, 0)
-        data = data_values.read_all()
+        data, _ = buffer_manager.get_data_by_placement(placement, 0)
 
         numpy_format = list()
         output_format = list()
@@ -339,7 +338,7 @@ class MCMCVertex(
 
             return convert
         else:
-            return numpy.array(data, dtype=numpy.uint8).view(numpy_format)
+            return numpy.array(data, dtype="uint8").view(numpy_format)
 
     def get_minimum_buffer_sdram_usage(self):
         return 1024
