@@ -1,9 +1,5 @@
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources.resource_container import ResourceContainer
-from pacman.model.resources.dtcm_resource import DTCMResource
-from pacman.model.resources.sdram_resource import SDRAMResource
-from pacman.model.resources.cpu_cycles_per_tick_resource \
-    import CPUCyclesPerTickResource
+from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from pacman.model.decorators.overrides import overrides
 from pacman.executor.injection_decorator import inject_items
 
@@ -55,12 +51,8 @@ class MCMCCholeskyVertex(
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
-
         resources = ResourceContainer(
-            dtcm=DTCMResource(0),
-            sdram=SDRAMResource(self._sdram_usage),
-            cpu_cycles=CPUCyclesPerTickResource(0),
-            iptags=[], reverse_iptags=[])
+            sdram=ConstantSDRAM(self._sdram_usage))
         return resources
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
