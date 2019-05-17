@@ -332,13 +332,6 @@ class MCMCVertex(
         else:
             return numpy.array(data, dtype="uint8").view(numpy_format)
 
-    def get_minimum_buffer_sdram_usage(self):
-        return 1024
-
-    def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
-        return recording_utilities.get_n_timesteps_in_buffer_space(
-            buffer_space, 4)
-
     def get_recorded_region_ids(self):
         return [0]
 
