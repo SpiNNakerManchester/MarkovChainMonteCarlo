@@ -451,7 +451,7 @@ void mcmc_exit_function() {
 void mcmc_get_address_and_key() {
 
 	// get address from data spec
-	address_t data_address = data_specification_get_data_address();
+	data_specification_metadata_t *data_address = data_specification_get_data_address();
 
 	// get key
 	address_t parameters_address = data_specification_get_region(

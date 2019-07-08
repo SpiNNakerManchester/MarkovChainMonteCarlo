@@ -558,7 +558,7 @@ void c_main() {
 //#endif
 
     // Read the data specification header
-    address_t data_address = data_specification_get_data_address();
+	data_specification_metadata_t *data_address = data_specification_get_data_address();
     if (!data_specification_read_header(data_address)) {
         rt_error(RTE_SWERR);
     }

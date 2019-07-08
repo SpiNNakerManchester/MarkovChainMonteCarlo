@@ -126,6 +126,7 @@ void timer_callback(uint time, uint unused) {
     // If all chips have the data, or we have timed out, start sending again
     if ((smallest_sequence == next_end_sequence_unwrapped) || timed_out) {
 
+    	io_printf(IO_BUF, "timed_out %d, sending again \n", timed_out);
         // Adjust the sequence to the next sequence to send
         if (smallest_sequence >= next_sequence &&
                 smallest_sequence <= next_end_sequence_unwrapped) {
@@ -140,7 +141,9 @@ void timer_callback(uint time, uint unused) {
             next_sequence = (smallest_sequence + 1) & sequence_mask;
         }
 
-        // Avoid sending more data in case the send takes too long
+    	io_printf(IO_BUF, "timed_out, data_size %d \n", data_size);
+
+    	// Avoid sending more data in case the send takes too long
         next_end_sequence_unwrapped = 0xFFFFFFFF;
 
         // Send the data
@@ -201,7 +204,7 @@ void empty_multicast_callback(uint key, uint payload) {
 
 void c_main() {
 
-    address_t data_address = data_specification_get_data_address();
+	data_specification_metadata_t *data_address = data_specification_get_data_address();
     address_t params = data_specification_get_region(0, data_address);
 
     // Get the size of the data in words

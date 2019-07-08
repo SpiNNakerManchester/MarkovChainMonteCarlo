@@ -438,7 +438,7 @@ void c_main() {
 //	}
 
 	// Get the acknowledge key from rf_parameters
-	address_t data_address = data_specification_get_data_address();
+	data_specification_metadata_t *data_address = data_specification_get_data_address();
 	address_t cholesky_parameters_address = data_specification_get_region(
 	        PARAMETERS, data_address);
 	struct cholesky_parameters *cholesky_sdram_params =
