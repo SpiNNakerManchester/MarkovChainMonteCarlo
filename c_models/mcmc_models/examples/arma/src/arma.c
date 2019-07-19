@@ -8,6 +8,7 @@
 //#define REAL float
 #define NCHOLESKY 5000
 //#define NCHOLESKY 1000
+#define MAX_WAIT 10000
 
 enum regions {
     RECORDING,
@@ -263,6 +264,7 @@ lglikelihood=-sum(err(p+q+1:end).^2)/(2*sigma^2)-0.5*(N-p)*log(sigma^2);
  */
 CALC_TYPE mcmc_model_prior_prob(
         mcmc_params_pointer_t params, mcmc_state_pointer_t state) {
+	use(params);
 	// debug for writing values
 //	char buffer[1024];
 	// set result_value in order to wait for result from root_finder
@@ -286,15 +288,30 @@ CALC_TYPE mcmc_model_prior_prob(
 	spin1_memcpy(model_state_address, state->parameters, state_n_bytes);
 
 	// Send mc packet with payload of address value to wake up root_finder
-	spin1_send_mc_packet(key, model_state_address, WITH_PAYLOAD);
+	//	spin1_send_mc_packet(key, model_state_address, WITH_PAYLOAD);
+	uint32_t m_s_add = (uint32_t) model_state_address;
+	while (!spin1_send_mc_packet(key, m_s_add, WITH_PAYLOAD)) {
+	//while (!spin1_send_mc_packet(key, model_state_address, WITH_PAYLOAD)) {
+		spin1_delay_us(1);
+	}
 
 //	log_info("ARMA: sent state parameters to rootfinder, waiting");
 //	log_info("ARMA: key %d, model_state_address %d", key, model_state_address);
 
 	// Wait here for the result to come back
+	//	uint32_t i_count = 0;
 	while (result_value==2) {
 		spin1_wfi();
+		//		if (i_count < MAX_WAIT) {
+		//			i_count++;
+		//		} else { // have waited too long, call the exit function
+		//			spin1_callback_off(MCPL_PACKET_RECEIVED);
+		//			log_info("waited %u for message from RF that never arrived", i_count);
+		//			mcmc_exit_function();
+		//		}
 	}
+
+	//	log_info("from root finder, i_count = %u", i_count);
 
 	// Read the result and return it
 	CALC_TYPE returnval = ZERO;
@@ -330,12 +347,30 @@ void mcmc_model_transition_jump(
 	spin1_memcpy(model_state_address, state->parameters, state_n_bytes);
 
 	// Send mc packet with payload of address value to wake up Cholesky
-	spin1_send_mc_packet(cholesky_key, model_state_address, WITH_PAYLOAD);
+	//	spin1_send_mc_packet(cholesky_key, model_state_address, WITH_PAYLOAD);
+	uint32_t m_s_add = (uint32_t) model_state_address;
+//	io_printf(IO_BUF, "m_s_add %d model_state_address %d\n",
+//			m_s_add, model_state_address);
+	while (!spin1_send_mc_packet(cholesky_key, m_s_add, WITH_PAYLOAD)) {
+//	while (!spin1_send_mc_packet(cholesky_key, model_state_address,
+//			WITH_PAYLOAD)) {
+		spin1_delay_us(1);
+	}
 
 	// Wait
+	//	uint32_t i_count = 0;
 	while (cholesky_result == 2) {
 		spin1_wfi();
+		//		if (i_count < MAX_WAIT) {
+		//			i_count++;
+		//		} else { // have waited too long, call the exit function
+		//			spin1_callback_off(MCPL_PACKET_RECEIVED);
+		//			log_info("waited %u for message (1) from CH that never arrived", i_count);
+		//			mcmc_exit_function();
+		//		}
 	}
+
+	//	log_info("from cholesky (1), i_count = %u", i_count);
 
 	// Create a t_variate vector
 	for (i=0; i < p+q+2; i++) {
@@ -349,16 +384,36 @@ void mcmc_model_transition_jump(
 	spin1_memcpy(model_params_address, t_variate, params_n_bytes);
 
 	// Send mc packet with the model params address this time
-	spin1_send_mc_packet(cholesky_key, model_params_address, WITH_PAYLOAD);
+	//	spin1_send_mc_packet(cholesky_key, model_params_address, WITH_PAYLOAD);
+	uint32_t m_p_add = (uint32_t) model_params_address;
+//	io_printf(IO_BUF, "m_p_add %d model_params_address %d\n",
+//			m_s_add, model_state_address);
+	while (!spin1_send_mc_packet(cholesky_key, m_p_add, WITH_PAYLOAD)) {
+//	while (!spin1_send_mc_packet(cholesky_key, model_params_address,
+//			WITH_PAYLOAD)) {
+		spin1_delay_us(1);
+	}
 
 	// Wait
+	//	i_count = 0;
 	while (cholesky_result == 2) {
 		spin1_wfi();
+		//		if (i_count < MAX_WAIT) {
+		//			i_count++;
+		//		} else { // have waited too long, call the exit function
+		//			spin1_callback_off(MCPL_PACKET_RECEIVED);
+		//			log_info("waited %u for message (2) from CH that never arrived", i_count);
+		//			mcmc_exit_function();
+		//		}
 	}
+
+	//	log_info("from cholesky (2), i_count = %u", i_count);
 
 	// When Cholesky has finished it returns the address of the location
 	// of the updated t_variate
-	spin1_memcpy(t_variate, cholesky_result, params_n_bytes);
+	uint32_t *chol_ptr = (uint32_t *) (cholesky_result);
+	spin1_memcpy(t_variate, chol_ptr, params_n_bytes);
+//	spin1_memcpy(t_variate, cholesky_result, params_n_bytes);
 
 	// Update polynomial coefficients
 	for (i=0; i < p+q+2; i++) {
@@ -396,7 +451,7 @@ void mcmc_exit_function() {
 void mcmc_get_address_and_key() {
 
 	// get address from data spec
-	address_t data_address = data_specification_get_data_address();
+	data_specification_metadata_t *data_address = data_specification_get_data_address();
 
 	// get key
 	address_t parameters_address = data_specification_get_region(

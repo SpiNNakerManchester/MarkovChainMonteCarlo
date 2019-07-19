@@ -65,7 +65,8 @@ void send_callback(uint send_time, uint unused) {
 
     // If the data has all been sent, send a start message and quit
     if (data_size == 0) {
-        log_info("All data has been sent and confirmed");
+        // log_info("All data has been sent and confirmed");
+        io_printf(IO_BUF, "All data has been sent and confirmed \n");
         while (!spin1_send_mc_packet(key, 0, NO_PAYLOAD)) {
             spin1_delay_us(1);
         }
@@ -88,6 +89,8 @@ void send_callback(uint send_time, uint unused) {
     next_end_sequence_unwrapped = next_sequence + packets_to_send - 1;
     next_end_sequence = next_end_sequence_unwrapped & sequence_mask;
     send_timeout = send_time + TIMEOUT;
+    io_printf(IO_BUF, "send_timeout %d data_size %d window_size %d \n",
+    		send_timeout, data_size, window_size);
 }
 
 
@@ -123,6 +126,7 @@ void timer_callback(uint time, uint unused) {
     // If all chips have the data, or we have timed out, start sending again
     if ((smallest_sequence == next_end_sequence_unwrapped) || timed_out) {
 
+    	io_printf(IO_BUF, "timed_out %d, sending again \n", timed_out);
         // Adjust the sequence to the next sequence to send
         if (smallest_sequence >= next_sequence &&
                 smallest_sequence <= next_end_sequence_unwrapped) {
@@ -137,7 +141,9 @@ void timer_callback(uint time, uint unused) {
             next_sequence = (smallest_sequence + 1) & sequence_mask;
         }
 
-        // Avoid sending more data in case the send takes too long
+    	io_printf(IO_BUF, "timed_out, data_size %d \n", data_size);
+
+    	// Avoid sending more data in case the send takes too long
         next_end_sequence_unwrapped = 0xFFFFFFFF;
 
         // Send the data
@@ -198,32 +204,38 @@ void empty_multicast_callback(uint key, uint payload) {
 
 void c_main() {
 
-    address_t data_address = data_specification_get_data_address();
+	data_specification_metadata_t *data_address = data_specification_get_data_address();
     address_t params = data_specification_get_region(0, data_address);
 
     // Get the size of the data in words
     data_size = params[DATA_SIZE];
-    log_info("Data size = %d", data_size);
+    // log_info("Data size = %d", data_size);
+    io_printf(IO_BUF, "Data size = %d \n", data_size);
 
     // Get a count of the chips to load on to
     n_chips = params[N_CHIPS];
-    log_info("N chips = %d", n_chips);
+    // log_info("N chips = %d", n_chips);
+    io_printf(IO_BUF, "N chips = %d \n", n_chips);
 
     // Get the key to send the data with
     key = params[KEY];
-    log_info("Key = 0x%08x", key);
+    // log_info("Key = 0x%08x", key);
+    io_printf(IO_BUF, "Key = 0x%08x \n", key);
 
     // Get the number of packets to be sent at the same time
     window_size = params[WINDOW_SIZE];
-    log_info("Window size = %d", window_size);
+    // log_info("Window size = %d", window_size);
+    io_printf(IO_BUF, "Window size = %d \n", window_size);
 
     // Get the total number of window spaces available
     sequence_mask = params[SEQUENCE_MASK];
-    log_info("Sequence mask = 0x%08x", sequence_mask);
+    // log_info("Sequence mask = 0x%08x", sequence_mask);
+    io_printf(IO_BUF, "Sequence mask = 0x%08x \n", sequence_mask);
 
     // Get the timer tick
     uint timer = params[TIMER];
-    log_info("Timer = %d", timer);
+    // log_info("Timer = %d", timer);
+    io_printf(IO_BUF, "Timer = %d \n", timer);
 
     // Get a pointer to the data - not worth copying at present
     data = (uint *) &(params[DATA]);

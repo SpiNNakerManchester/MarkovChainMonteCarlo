@@ -12,8 +12,8 @@
 
 #define ROOT_FAIL 1 // define it this way here to send "boolean" back
 
-// Value of the pointer to the location in SDRAM to get parameters
-uint32_t *parameter_rec_ptr;
+// Value of the location in SDRAM to get parameters
+uint32_t parameter_rec_add;
 
 // Functions required to print floats as hex values (uncomment for debug)
 //struct double_uint {
@@ -48,6 +48,9 @@ struct rf_parameters {
 
 // The general parameters
 struct rf_parameters rf_parameters;
+
+// Define spin1_wfi
+extern void spin1_wfi();
 
 // Acknowledge key global variable
 uint32_t ack_key;
@@ -231,28 +234,40 @@ void run(uint unused0, uint unused1) {
     use(unused1);
 
     // for debug writing values
-    char buffer[1024];
+//    char buffer[1024];
 
     uint32_t i, p, q;
-    CALC_TYPE state_parameters[PPOLYORDER+QPOLYORDER+2];
-
-//    log_info("ROOTFINDER: running root finder");
 
     // p and q defined in header
     p = PPOLYORDER;
     q = QPOLYORDER;
 
+    // allocate some DTCM for this array
+	CALC_TYPE *state_parameters = spin1_malloc((p+q+2)*sizeof(CALC_TYPE));
+//	CALC_TYPE state_parameters[p+q+2];
+
+//    log_info("ROOTFINDER: running root finder");
+
     // Get the size of the state parameters
 	uint32_t state_n_bytes = mcmc_model_get_state_n_bytes();
 
 	// Get the parameters from SDRAM
-	spin1_memcpy(state_parameters, parameter_rec_ptr[0], state_n_bytes);
+	uint32_t *param_ptr = (uint32_t *) parameter_rec_add;
+	spin1_memcpy(state_parameters, param_ptr, state_n_bytes);
 
 	// Set up data structures for the coefficients of a polynomial
 	// characteristic equation for AR and MA model respectively.
 	// C99 compile flag required for complex type and variable length arrays
-	CALC_TYPE AR_eq[p+1], MA_eq[q+1];
-	complex float AR_param[p+1], MA_param[q+1], AR_rt[p+1], MA_rt[q+1];
+	// Trying to do this using memory allocation rather than on the fly
+	CALC_TYPE *AR_eq = spin1_malloc((p+1)*sizeof(CALC_TYPE));
+	CALC_TYPE *MA_eq = spin1_malloc((q+1)*sizeof(CALC_TYPE));
+
+	//log_info("ROOTFINDER: sizeof(complex float)=%u", sizeof(complex float));
+	complex float *AR_param = spin1_malloc((p+1)*sizeof(complex float));
+	complex float *MA_param = spin1_malloc((q+1)*sizeof(complex float));
+	complex float *AR_rt = spin1_malloc((p+1)*sizeof(complex float));
+	complex float *MA_rt = spin1_malloc((q+1)*sizeof(complex float));
+	//complex float AR_param[p+1], MA_param[q+1], AR_rt[p+1], MA_rt[q+1];
 
 	// Create an array with the coefficients for the characteristic AR equation
 	// The characteristic equation is -a_p*x^p-a_(p-1)*x^(p-1)-...+1=0;
@@ -304,14 +319,23 @@ void run(uint unused0, uint unused1) {
 		spin1_delay_us(1);
 	}
 
+	// free up memory
+	sark_free(state_parameters);
+	sark_free(AR_eq);
+	sark_free(MA_eq);
+	sark_free(AR_param);
+	sark_free(MA_param);
+	sark_free(AR_rt);
+	sark_free(MA_rt);
+
 	// End of required functions
 
 }
 
 void trigger_run(uint key, uint payload) {
 	use(key);
-	// Get the pointer value to the location in SDRAM
-	parameter_rec_ptr[0] = payload;
+	// Get the value of the location in SDRAM
+	parameter_rec_add = payload;
 	// Get ready to run the root_finder algorithm
 	spin1_callback_off(TIMER_TICK);
     spin1_schedule_callback(run, 0, 0, 2);
@@ -327,7 +351,7 @@ void end_callback(uint unused0, uint unused1) {
 
 void c_main() {
 	// Get the acknowledge key from rf_parameters
-	address_t data_address = data_specification_get_data_address();
+	data_specification_metadata_t *data_address = data_specification_get_data_address();
 	address_t rf_parameters_address = data_specification_get_region(
 	        PARAMETERS, data_address);
 	struct rf_parameters *rf_sdram_params =

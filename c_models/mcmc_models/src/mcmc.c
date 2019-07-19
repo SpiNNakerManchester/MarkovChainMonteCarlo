@@ -134,7 +134,7 @@ uint32_t dma_read_buffer = 0;
 uint likelihood_done = 0;
 
 // Set up print_value if we're not using fixed-point datatype
-#if TYPE_SELECT != 2
+/* #if TYPE_SELECT != 2
 struct double_uint {
     uint first_word;
     uint second_word;
@@ -152,7 +152,7 @@ void print_value(CALC_TYPE d_value, char *buffer) {
         buffer, "0x%08x%08x",
         converter.int_values.second_word, converter.int_values.first_word);
 }
-#endif
+#endif */
 
 // returns a high-quality Uniform[0,1] random variate -
 // Marsaglia KISS32 algorithm
@@ -349,6 +349,7 @@ void run(uint unused0, uint unused1) {
 
     unsigned int sample_count = 0;
     unsigned int accepted = 0;
+    unsigned int previous_accepted = 0;
     unsigned int likelihood_calls = 0;
     unsigned int timestep = 0;
 
@@ -448,7 +449,23 @@ void run(uint unused0, uint unused1) {
 
         // Print the acceptance stats every 5000 timesteps
         if (likelihood_calls % 5000 == 0) {
-        	log_info("accepted %d of %d", accepted, likelihood_calls);
+//        	log_info("accepted %d of %d", accepted, likelihood_calls);
+        	io_printf(IO_BUF, "accepted %d of %d \n", accepted, likelihood_calls);
+        	if (previous_accepted == accepted) {
+        		// There has been no change: the easiest thing to do now
+        		// is to record the remaining samples and exit
+        		do {
+        			// record the current state for the remaining samples
+        			recording_record(0, state, state_n_bytes);
+        			sample_count++;
+        			// record one less than needed as we need to exit
+        			// the outer while loop with the correct n_samples
+        		} while (sample_count < parameters.n_samples - 1);
+
+        	} else {
+        		// Set previous to current total and continue
+        		previous_accepted = accepted;
+        	}
         }
 
         // debug: output every timestep
@@ -465,11 +482,14 @@ void run(uint unused0, uint unused1) {
             samples_to_go--;
 
         	if (likelihood_calls == parameters.burn_in) {
-                log_info(
-                    "Burn-in accepted %d of %d", accepted, likelihood_calls);
+//                log_info(
+//                    "Burn-in accepted %d of %d", accepted, likelihood_calls);
+                io_printf(IO_BUF,
+                    "Burn-in accepted %d of %d \n", accepted, likelihood_calls);
 
                 // reset diagnostic statistics
                 accepted = 0;
+                previous_accepted = 0;
                 likelihood_calls = 0;
                 burn_in = false;
             }
@@ -488,7 +508,8 @@ void run(uint unused0, uint unused1) {
 
     recording_finalise();
 
-    log_info("Sampling accepted %d of %d", accepted, likelihood_calls);
+//    log_info("Sampling accepted %d of %d", accepted, likelihood_calls);
+    io_printf(IO_BUF, "Sampling accepted %d of %d \n", accepted, likelihood_calls);
 
     // Finished: exit (application-specific)
     mcmc_exit_function();
@@ -537,7 +558,7 @@ void c_main() {
 //#endif
 
     // Read the data specification header
-    address_t data_address = data_specification_get_data_address();
+	data_specification_metadata_t *data_address = data_specification_get_data_address();
     if (!data_specification_read_header(data_address)) {
         rt_error(RTE_SWERR);
     }
@@ -581,17 +602,24 @@ void c_main() {
     }
     spin1_memcpy(state, model_state_address, state_n_bytes);
 
-    log_info("Burn in = %d", parameters.burn_in);
-    log_info("Thinning = %d", parameters.thinning);
-    log_info("N Samples = %d", parameters.n_samples);
-    log_info("N Data Points = %d", parameters.n_data_points);
+//    log_info("Burn in = %d", parameters.burn_in);
+    io_printf(IO_BUF, "Burn in = %d \n", parameters.burn_in);
+//    log_info("Thinning = %d", parameters.thinning);
+    io_printf(IO_BUF, "Thinning = %d \n", parameters.thinning);
+//    log_info("N Samples = %d", parameters.n_samples);
+    io_printf(IO_BUF, "N Samples = %d \n", parameters.n_samples);
+//    log_info("N Data Points = %d", parameters.n_data_points);
+    io_printf(IO_BUF, "N Data Points = %d \n", parameters.n_data_points);
 //    log_info("Data Window Size = %d", parameters.data_window_size);
 //    log_info("Sequence mask = 0x%08x", parameters.sequence_mask);
-    log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
+//    log_info("Acknowledge key = 0x%08x", parameters.acknowledge_key);
+    io_printf(IO_BUF, "Acknowledge key = 0x%08x \n", parameters.acknowledge_key);
 //    log_info("Data tag = %d", parameters.data_tag);
 //    log_info("Timer = %d", parameters.timer);
-    log_info("Key = 0x%08x", parameters.key);
-    log_info("Cholesky key = 0x%08x", parameters.cholesky_key);
+//    log_info("Key = 0x%08x", parameters.key);
+    io_printf(IO_BUF, "Key = 0x%08x \n", parameters.key);
+//    log_info("Cholesky key = 0x%08x", parameters.cholesky_key);
+    io_printf(IO_BUF, "Cholesky key = 0x%08x \n", parameters.cholesky_key);
 //#if TYPE_SELECT == 2
 //    log_info("Degrees of freedom = %k", parameters.degrees_of_freedom);
 //#else

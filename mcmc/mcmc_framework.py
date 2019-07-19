@@ -14,9 +14,8 @@ from spinnman.model.enums.cpu_state import CPUState
 
 from spinn_front_end_common.utilities import globals_variables
 
-from six import itervalues
+from six import iteritems
 
-import numpy
 import logging
 import time
 
@@ -221,11 +220,10 @@ def run_mcmc(
     finish_computing_time = time.time()
 
     # Get the data back
-    samples = list()
-    for coordinator in itervalues(coordinators):
-        samples.append(coordinator.read_samples(g.buffer_manager()))
-
-    samples = numpy.hstack(samples)
+    samples = dict()
+    for coord, coordinator in iteritems(coordinators):
+        samples[coord[0], coord[1]] = coordinator.read_samples(
+            g.buffer_manager())
 
     # Close the machine
     g.stop()
