@@ -11,3 +11,5 @@
 **/*.txt
 **/*.dict
 **/modified_src
+**/results*.csv
+**/results*.npy
