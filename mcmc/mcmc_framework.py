@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def run_mcmc(
         model, data, n_samples, burn_in=2000, thinning=5,
-        degrees_of_freedom=3.0, seed=None, n_chips=None):
+        degrees_of_freedom=3.0, seed=None, n_chips=None, n_boards=None):
     """ Executes an MCMC model, returning the received samples
 
     :param model: The MCMCModel to be used
@@ -49,7 +49,8 @@ def run_mcmc(
     """
 
     # Set up the simulation
-    g.setup(n_chips_required=n_chips, model_binary_module=model_binaries)
+    g.setup(n_boards_required=n_boards, n_chips_required=n_chips,
+            model_binary_module=model_binaries)
 
     # Get the number of cores available for use
     n_cores = 0
