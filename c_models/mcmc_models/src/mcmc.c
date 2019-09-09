@@ -24,10 +24,10 @@
 
 #include <limits.h>
 #include <spin1_api.h>
-#include <debug.h>
 #include <data_specification.h>
 #include <simulation.h>
 #include <recording.h>
+#include <debug.h>
 #include "mcmc_model.h"
 
 // Define spin1_wfi
