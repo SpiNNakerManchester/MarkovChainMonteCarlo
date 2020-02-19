@@ -564,10 +564,10 @@ void c_main() {
     }
 
     // Setup recording
-    address_t recording_address = data_specification_get_region(
+    void *recording_region = data_specification_get_region(
         RECORDING, data_address);
     uint32_t recording_flags = 0;
-    if (!recording_initialize(recording_address, &recording_flags)) {
+    if (!recording_initialize(&recording_region, &recording_flags)) {
         rt_error(RTE_SWERR);
     }
 

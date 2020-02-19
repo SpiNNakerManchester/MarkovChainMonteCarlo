@@ -13,3 +13,5 @@
 **/modified_src
 **/results*.csv
 **/results*.npy
+c_models/Debug/
+c_models/Release/
