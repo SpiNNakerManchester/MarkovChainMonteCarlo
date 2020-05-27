@@ -2,7 +2,7 @@ language: python
 python:
   - 2.7
   - 3.6
-dist: trusty
+dist: bionic
 
 env:
   # Need this environment if we're doing tests without a config file
