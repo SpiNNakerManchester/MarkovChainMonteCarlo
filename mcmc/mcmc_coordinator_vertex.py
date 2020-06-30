@@ -262,7 +262,7 @@ class MCMCCoordinatorVertex(
         spec.end_specification()
 
     @overrides(AbstractProvidesNKeysForPartition.get_n_keys_for_partition)
-    def get_n_keys_for_partition(self, partition, graph_mapper):
+    def get_n_keys_for_partition(self, partition):
         return self._n_sequences
 
     def read_samples(self, buffer_manager):
