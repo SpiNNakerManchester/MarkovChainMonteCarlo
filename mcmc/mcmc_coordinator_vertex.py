@@ -10,9 +10,6 @@ from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
 from spinn_front_end_common.abstract_models\
     .abstract_generates_data_specification \
     import AbstractGeneratesDataSpecification
-from spinn_front_end_common.abstract_models\
-    .abstract_provides_n_keys_for_partition \
-    import AbstractProvidesNKeysForPartition
 from spinn_front_end_common.utilities.utility_objs.executable_type \
     import ExecutableType
 
@@ -24,8 +21,7 @@ import random
 
 class MCMCCoordinatorVertex(
         MachineVertex, AbstractHasAssociatedBinary,
-        AbstractGeneratesDataSpecification,
-        AbstractProvidesNKeysForPartition):
+        AbstractGeneratesDataSpecification):
     """ A vertex that runs the MCMC algorithm
     """
 
@@ -60,7 +56,8 @@ class MCMCCoordinatorVertex(
         :param seed: The random seed to use
         """
 
-        MachineVertex.__init__(self, label="MCMC Node", constraints=None)
+        MachineVertex.__init__(self, label="MCMC Coordinator Node",
+                               constraints=None)
         self._model = model
         self._data = data
         self._n_samples = n_samples
@@ -261,7 +258,6 @@ class MCMCCoordinatorVertex(
         # End the specification
         spec.end_specification()
 
-    @overrides(AbstractProvidesNKeysForPartition.get_n_keys_for_partition)
     def get_n_keys_for_partition(self, partition):
         return self._n_sequences
 
