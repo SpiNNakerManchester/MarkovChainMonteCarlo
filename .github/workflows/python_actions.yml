@@ -136,14 +136,15 @@ jobs:
     - name: Lint with flake8
       run: |
         # run flake8
-        flake8 spinnaker_graph_front_end unittests
+        flake8 mcmc mcmc_examples
 
     - name: Lint with pylint
       # Broken in 2.7 as it can not find data_specification.exceptions
       if: matrix.python-version != 2.7
       # Note that there's special conditioning of the return code of pylint
       run: |
-        pylint --output-format=colorized --disable=R,C spinnaker_graph_front_end || exit $(($? & 35))
+        pylint --output-format=colorized --disable=R,C mcmc || exit $(($? & 35))
+        pylint --output-format=colorized --disable=R,C mcmc_examples || exit $(($? & 35))
 
 #    # Add the following as required in the future
 #    - name: Run rat copyright enforcement
