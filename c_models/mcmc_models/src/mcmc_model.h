@@ -76,10 +76,10 @@ extern CALC_TYPE t_deviate();
 #define SQR( x ) (( x ) * ( x ))
 
 // !\brief Get the number of bytes in the params struct (usually just sizeof)
-uint32_t mcmc_model_get_params_n_bytes();
+uint32_t mcmc_model_get_params_n_bytes(void);
 
 // !\brief Get the number of bytes in the state struct (usually just sizeof)
-uint32_t mcmc_model_get_state_n_bytes();
+uint32_t mcmc_model_get_state_n_bytes(void);
 
 // !\brief Given an array of values x, calculate the likelihood
 CALC_TYPE mcmc_model_likelihood(
@@ -96,7 +96,7 @@ void mcmc_model_transition_jump(
     mcmc_state_pointer_t new_state, uint32_t timestep);
 
 // !\brief Define the exit function from MCMC
-void mcmc_exit_function();
+void mcmc_exit_function(void);
 
 // !\brief Get the address and key required for communication (multi-core exec.)
-void mcmc_get_address_and_key();
+void mcmc_get_address_and_key(void);

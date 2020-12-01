@@ -179,7 +179,7 @@ CALC_TYPE uniform(uniform_seed seed) {
 }
 
 // Returns a standard t-distributed deviate - from Ripley
-CALC_TYPE t_deviate() {
+CALC_TYPE t_deviate(void) {
     CALC_TYPE x;
     CALC_TYPE v;
     CALC_TYPE df = parameters.degrees_of_freedom;
@@ -551,7 +551,7 @@ void trigger_run(uint unused0, uint unused1) {
  main program which sets up DSG and prepares to communicate data to cores
 */
 
-void c_main() {
+void c_main(void) {
 //#if TYPE_SELECT != 2
 //    char buffer[1024];
 //#endif

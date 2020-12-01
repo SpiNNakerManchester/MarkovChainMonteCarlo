@@ -224,7 +224,7 @@ void zroots( complex float a[], int m, complex float roots[], bool polish )
 }
 
 // Sensible to get this size if it's directly available to us
-uint32_t mcmc_model_get_state_n_bytes() {
+uint32_t mcmc_model_get_state_n_bytes(void) {
     return sizeof(struct mcmc_state);
 }
 
@@ -349,7 +349,7 @@ void end_callback(uint unused0, uint unused1) {
 	spin1_exit(0);
 }
 
-void c_main() {
+void c_main(void) {
 	// Get the acknowledge key from rf_parameters
 	data_specification_metadata_t *data_address = data_specification_get_data_address();
 	address_t rf_parameters_address = data_specification_get_region(

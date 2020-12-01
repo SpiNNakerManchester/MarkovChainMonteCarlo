@@ -202,7 +202,7 @@ void empty_multicast_callback(uint key, uint payload) {
     use(payload);
 }
 
-void c_main() {
+void c_main(void) {
 
 	data_specification_metadata_t *data_address = data_specification_get_data_address();
     address_t params = data_specification_get_region(0, data_address);

@@ -85,11 +85,11 @@ address_t model_params_address;
 uint32_t state_n_bytes;
 uint32_t params_n_bytes;
 
-uint32_t mcmc_model_get_params_n_bytes() {
+uint32_t mcmc_model_get_params_n_bytes(void) {
     return sizeof(struct mcmc_params);
 }
 
-uint32_t mcmc_model_get_state_n_bytes() {
+uint32_t mcmc_model_get_state_n_bytes(void) {
     return sizeof(struct mcmc_state);
 }
 
@@ -434,7 +434,7 @@ void mcmc_model_transition_jump(
 /*
  exit function: send message to root finder, cholesky to exit, then exit
  */
-void mcmc_exit_function() {
+void mcmc_exit_function(void) {
 	// send message to root finder
 	spin1_send_mc_packet(key, 0, 0);
 
@@ -448,7 +448,7 @@ void mcmc_exit_function() {
 /*
  set up addresses for sending information to root finder
  */
-void mcmc_get_address_and_key() {
+void mcmc_get_address_and_key(void) {
 
 	// get address from data spec
 	data_specification_metadata_t *data_address = data_specification_get_data_address();

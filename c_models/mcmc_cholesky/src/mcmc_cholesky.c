@@ -179,10 +179,10 @@ void mean_covar_of_mat_n(const uint32_t n, const uint32_t d) {
 }
 
 // Sensible to get this size if it's directly available to us
-uint32_t mcmc_model_get_params_n_bytes() {
+uint32_t mcmc_model_get_params_n_bytes(void) {
     return sizeof(struct mcmc_params);
 }
-uint32_t mcmc_model_get_state_n_bytes() {
+uint32_t mcmc_model_get_state_n_bytes(void) {
     return sizeof(struct mcmc_state);
 }
 
@@ -374,7 +374,7 @@ void end_callback(uint unused0, uint unused1) {
 
 }
 
-void c_main() {
+void c_main(void) {
 
 //	Testing Cholesky: note, you will need to alter the cholesky function to
 //	take double[test_size][test_size] to make this one work instead of Mat

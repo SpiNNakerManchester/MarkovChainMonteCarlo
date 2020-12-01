@@ -7,11 +7,11 @@
 #define use(x) do {} while ((x)!=(x))
 #endif
 
-uint32_t mcmc_model_get_params_n_bytes() {
+uint32_t mcmc_model_get_params_n_bytes(void) {
     return sizeof(struct mcmc_params);
 }
 
-uint32_t mcmc_model_get_state_n_bytes() {
+uint32_t mcmc_model_get_state_n_bytes(void) {
     return sizeof(struct mcmc_state);
 }
 
@@ -81,13 +81,13 @@ void mcmc_model_transition_jump(
 /*
  exit function from MCMC: single-core executable, so simply spin1_exit
  */
-void mcmc_exit_function() {
+void mcmc_exit_function(void) {
 	spin1_exit(0);
 }
 
 /*
  set up address and key function: in this single-core exec. case, empty function
  */
-void mcmc_get_address_and_key() {
+void mcmc_get_address_and_key(void) {
 
 }
