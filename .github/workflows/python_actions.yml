@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [2.7, 3.6, 3.7, 3.8]
+        python-version: [3.6, 3.7, 3.8]
 
     steps:
     - name: Set up Python ${{ matrix.python-version }}
@@ -70,11 +70,6 @@ jobs:
       run: python setup.py install
       working-directory: SpiNNMan
 
-    - name: preinstall pacman requirements (2.7 only)
-      if: matrix.python-version == 2.7
-      run: pip install -r requirements.txt
-      working-directory: PACMAN
-
     - name: Install PACMAN
       run: python setup.py install
       working-directory: PACMAN
@@ -87,11 +82,6 @@ jobs:
       run: python setup.py install
       working-directory: spalloc
 
-    - name: preinstall SpiNNFrontEndCommon requirements (2.7 Only)
-      if: matrix.python-version == 2.7
-      run: pip install -r requirements.txt
-      working-directory: SpiNNFrontEndCommon
-
     - name: Install SpiNNFrontEndCommon
       run: python setup.py install
       working-directory: SpiNNFrontEndCommon
@@ -99,11 +89,6 @@ jobs:
     - name: Install SpiNNakerGraphFrontEnd
       run: python setup.py install
       working-directory: SpiNNakerGraphFrontEnd
-
-    - name: Preinstall requirements (2.7 Only)
-      if: matrix.python-version == 2.7
-      run: |
-        pip install -r requirements.txt
 
     - name: Setup
       run: |
@@ -139,8 +124,6 @@ jobs:
         flake8 mcmc mcmc_examples
 
     - name: Lint with pylint
-      # Broken in 2.7 as it can not find data_specification.exceptions
-      if: matrix.python-version != 2.7
       # Note that there's special conditioning of the return code of pylint
       run: |
         pylint --output-format=colorized --disable=R,C mcmc || exit $(($? & 35))

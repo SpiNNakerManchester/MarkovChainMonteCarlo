@@ -14,8 +14,6 @@ from spinnman.model.enums.cpu_state import CPUState
 
 from spinn_front_end_common.utilities import globals_variables
 
-from six import iteritems
-
 import logging
 import time
 
@@ -44,8 +42,9 @@ def run_mcmc(
     :param root_finder: Use the root finder by adding root finder vertices
     :param cholesky: Use the Cholesky algorithm by adding Cholesky vertices
 
-    :return: The samples read
-    :rtype: A numpy array with fields for each model state variable
+    :return: The samples read as
+        a numpy array with fields for each model state variable
+    :rtype: dict(tuple(int,int),~numpy.ndarray)
     """
 
     # Set up the simulation
@@ -222,7 +221,7 @@ def run_mcmc(
 
     # Get the data back
     samples = dict()
-    for coord, coordinator in iteritems(coordinators):
+    for coord, coordinator in coordinators.items():
         samples[coord[0], coord[1]] = coordinator.read_samples(
             g.buffer_manager())
 

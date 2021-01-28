@@ -1,10 +1,8 @@
-from six import add_metaclass
 from spinn_utilities.abstract_base import AbstractBase
 from spinn_utilities.abstract_base import abstractmethod
 
 
-@add_metaclass(AbstractBase)
-class MCMCModel(object):
+class MCMCModel(object, metaclass=AbstractBase):
 
     @abstractmethod
     def get_parameters(self):

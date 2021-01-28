@@ -5,7 +5,6 @@ from mcmc import mcmc_framework
 from mcmc_examples.arma.arma_float_model import ARMAFloatModel
 # from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #     import ARMAFixedPointModel
-from six import iteritems
 
 # Data to use for 1000 data points (read from file)
 data_10000 = numpy.loadtxt("data_10000.csv", delimiter=",")
@@ -94,7 +93,7 @@ samples = mcmc_framework.run_mcmc(
 # print('samples: ', samples)
 
 # Save the results
-for coord, sample in iteritems(samples):
+for coord, sample in samples.items():
     fname = "results_board_x"+str(coord[0])+"_y"+str(
         coord[1])+"_n_boards"+str(n_boards)+"_n_samples"+str(n_samples)
     numpy.save(fname+".npy", sample)

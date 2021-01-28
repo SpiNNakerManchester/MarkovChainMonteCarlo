@@ -7,7 +7,6 @@ from mcmc_examples.lighthouse.lighthouse_float_model \
      import LightHouseFloatModel
 # from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #      import LightHouseFixedPointModel
-from six import iteritems
 
 # Data to use for 50 data points
 data_50 = [
@@ -283,7 +282,7 @@ def run_job(thread_id, model=model, data_points=data_points,
 
     print('samples: ', samples)
 
-    for coord, sample in iteritems(samples):
+    for coord, sample in samples.items():
         fname = "results_th" + str(thread_id[0]) + "_board_x" + str(coord[0])\
             + "_y" + str(coord[1]) + "_nboards" + str(n_boards) + "_nsamples"\
             + str(n_samples)
