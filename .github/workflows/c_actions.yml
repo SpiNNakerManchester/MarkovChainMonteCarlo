@@ -52,7 +52,7 @@ jobs:
       # Note: run this before building to avoid linting modified_src directories
       uses: ./support/actions/vera
       with:
-        base-dir: c_code
+        base-dir: c_models
 
     - name: Set SPINN_DIRS
       run: |
@@ -67,13 +67,13 @@ jobs:
 
     - name: Build C code
       run: make
-      working-directory: c_code
+      working-directory: c_models
       env:
         CFLAGS: -fdiagnostics-color=always
 
     # To be added: Documentation building
 #    - name: Build documentation using doxygen
 #      run: make doxysetup doxygen
-#      working-directory: neural_modelling
+#      working-directory: c_models
 
     # Note: This workflow does not run the C code; that'd be an integration test
