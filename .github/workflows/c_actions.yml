@@ -58,6 +58,7 @@ jobs:
       run: |
         echo "Set SPINN_DIRS to $PWD/spinnaker_tools"
         echo "SPINN_DIRS=$PWD/spinnaker_tools" >> $GITHUB_ENV
+        
     - name: Build SpiNNaker C dependencies
       run: |
         make -C $SPINN_DIRS
