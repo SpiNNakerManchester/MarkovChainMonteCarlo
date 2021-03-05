@@ -193,23 +193,21 @@ class MCMCVertex(
         return ExecutableType.SYNC
 
     @inject_items({
-        "routing_info": "MemoryRoutingInfos",
-        "tags": "MemoryTags",
+        "routing_info": "MemoryRoutingInfos"
     })
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification,
-        additional_arguments=["routing_info", "tags"])
+        additional_arguments=["routing_info"])
     def generate_data_specification(
-            self, spec, placement, routing_info, tags):
+            self, spec, placement, routing_info):
 
         # Reserve and write the recording regions
         spec.reserve_memory_region(
             MCMCRegions.RECORDING.value,
             recording_utilities.get_recording_header_size(1))
         spec.switch_write_focus(MCMCRegions.RECORDING.value)
-        ip_tags = tags.get_ip_tags_for_vertex(self) or []
         spec.write_array(recording_utilities.get_recording_header_array(
-            [self._recording_size], ip_tags=ip_tags))
+            [self._recording_size]))
 
         # Reserve and write the parameters region
         spec.reserve_memory_region(
