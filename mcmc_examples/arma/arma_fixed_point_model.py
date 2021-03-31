@@ -40,6 +40,6 @@ class ARMAFixedPointModel(MCMCModel):
     @overrides(MCMCModel.get_state_variables)
     def get_state_variables(self):
         return [
-            MCMCStateVariable("order_p", 10, DataType.U1615),  # check type
-            MCMCStateVariable("order_q", 10, DataType.U1615)
+            MCMCStateVariable("order_p", 10, DataType.S1615),  # check type
+            MCMCStateVariable("order_q", 10, DataType.S1615)
         ]
