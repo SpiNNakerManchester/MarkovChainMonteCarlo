@@ -228,7 +228,7 @@ seed = None  # set this if you want to use a different seed on each core
 # and number of threads to run (so this will run n_threads jobs each using
 # n_boards boards, and collect n_samples samples)
 n_samples = 100  # 100 is the "default"
-n_boards = 3
+n_boards = 1
 n_threads = 1
 
 # get n_samples and n_boards from command line arguments if specified
@@ -279,8 +279,7 @@ def run_job(thread_id, model=model, data_points=data_points,
             n_samples=n_samples, seed=seed):
     samples = mcmc_framework.run_mcmc(
         model, data_points, n_samples,
-        degrees_of_freedom=3.0, seed=seed, n_boards=1)  # spinn-3 board
-#        degrees_of_freedom=3.0, seed=seed, n_boards=n_boards)
+        degrees_of_freedom=3.0, seed=seed, n_boards=n_boards)
 
     print('samples: ', samples)
 
