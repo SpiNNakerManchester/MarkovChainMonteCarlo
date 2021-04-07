@@ -82,15 +82,9 @@ model = ARMAFloatModel(parameters, jump_scale)  # note: this sets both True
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
 
-# Uncomment below for a spinn-5 run
-# samples = mcmc_framework.run_mcmc(
-#    model, data_points, n_samples, burn_in=5000, thinning=50,
-#    degrees_of_freedom=6.0, seed=seed, n_boards=n_boards)
-
-# Uncomment below for a spinn-3 run
 samples = mcmc_framework.run_mcmc(
-    model, data_points, n_samples, burn_in=5000, thinning=50,
-    degrees_of_freedom=6.0, seed=seed, n_boards=1)
+   model, data_points, n_samples, burn_in=5000, thinning=50,
+   degrees_of_freedom=6.0, seed=seed, n_boards=n_boards)
 
 # print('samples: ', samples)
 
