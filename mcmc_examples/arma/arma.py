@@ -1,4 +1,6 @@
 import sys
+import os
+from time import gmtime, strftime
 import numpy
 from mcmc import mcmc_framework
 # from mcmc_examples.arma.arma_model import ARMAModel
@@ -93,8 +95,12 @@ samples = mcmc_framework.run_mcmc(
 # print('samples: ', samples)
 
 # Save the results
+dirpath = "results_"+strftime("%Y-%m-%d_%H:%M:%S", gmtime()) + "_nboards"\
+    + str(n_boards) + "_nsamples" + str(n_samples)
+os.mkdir(dirpath)
 for coord, sample in samples.items():
-    fname = "results_board_x"+str(coord[0])+"_y"+str(
-        coord[1])+"_n_boards"+str(n_boards)+"_n_samples"+str(n_samples)
+    fname = dirpath + "/" + "results__board_x" + str(coord[0]) + "_y"\
+        + str(coord[1]) + "_nboards" + str(n_boards) + "_nsamples"\
+        + str(n_samples)
     numpy.save(fname+".npy", sample)
     numpy.savetxt(fname+".csv", sample, fmt="%f", delimiter=",")
