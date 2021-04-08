@@ -13,23 +13,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-class MCMCParameter(object):
-    """ A Parameter of the MCMC simulation
-    """
+LIBRARIES += -lm
 
-    def __init__(self, value, data_type):
-        """
+MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+CURRENT_DIR := $(dir $(MAKEFILE_PATH))
+SOURCE_DIR := $(abspath $(CURRENT_DIR))/src
+SOURCE_DIRS += $(SOURCE_DIR)
 
-        :param value: The value of the parameter
-        :param data_type: The numpy data type of the parameter
-        """
-        self._value = value
-        self._data_type = data_type
+APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR))/../../mcmc/model_binaries/
 
-    @property
-    def value(self):
-        return self._value
+SOURCES += mcmc.c
 
-    @property
-    def data_type(self):
-        return self._data_type
+# The spinnaker_tools standard makefile
+include $(SPINN_DIRS)/make/local.mk
+
+all: $(APP_OUTPUT_DIR)$(APP).aplx
