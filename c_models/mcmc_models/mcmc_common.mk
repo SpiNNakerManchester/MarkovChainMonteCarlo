@@ -13,13 +13,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SpiNNUtilities >= 1!5.0.1, < 1!6.0.0
-SpiNNMachine >= 1!5.0.1, < 1!6.0.0
-SpiNNMan >= 1!5.0.1, < 1!6.0.0
-SpiNNaker_PACMAN >= 1!5.0.1, < 1!6.0.0
-SpiNNaker_DataSpecification >= 1!5.0.1, < 1!6.0.0
-SpiNNFrontEndCommon >= 1!5.0.1, < 1!6.0.0
-SpiNNakerGraphFrontEnd >= 1!5.0.1, < 1!6.0.0
-numpy
-lxml
-pathos
+LIBRARIES += -lm
+
+MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+CURRENT_DIR := $(dir $(MAKEFILE_PATH))
+SOURCE_DIR := $(abspath $(CURRENT_DIR))/src
+SOURCE_DIRS += $(SOURCE_DIR)
+
+APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR))/../../mcmc/model_binaries/
+
+SOURCES += mcmc.c
+
+# The spinnaker_tools standard makefile
+include $(SPINN_DIRS)/make/local.mk
+
+all: $(APP_OUTPUT_DIR)$(APP).aplx

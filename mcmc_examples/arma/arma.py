@@ -1,3 +1,18 @@
+# Copyright (c) 2016-2021 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import sys
 import numpy
 from mcmc import mcmc_framework
@@ -23,8 +38,8 @@ seed = None  # set this if you want to use a different seed on each core
 # ]
 
 # set number of posterior samples to get and number of boards to use
-n_samples = 100  # 20000
-n_boards = 3
+n_samples = 10  # 20000
+n_boards = 1
 
 # get n_samples and n_boards from command line arguments if specified
 if (len(sys.argv) == 2):
@@ -80,15 +95,9 @@ model = ARMAFloatModel(parameters, jump_scale)  # note: this sets both True
 #    alpha_jump_scale, alpha_min, alpha_max, beta_jump_scale, beta_min,
 #    beta_max)
 
-# Uncomment below for a spinn-5 run
-# samples = mcmc_framework.run_mcmc(
-#    model, data_points, n_samples, burn_in=5000, thinning=50,
-#    degrees_of_freedom=6.0, seed=seed, n_boards=n_boards)
-
-# Uncomment below for a spinn-3 run
 samples = mcmc_framework.run_mcmc(
-    model, data_points, n_samples, burn_in=5000, thinning=50,
-    degrees_of_freedom=6.0, seed=seed, n_boards=1)
+   model, data_points, n_samples, burn_in=5000, thinning=50,
+   degrees_of_freedom=6.0, seed=seed, n_boards=n_boards)
 
 # print('samples: ', samples)
 
