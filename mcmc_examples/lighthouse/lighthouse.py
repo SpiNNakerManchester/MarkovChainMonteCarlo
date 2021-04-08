@@ -283,13 +283,12 @@ def run_job(thread_id, model=model, data_points=data_points,
 
     print('samples: ', samples)
 
-    dirpath = "results_"+strftime("%Y-%m-%d_%H:%M:%S", gmtime()) + "_nboards"\
-        + str(n_boards) + "_nsamples" + str(n_samples)
+    dirpath = "results_{}_nboards{}_nsamples{}".format(
+        strftime("%Y-%m-%d_%H:%M:%S", gmtime()), n_boards, n_samples)
     os.mkdir(dirpath)
     for coord, sample in samples.items():
-        fname = dirpath + "/" + "results_th" + str(thread_id[0]) + "_board_x"\
-            + str(coord[0]) + "_y" + str(coord[1]) + "_nboards"\
-            + str(n_boards) + "_nsamples" + str(n_samples)
+        fname = "{}/results_th{}_board_x{}_y{}_nboards{}_nsamples{}".format(
+            dirpath, thread_id[0], coord[0], coord[1], n_boards, n_samples)
         numpy.save(fname+".npy", sample)
         numpy.savetxt(fname+".csv", sample, fmt="%f", delimiter=",")
 
