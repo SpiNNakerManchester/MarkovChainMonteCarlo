@@ -44,7 +44,7 @@ jobs:
       with:
         repositories: >
           SpiNNUtils SpiNNMachine SpiNNMan PACMAN DataSpecification spalloc
-          SpiNNFrontEndCommon SpiNNakerGraphFrontEnd
+          SpiNNFrontEndCommon SpiNNakerGraphFrontEnd TestBase
         install: true
     - name: Setup
       uses: ./support/actions/run-setup
