@@ -248,7 +248,8 @@ n_threads = 1
 
 # get n_samples and n_boards from command line arguments if specified
 if (len(sys.argv) == 2):
-    n_samples = int(sys.argv[1])
+    if sys.argv[1] != 'test_scripts.py':
+        n_samples = int(sys.argv[1])
 elif (len(sys.argv) == 3):
     n_samples = int(sys.argv[1])
     n_boards = int(sys.argv[2])
