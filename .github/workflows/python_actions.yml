@@ -71,6 +71,10 @@ jobs:
       with: 
         package: mcmc mcmc_examples
 
+    - name: Run rat copyright enforcement
+      if: matrix.python-version == 3.8
+      uses: ./support/actions/check-copyrights
+
 #    # Add the following as required in the future
 #    - name: Validate XML
 #      if: matrix.python-version == 3.8
@@ -78,6 +82,3 @@ jobs:
 #      with:
 #        base-path: mcmc mcmc_examples
 
-#    - name: Run rat copyright enforcement
-#      if: matrix.python-version == 3.8
-#      uses: ./support/actions/check-copyrights

@@ -1,5 +1,22 @@
+# Copyright (c) 2016-2021 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import sys
+import os
 import pathos.multiprocessing
+from time import gmtime, strftime
 import numpy
 from mcmc import mcmc_framework
 # from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
@@ -226,7 +243,7 @@ seed = None  # set this if you want to use a different seed on each core
 # and number of threads to run (so this will run n_threads jobs each using
 # n_boards boards, and collect n_samples samples)
 n_samples = 100  # 100 is the "default"
-n_boards = 3
+n_boards = 1
 n_threads = 1
 
 # get n_samples and n_boards from command line arguments if specified
@@ -277,15 +294,16 @@ def run_job(thread_id, model=model, data_points=data_points,
             n_samples=n_samples, seed=seed):
     samples = mcmc_framework.run_mcmc(
         model, data_points, n_samples,
-        degrees_of_freedom=3.0, seed=seed, n_boards=1)  # spinn-3 board
-#        degrees_of_freedom=3.0, seed=seed, n_boards=n_boards)
+        degrees_of_freedom=3.0, seed=seed, n_boards=n_boards)
 
     print('samples: ', samples)
 
+    dirpath = "results_{}_nboards{}_nsamples{}".format(
+        strftime("%Y-%m-%d_%H:%M:%S", gmtime()), n_boards, n_samples)
+    os.mkdir(dirpath)
     for coord, sample in samples.items():
-        fname = "results_th" + str(thread_id[0]) + "_board_x" + str(coord[0])\
-            + "_y" + str(coord[1]) + "_nboards" + str(n_boards) + "_nsamples"\
-            + str(n_samples)
+        fname = "{}/results_th{}_board_x{}_y{}_nboards{}_nsamples{}".format(
+            dirpath, thread_id[0], coord[0], coord[1], n_boards, n_samples)
         numpy.save(fname+".npy", sample)
         numpy.savetxt(fname+".csv", sample, fmt="%f", delimiter=",")
 

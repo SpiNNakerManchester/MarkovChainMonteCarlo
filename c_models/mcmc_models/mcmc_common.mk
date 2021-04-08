@@ -13,8 +13,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__version__ = "1!6.0.0"
-__version_month__ = "April"
-__version_year__ = "2021"
-__version_day__ = "9"
-__version_name__ = "Now We Try It My Way"
+LIBRARIES += -lm
+
+MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+CURRENT_DIR := $(dir $(MAKEFILE_PATH))
+SOURCE_DIR := $(abspath $(CURRENT_DIR))/src
+SOURCE_DIRS += $(SOURCE_DIR)
+
+APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR))/../../mcmc/model_binaries/
+
+SOURCES += mcmc.c
+
+# The spinnaker_tools standard makefile
+include $(SPINN_DIRS)/make/local.mk
+
+all: $(APP_OUTPUT_DIR)$(APP).aplx

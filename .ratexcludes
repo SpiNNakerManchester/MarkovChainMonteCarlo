@@ -1,0 +1,11 @@
+**/*.csv
+**/SpiNNUtils/**
+**/SpiNNMachine/**
+**/SpiNNMan/**
+**/PACMAN/**
+**/DataSpecification/**
+**/spalloc/**
+**/SpiNNFrontEndCommon/**
+**/sPyNNaker/**
+**/SpiNNakerGraphFrontEnd/**
+**/.pylintrc
