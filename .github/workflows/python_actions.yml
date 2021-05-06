@@ -50,12 +50,12 @@ jobs:
       uses: ./support/actions/run-setup
 
 #    # Add this when tests are built
-#    - name: Create a configuration file
-#      uses: ./support/actions/configure-spynnaker
-#      with:
-#        board-address: spinn-4.cs.man.ac.uk
-#    - run: mv ~/.spynnaker.cfg ~/.spiNNakerGraphFrontEnd.cfg
-#
+    - name: Create a configuration file
+      uses: ./support/actions/configure-spynnaker
+      with:
+        board-address: spinn-4.cs.man.ac.uk
+    - run: mv ~/.spynnaker.cfg ~/.spiNNakerGraphFrontEnd.cfg
+
     - name: Test with pytest
       uses: ./support/actions/pytest
       with:
