@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import unittest
 from spinn_utilities.config_holder import run_config_checks
 from spinnaker_graph_front_end.config_setup import reset_configs
@@ -24,10 +25,17 @@ class TestCfgChecker(unittest.TestCase):
     def setUpClass(cls):
         reset_configs()
 
-    def test_config_checks(self):
+    def test_cfg_check(self):
+        unittests = os.path.dirname(__file__)
+        parent = os.path.dirname(unittests)
+        mcmc = os.path.join(parent, "mcmc")
+        integration_tests = os.path.join(parent, "mcmc_integration_tests")
+        mcmc_examples = os.path.join(parent, "mcmc_examples")
         repeaters = [
             "application_to_machine_graph_algorithms",
             "machine_graph_to_machine_algorithms",
             "machine_graph_to_virtual_machine_algorithms",
             "loading_algorithms"]
-        run_config_checks("mcmc", repeaters=repeaters)
+        run_config_checks(
+            directories=[mcmc, integration_tests, unittests, mcmc_examples],
+            repeaters=repeaters)
