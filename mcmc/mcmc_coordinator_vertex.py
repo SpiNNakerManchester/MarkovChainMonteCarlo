@@ -206,7 +206,7 @@ class MCMCCoordinatorVertex(
         return ExecutableType.SYNC
 
     @inject_items({
-        "placements": "MemoryPlacements",
+        "placements": "Placements",
         "routing_info": "MemoryRoutingInfos"})
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification,
