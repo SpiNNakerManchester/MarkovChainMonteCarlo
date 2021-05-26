@@ -207,7 +207,7 @@ class MCMCCoordinatorVertex(
 
     @inject_items({
         "placements": "Placements",
-        "routing_info": "MemoryRoutingInfos"})
+        "routing_info": "RoutingInfos"})
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification,
         additional_arguments=["placements", "routing_info"])
