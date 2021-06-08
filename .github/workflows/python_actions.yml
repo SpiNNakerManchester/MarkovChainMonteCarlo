@@ -50,19 +50,19 @@ jobs:
       uses: ./support/actions/run-setup
 
 #    # Add this when tests are built
-#    - name: Create a configuration file
-#      uses: ./support/actions/configure-spynnaker
-#      with:
-#        board-address: spinn-4.cs.man.ac.uk
-#    - run: mv ~/.spynnaker.cfg ~/.spiNNakerGraphFrontEnd.cfg
-#
-#    - name: Test with pytest
-#      uses: ./support/actions/pytest
-#      with:
-#        tests: unittests
-#        coverage: ${{ matrix.python-version == 3.6 }}
-#        cover-packages: ${{ env.CODE_PATHS }}
-#        coveralls-token: ${{ secrets.COVERALLS_REPO_TOKEN }}
+    - name: Create a configuration file
+      uses: ./support/actions/configure-spynnaker
+      with:
+        board-address: spinn-4.cs.man.ac.uk
+    - run: mv ~/.spynnaker.cfg ~/.spiNNakerGraphFrontEnd.cfg
+
+    - name: Test with pytest
+      uses: ./support/actions/pytest
+      with:
+        tests: unittests
+        coverage: ${{ matrix.python-version == 3.6 }}
+        cover-packages: ${{ env.CODE_PATHS }}
+        coveralls-token: ${{ secrets.COVERALLS_REPO_TOKEN }}
 
     - name: Lint with flake8
       run: flake8 mcmc mcmc_examples
