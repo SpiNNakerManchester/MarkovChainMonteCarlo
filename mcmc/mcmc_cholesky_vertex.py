@@ -79,7 +79,7 @@ class MCMCCholeskyVertex(
         return ExecutableType.SYNC
 
     @inject_items({
-        "routing_info": "MemoryRoutingInfos"})
+        "routing_info": "RoutingInfos"})
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification,
         additional_arguments=["routing_info"])

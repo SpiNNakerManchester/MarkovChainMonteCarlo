@@ -208,7 +208,7 @@ class MCMCVertex(
         return ExecutableType.SYNC
 
     @inject_items({
-        "routing_info": "MemoryRoutingInfos"
+        "routing_info": "RoutingInfos"
     })
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification,
