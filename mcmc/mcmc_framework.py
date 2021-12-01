@@ -27,7 +27,7 @@ from pacman.model.graphs.machine import MachineEdge
 
 from spinnman.model.enums.cpu_state import CPUState
 
-from spinn_front_end_common.utilities import globals_variables
+from spynnaker.pyNN.data import SpynnakerDataView
 
 import logging
 import time
@@ -211,7 +211,7 @@ def run_mcmc(
 
     # Wait for the application to finish
     txrx = g.transceiver()
-    app_id = globals_variables.get_simulator()._app_id
+    app_id = SpynnakerDataView().app_id
     logger.info("Running {} worker cores".format(n_workers))
     if (model.root_finder):
         logger.info("Running {} root finder cores".format(n_root_finders))
