@@ -348,6 +348,6 @@ class MCMCVertex(
     def get_recorded_region_ids(self):
         return [0]
 
-    def get_recording_region_base_address(self, txrx, placement):
+    def get_recording_region_base_address(self, placement):
         return helpful_functions.locate_memory_region_for_placement(
-            placement, MCMCRegions.RECORDING.value, txrx)
+            placement, MCMCRegions.RECORDING.value)
