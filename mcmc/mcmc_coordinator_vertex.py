@@ -25,9 +25,9 @@ from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
 from spinn_front_end_common.abstract_models\
     .abstract_generates_data_specification \
     import AbstractGeneratesDataSpecification
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.utility_objs.executable_type \
     import ExecutableType
-from spynnaker.pyNN.data import SpynnakerDataView
 from spinn_utilities.progress_bar import ProgressBar
 
 import numpy
@@ -221,7 +221,7 @@ class MCMCCoordinatorVertex(
         # Get the placement of the vertices and find out how many chips
         # are needed
         keys = list()
-        placements = SpynnakerDataView().placements
+        placements = FecDataView().placements
         for vertex in self._mcmc_vertices:
             mcmc_placement = placements.get_placement_of_vertex(vertex)
             self._mcmc_placements.append(mcmc_placement)
