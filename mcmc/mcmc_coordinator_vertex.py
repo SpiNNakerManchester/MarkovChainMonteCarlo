@@ -27,7 +27,7 @@ from spinn_front_end_common.abstract_models\
     import AbstractGeneratesDataSpecification
 from spinn_front_end_common.utilities.utility_objs.executable_type \
     import ExecutableType
-
+from spynnaker.pyNN.data import SpynnakerDataView
 from spinn_utilities.progress_bar import ProgressBar
 
 import numpy
@@ -206,13 +206,11 @@ class MCMCCoordinatorVertex(
         return ExecutableType.SYNC
 
     @inject_items({
-        "placements": "Placements",
         "routing_info": "RoutingInfos"})
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification,
-        additional_arguments=["placements", "routing_info"])
-    def generate_data_specification(
-            self, spec, placement, placements, routing_info):
+        additional_arguments=["routing_info"])
+    def generate_data_specification(self, spec, placement, routing_info):
 
         # Reserve and write the parameters region
         region_size = self._N_PARAMETER_BYTES + self._data_size
@@ -223,6 +221,7 @@ class MCMCCoordinatorVertex(
         # Get the placement of the vertices and find out how many chips
         # are needed
         keys = list()
+        placements = SpynnakerDataView().placements
         for vertex in self._mcmc_vertices:
             mcmc_placement = placements.get_placement_of_vertex(vertex)
             self._mcmc_placements.append(mcmc_placement)
