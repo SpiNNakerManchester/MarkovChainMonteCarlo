@@ -221,9 +221,8 @@ class MCMCCoordinatorVertex(
         # Get the placement of the vertices and find out how many chips
         # are needed
         keys = list()
-        placements = FecDataView().placements
         for vertex in self._mcmc_vertices:
-            mcmc_placement = placements.get_placement_of_vertex(vertex)
+            mcmc_placement = FecDataView.get_placement_of_vertex(vertex)
             self._mcmc_placements.append(mcmc_placement)
             if self._is_receiver_placement(mcmc_placement):
                 key = routing_info.get_first_key_from_pre_vertex(
