@@ -16,7 +16,6 @@
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from spinn_utilities.overrides import overrides
-from pacman.executor.injection_decorator import inject_items
 
 from data_specification.enums.data_type import DataType
 
@@ -25,6 +24,7 @@ from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
 from spinn_front_end_common.abstract_models\
     .abstract_generates_data_specification \
     import AbstractGeneratesDataSpecification
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.buffer_management.buffer_models\
     .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
 from spinn_front_end_common.utilities import helpful_functions
@@ -142,8 +142,9 @@ class MCMCVertex(
         return numpy.array(
             [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
-    def get_result_key(self, placement, routing_info):
+    def get_result_key(self, placement):
         if self._is_receiver_placement(placement):
+            routing_info = FecDataView.get_routing_infos()
             key = routing_info.get_first_key_from_pre_vertex(
                 placement.vertex, self._result_partition_name)
             return key
@@ -157,8 +158,9 @@ class MCMCVertex(
             return True
         return self._data_receiver[(x, y)] == placement.p
 
-    def get_cholesky_result_key(self, placement, routing_info):
+    def get_cholesky_result_key(self, placement):
         if self._is_cholesky_receiver_placement(placement):
+            routing_info = FecDataView.get_routing_infos()
             key = routing_info.get_first_key_from_pre_vertex(
                 placement.vertex, self._cholesky_result_partition_name)
             return key
@@ -207,15 +209,11 @@ class MCMCVertex(
     def get_binary_start_type(self):
         return ExecutableType.SYNC
 
-    @inject_items({
-        "routing_info": "RoutingInfos"
-    })
     @overrides(
-        AbstractGeneratesDataSpecification.generate_data_specification,
-        additional_arguments=["routing_info"])
-    def generate_data_specification(
-            self, spec, placement, routing_info):
+        AbstractGeneratesDataSpecification.generate_data_specification)
+    def generate_data_specification(self, spec, placement):
 
+        routing_info = FecDataView.get_routing_infos()
         # Reserve and write the recording regions
         spec.reserve_memory_region(
             MCMCRegions.RECORDING.value,

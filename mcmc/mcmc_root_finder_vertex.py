@@ -76,11 +76,8 @@ class MCMCRootFinderVertex(
     def get_binary_start_type(self):
         return ExecutableType.SYNC
 
-    @inject_items({
-        "routing_info": "RoutingInfos"})
     @overrides(
-        AbstractGeneratesDataSpecification.generate_data_specification,
-        additional_arguments=["routing_info"])
+        AbstractGeneratesDataSpecification.generate_data_specification)
     def generate_data_specification(
             self, spec, placement, routing_info):
 
@@ -90,8 +87,7 @@ class MCMCRootFinderVertex(
         spec.switch_write_focus(MCMCRootFinderRegions.PARAMETERS.value)
 
         # Write the acknowledge key
-        spec.write_value(self._vertex.get_result_key(
-            placement, routing_info))
+        spec.write_value(self._vertex.get_result_key(placement))
 
         # End the specification
         spec.end_specification()
