@@ -78,8 +78,7 @@ class MCMCRootFinderVertex(
 
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification)
-    def generate_data_specification(
-            self, spec, placement, routing_info):
+    def generate_data_specification(self, spec, placement):
 
         # Reserve and write the parameters region
         spec.reserve_memory_region(
