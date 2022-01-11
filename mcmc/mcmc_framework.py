@@ -210,9 +210,8 @@ def run_mcmc(
     mid_computing_time = time.time()
 
     # Wait for the application to finish
-    view = FecDataView()
     txrx = FecDataView.get_transceiver()
-    app_id = view.app_id
+    app_id = FecDataView.get_app_id()
     logger.info("Running {} worker cores".format(n_workers))
     if (model.root_finder):
         logger.info("Running {} root finder cores".format(n_root_finders))
