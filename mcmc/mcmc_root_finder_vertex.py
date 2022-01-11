@@ -16,7 +16,6 @@
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from spinn_utilities.overrides import overrides
-from pacman.executor.injection_decorator import inject_items
 
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
