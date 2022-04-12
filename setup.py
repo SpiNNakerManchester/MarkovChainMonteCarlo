@@ -54,6 +54,5 @@ setup(
                       'SpiNNaker_PACMAN == 1!6.0.1',
                       'SpiNNaker_DataSpecification == 1!6.0.1',
                       'SpiNNFrontEndCommon == 1!6.0.1',
-                      'SpiNNakerGraphFrontEnd == 1!6.0.1',
-                      'lxml']
+                      'SpiNNakerGraphFrontEnd == 1!6.0.1']
 )
