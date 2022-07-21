@@ -16,7 +16,6 @@
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from spinn_utilities.overrides import overrides
-from pacman.executor.injection_decorator import inject_items
 
 from data_specification.enums.data_type import DataType
 
@@ -25,9 +24,9 @@ from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
 from spinn_front_end_common.abstract_models\
     .abstract_generates_data_specification \
     import AbstractGeneratesDataSpecification
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.utility_objs.executable_type \
     import ExecutableType
-
 from spinn_utilities.progress_bar import ProgressBar
 
 import numpy
@@ -205,14 +204,10 @@ class MCMCCoordinatorVertex(
     def get_binary_start_type(self):
         return ExecutableType.SYNC
 
-    @inject_items({
-        "placements": "Placements",
-        "routing_info": "RoutingInfos"})
     @overrides(
-        AbstractGeneratesDataSpecification.generate_data_specification,
-        additional_arguments=["placements", "routing_info"])
-    def generate_data_specification(
-            self, spec, placement, placements, routing_info):
+        AbstractGeneratesDataSpecification.generate_data_specification)
+    def generate_data_specification(self, spec, placement):
+        routing_info = FecDataView.get_routing_infos()
 
         # Reserve and write the parameters region
         region_size = self._N_PARAMETER_BYTES + self._data_size
@@ -224,7 +219,7 @@ class MCMCCoordinatorVertex(
         # are needed
         keys = list()
         for vertex in self._mcmc_vertices:
-            mcmc_placement = placements.get_placement_of_vertex(vertex)
+            mcmc_placement = FecDataView.get_placement_of_vertex(vertex)
             self._mcmc_placements.append(mcmc_placement)
             if self._is_receiver_placement(mcmc_placement):
                 key = routing_info.get_first_key_from_pre_vertex(

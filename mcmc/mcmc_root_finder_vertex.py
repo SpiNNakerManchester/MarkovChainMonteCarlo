@@ -16,7 +16,6 @@
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from spinn_utilities.overrides import overrides
-from pacman.executor.injection_decorator import inject_items
 
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
@@ -76,13 +75,9 @@ class MCMCRootFinderVertex(
     def get_binary_start_type(self):
         return ExecutableType.SYNC
 
-    @inject_items({
-        "routing_info": "RoutingInfos"})
     @overrides(
-        AbstractGeneratesDataSpecification.generate_data_specification,
-        additional_arguments=["routing_info"])
-    def generate_data_specification(
-            self, spec, placement, routing_info):
+        AbstractGeneratesDataSpecification.generate_data_specification)
+    def generate_data_specification(self, spec, placement):
 
         # Reserve and write the parameters region
         spec.reserve_memory_region(
@@ -90,8 +85,7 @@ class MCMCRootFinderVertex(
         spec.switch_write_focus(MCMCRootFinderRegions.PARAMETERS.value)
 
         # Write the acknowledge key
-        spec.write_value(self._vertex.get_result_key(
-            placement, routing_info))
+        spec.write_value(self._vertex.get_result_key(placement))
 
         # End the specification
         spec.end_specification()
