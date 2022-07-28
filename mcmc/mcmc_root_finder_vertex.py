@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2021 The University of Manchester
+# Copyright (c) 2016-2022 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, ConstantSDRAM
+from pacman.model.resources import ConstantSDRAM
 from spinn_utilities.overrides import overrides
 
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
@@ -58,14 +58,10 @@ class MCMCRootFinderVertex(
 
         self._n_parameter_bytes = self._n_other_params * 4
 
-        self._sdram_usage = (self._n_parameter_bytes)
-
     @property
-    @overrides(MachineVertex.resources_required)
-    def resources_required(self):
-        resources = ResourceContainer(
-            sdram=ConstantSDRAM(self._sdram_usage))
-        return resources
+    @overrides(MachineVertex.sdram_required)
+    def sdram_required(self):
+        return ConstantSDRAM(self._n_parameter_bytes)
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):

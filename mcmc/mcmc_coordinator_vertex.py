@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2021 The University of Manchester
+# Copyright (c) 2016-2022 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, ConstantSDRAM
+from pacman.model.resources import ConstantSDRAM
 from spinn_utilities.overrides import overrides
 
 from data_specification.enums.data_type import DataType
@@ -188,13 +188,11 @@ class MCMCCoordinatorVertex(
         return self._acknowledge_partition_name
 
     @property
-    @overrides(MachineVertex.resources_required)
-    def resources_required(self):
+    @overrides(MachineVertex.sdram_required)
+    def sdram_required(self):
         sdram = self._N_PARAMETER_BYTES + self._data_size
         sdram += len(self._mcmc_vertices) * self._KEY_ELEMENT_TYPE.size
-        resources = ResourceContainer(
-            sdram=ConstantSDRAM(sdram))
-        return resources
+        return ConstantSDRAM(sdram)
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
