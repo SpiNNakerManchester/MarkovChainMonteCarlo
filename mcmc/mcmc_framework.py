@@ -21,8 +21,8 @@ from .mcmc_root_finder_vertex import MCMCRootFinderVertex
 from .mcmc_cholesky_vertex import MCMCCholeskyVertex
 from . import model_binaries
 
-from pacman.model.constraints.placer_constraints\
-    .chip_and_core_constraint import ChipAndCoreConstraint
+from pacman.model.constraints.chip_and_core_constraint import(
+    ChipAndCoreConstraint)
 from pacman.model.graphs.machine import MachineEdge
 
 from spinnman.model.enums.cpu_state import CPUState
