@@ -21,8 +21,7 @@ from .mcmc_root_finder_vertex import MCMCRootFinderVertex
 from .mcmc_cholesky_vertex import MCMCCholeskyVertex
 from . import model_binaries
 
-from pacman.model.constraints.placer_constraints\
-    .chip_and_core_constraint import ChipAndCoreConstraint
+from pacman.model.graphs.common import ChipAndCore
 from pacman.model.graphs.machine import MachineEdge
 
 from spinnman.model.enums.cpu_state import CPUState
@@ -82,7 +81,7 @@ def run_mcmc(
         g.add_machine_vertex_instance(coordinator)
 
         # Put the coordinator on the Ethernet chip
-        coordinator.add_constraint(ChipAndCoreConstraint(chip.x, chip.y))
+        coordinator.fixed_location = ChipAndCore(chip.x, chip.y)
         coordinators[chip.x, chip.y] = coordinator
         boards[chip.x, chip.y] = chip.ip_address
 
@@ -137,7 +136,7 @@ def run_mcmc(
             g.add_machine_vertex_instance(vertex)
 
             # Put the vertex on the same board as the coordinator
-            vertex.add_constraint(ChipAndCoreConstraint(chip.x, chip.y))
+            vertex.fixed_location = ChipAndCore(chip.x, chip.y)
 
             # Add an edge from the coordinator to the vertex, to send the data
             g.add_machine_edge_instance(
@@ -158,7 +157,7 @@ def run_mcmc(
 
                 # put it on the same chip as the standard mcmc vertex?
                 # no - put it on a "nearby" chip, however that works
-                rf_vertex.add_constraint(ChipAndCoreConstraint(chip.x, chip.y))
+                rf_vertex.fixed_location = ChipAndCore(chip.x, chip.y)
 
                 # Add an edge from mcmc vertex to root finder vertex,
                 # to "send" the data - need to work this out
@@ -180,8 +179,7 @@ def run_mcmc(
 
                 # put it on the same chip as the standard mcmc vertex?
                 # no - put it on a "nearby" chip, however that works
-                cholesky_vertex.add_constraint(
-                    ChipAndCoreConstraint(chip.x, chip.y))
+                cholesky_vertex.fixed_location = ChipAndCore(chip.x, chip.y)
 
                 # Add an edge from mcmc vertex to Cholesky vertex,
                 # to "send" the data - need to work this out

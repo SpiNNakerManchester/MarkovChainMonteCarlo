@@ -63,7 +63,7 @@ class MCMCVertex(
         :param model: The model being simulated
         """
 
-        MachineVertex.__init__(self, label="MCMC Node", constraints=None)
+        MachineVertex.__init__(self, label="MCMC Node")
         self._coordinator = coordinator
         self._model = model
         self._parameter_partition_name = parameter_partition_name
