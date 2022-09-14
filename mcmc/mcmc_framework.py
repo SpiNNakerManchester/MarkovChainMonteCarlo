@@ -81,7 +81,7 @@ def run_mcmc(
         g.add_machine_vertex_instance(coordinator)
 
         # Put the coordinator on the Ethernet chip
-        coordinator.fixed_location = ChipAndCore(chip.x, chip.y)
+        coordinator.set_fixed_location(ChipAndCore(chip.x, chip.y))
         coordinators[chip.x, chip.y] = coordinator
         boards[chip.x, chip.y] = chip.ip_address
 
@@ -136,7 +136,7 @@ def run_mcmc(
             g.add_machine_vertex_instance(vertex)
 
             # Put the vertex on the same board as the coordinator
-            vertex.fixed_location = ChipAndCore(chip.x, chip.y)
+            vertex.set_fixed_location(ChipAndCore(chip.x, chip.y))
 
             # Add an edge from the coordinator to the vertex, to send the data
             g.add_machine_edge_instance(
@@ -157,7 +157,7 @@ def run_mcmc(
 
                 # put it on the same chip as the standard mcmc vertex?
                 # no - put it on a "nearby" chip, however that works
-                rf_vertex.fixed_location = ChipAndCore(chip.x, chip.y)
+                rf_vertex.set_fixed_location(ChipAndCore(chip.x, chip.y))
 
                 # Add an edge from mcmc vertex to root finder vertex,
                 # to "send" the data - need to work this out
@@ -179,7 +179,7 @@ def run_mcmc(
 
                 # put it on the same chip as the standard mcmc vertex?
                 # no - put it on a "nearby" chip, however that works
-                cholesky_vertex.fixed_location = ChipAndCore(chip.x, chip.y)
+                cholesky_vertex.set_fixed_location(ChipAndCore(chip.x, chip.y))
 
                 # Add an edge from mcmc vertex to Cholesky vertex,
                 # to "send" the data - need to work this out
