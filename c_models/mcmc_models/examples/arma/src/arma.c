@@ -36,7 +36,7 @@ enum regions {
 // The type of the seed
 typedef uint32_t uniform_seed[5];
 
-struct parameters {
+struct arma_parameters {
 
     // no of MCMC transitions to reach apparent equilibrium before generating
     // inference samples
@@ -80,7 +80,7 @@ struct parameters {
 };
 
 // The general parameters
-struct parameters parameters;
+struct arma_parameters arma_parameters;
 
 // Define spin1_wfi
 extern void spin1_wfi();
@@ -470,12 +470,12 @@ void mcmc_get_address_and_key(void) {
 	data_specification_metadata_t *data_address = data_specification_get_data_address();
 
 	// get key
-	address_t parameters_address = data_specification_get_region(
+	address_t arma_parameters_address = data_specification_get_region(
 	        PARAMETERS, data_address);
-	struct parameters *sdram_params = (struct parameters *) parameters_address;
-	spin1_memcpy(&parameters, sdram_params, sizeof(struct parameters));
-	key = parameters.key;
-	cholesky_key = parameters.cholesky_key;
+	struct arma_parameters *sdram_params = (struct arma_parameters *) arma_parameters_address;
+	spin1_memcpy(&arma_parameters, sdram_params, sizeof(struct arma_parameters));
+	key = arma_parameters.key;
+	cholesky_key = arma_parameters.cholesky_key;
 
 	// store size of state parameters and model state address
 	params_n_bytes = mcmc_model_get_params_n_bytes();
