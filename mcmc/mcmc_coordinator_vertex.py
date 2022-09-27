@@ -70,8 +70,7 @@ class MCMCCoordinatorVertex(
         :param seed: The random seed to use
         """
 
-        MachineVertex.__init__(self, label="MCMC Coordinator Node",
-                               constraints=None)
+        MachineVertex.__init__(self, label="MCMC Coordinator Node")
         self._model = model
         self._data = data
         self._n_samples = n_samples

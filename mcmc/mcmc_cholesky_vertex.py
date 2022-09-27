@@ -48,8 +48,7 @@ class MCMCCholeskyVertex(
         :param model: The model being simulated
         """
 
-        MachineVertex.__init__(self, label="MCMC Cholesky Node",
-                               constraints=None)
+        MachineVertex.__init__(self, label="MCMC Cholesky Node")
         self._vertex = vertex
         self._model = model
 
