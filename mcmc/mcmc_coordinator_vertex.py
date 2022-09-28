@@ -153,7 +153,7 @@ class MCMCCoordinatorVertex(
     def get_sequence_mask(self, placement, routing_info):
         if self._is_receiver_placement(placement):
             mask = routing_info.get_routing_info_from_pre_vertex(
-                self, self._data_partition_name).first_mask
+                self, self._data_partition_name).first
             return ~mask & 0xFFFFFFFF
         return 0
 
@@ -235,14 +235,14 @@ class MCMCCoordinatorVertex(
         # Write the key
         routing_info = routing_info.get_routing_info_from_pre_vertex(
             self, self._data_partition_name)
-        spec.write_value(routing_info.first_key, data_type=DataType.UINT32)
+        spec.write_value(routing_info.key, data_type=DataType.UINT32)
 
         # Write the window size
         spec.write_value(self._window_size, data_type=DataType.UINT32)
 
         # Write the sequence mask
         spec.write_value(
-            ~routing_info.first_mask & 0xFFFFFFFF, data_type=DataType.UINT32)
+            ~routing_info.first & 0xFFFFFFFF, data_type=DataType.UINT32)
 
         # Write the timer
         spec.write_value(self._send_timer, data_type=DataType.UINT32)
