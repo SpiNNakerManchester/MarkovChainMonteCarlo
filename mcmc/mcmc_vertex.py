@@ -259,16 +259,14 @@ class MCMCVertex(
         if (self._model.root_finder):
             routing_info_rf = routing_info.get_routing_info_from_pre_vertex(
                 self, self._parameter_partition_name)
-            spec.write_value(routing_info_rf.first_key,
-                             data_type=DataType.UINT32)
+            spec.write_value(routing_info_rf.key, data_type=DataType.UINT32)
         else:
             spec.write_value(0, data_type=DataType.UINT32)
 
         if (self._model.cholesky):
             routing_info_ch = routing_info.get_routing_info_from_pre_vertex(
                 self, self._cholesky_partition_name)
-            spec.write_value(routing_info_ch.first_key,
-                             data_type=DataType.UINT32)
+            spec.write_value(routing_info_ch.key, data_type=DataType.UINT32)
         else:
             spec.write_value(0, data_type=DataType.UINT32)
 
