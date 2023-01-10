@@ -291,20 +291,22 @@ model = LightHouseFloatModel(
 #     beta_max)
 
 
-def run_job(thread_id, model=model, data_points=data_points,
-            n_samples=n_samples, seed=seed):
+def run_job(_thread_id, _model=model, _data_points=None,
+            _n_samples=n_samples, _seed=seed):
+    if _data_points is None:
+        _data_points = list(data_points)
     samples = mcmc_framework.run_mcmc(
-        model, data_points, n_samples,
-        degrees_of_freedom=3.0, seed=seed, n_boards=n_boards)
+        _model, _data_points, _n_samples,
+        degrees_of_freedom=3.0, seed=_seed, n_boards=n_boards)
 
     print('samples: ', samples)
 
     dirpath = "results_{}_nboards{}_nsamples{}".format(
-        strftime("%Y-%m-%d_%H:%M:%S", gmtime()), n_boards, n_samples)
+        strftime("%Y-%m-%d_%H:%M:%S", gmtime()), n_boards, _n_samples)
     os.mkdir(dirpath)
     for coord, sample in samples.items():
         fname = "{}/results_th{}_board_x{}_y{}_nboards{}_nsamples{}".format(
-            dirpath, thread_id[0], coord[0], coord[1], n_boards, n_samples)
+            dirpath, _thread_id[0], coord[0], coord[1], n_boards, _n_samples)
         numpy.save(fname+".npy", sample)
         numpy.savetxt(fname+".csv", sample, fmt="%f", delimiter=",")
 

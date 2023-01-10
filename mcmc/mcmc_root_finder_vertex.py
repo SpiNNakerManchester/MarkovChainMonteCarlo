@@ -87,6 +87,7 @@ class MCMCRootFinderVertex(
         spec.end_specification()
 
     def read_samples(self, buffer_manager, placement):
+        # pylint: disable=unused-argument
         """ Read back the samples (dummy call)
         """
 #        print 'There are no samples to read back on a root finder vertex'
