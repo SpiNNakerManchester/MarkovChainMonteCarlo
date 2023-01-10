@@ -194,12 +194,12 @@ def run_mcmc(
 
     start_computing_time = time.time()
 
-    logger.info("n_chips_on_machine %", n_chips_on_machine)
-    logger.info("Running % worker cores", n_workers)
+    logger.info("n_chips_on_machine {}", n_chips_on_machine)
+    logger.info("Running {} worker cores", n_workers)
     if (model.root_finder):
-        logger.info("Running % root finder cores",)
+        logger.info("Running {} root finder cores", n_root_finders)
     if (model.cholesky):
-        logger.info("Running % Cholesky cores", n_cholesky)
+        logger.info("Running {} Cholesky cores", n_cholesky)
 
     # Run the simulation
     g.run_until_complete()
@@ -209,11 +209,11 @@ def run_mcmc(
     # Wait for the application to finish
     txrx = FecDataView.get_transceiver()
     app_id = FecDataView.get_app_id()
-    logger.info("Running % worker cores", n_workers)
+    logger.info("Running {} worker cores", n_workers)
     if (model.root_finder):
-        logger.info("Running % root finder cores", n_root_finders)
+        logger.info("Running {} root finder cores", n_root_finders)
     if (model.cholesky):
-        logger.info("Running % Cholesky cores", n_cholesky)
+        logger.info("Running {} Cholesky cores", n_cholesky)
     logger.info("Waiting for application to finish...")
     running = txrx.get_core_state_count(app_id, CPUState.RUNNING)
     # there are now cores doing extra_monitor etc.
