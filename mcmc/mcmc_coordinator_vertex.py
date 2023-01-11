@@ -265,7 +265,8 @@ class MCMCCoordinatorVertex(
         # End the specification
         spec.end_specification()
 
-    def get_n_keys_for_partition(self, partition):
+    @overrides(MachineVertex.get_n_keys_for_partition)
+    def get_n_keys_for_partition(self, partition_id):
         return self._n_sequences
 
     def read_samples(self, buffer_manager):
