@@ -112,7 +112,7 @@ class MCMCVertex(
                     int(param.value * float(DataType.S1615.scale)))
             else:
                 # throw exception for unknown data type
-                raise Exception(
+                raise TypeError(
                     "Error: unsupported data type used for model parameters")
         return numpy.array(
             [tuple(numpy_values)], dtype=numpy_format).view("uint32")
@@ -137,7 +137,7 @@ class MCMCVertex(
                     int(param.initial_value * float(DataType.S1615.scale)))
             else:
                 # throw exception for unknown data type
-                raise Exception(
+                raise TypeError(
                     "Error: unsupported data type for model state params")
         return numpy.array(
             [tuple(numpy_values)], dtype=numpy_format).view("uint32")

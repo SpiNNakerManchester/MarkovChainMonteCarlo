@@ -15,6 +15,7 @@
 
 import spinnaker_graph_front_end as g
 
+from spinnman.exceptions import SpinnmanException
 from .mcmc_vertex import MCMCVertex
 from .mcmc_coordinator_vertex import MCMCCoordinatorVertex
 from .mcmc_root_finder_vertex import MCMCRootFinderVertex
@@ -225,7 +226,7 @@ def run_mcmc(
         if error > 0 or watchdog > 0:
             error_msg = "Some cores have failed ({} RTE, {} WDOG)".format(
                 error, watchdog)
-            raise Exception(error_msg)
+            raise SpinnmanException(error_msg)
         running = txrx.get_core_state_count(app_id, CPUState.RUNNING)
         print('running: ', running)
 
