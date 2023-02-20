@@ -1,3 +1,6 @@
+[![Python Build Status](https://github.com/SpiNNakerManchester/MarkovChainMonteCarlo/workflows/Python%20Actions/badge.svg?branch=master)](https://github.com/SpiNNakerManchester/MarkovChainMonteCarlo/actions?query=workflow%3A%22Python+Actions%22+branch%3Amaster)
+[![C Build Status](https://github.com/SpiNNakerManchester/MarkovChainMonteCarlo/workflows/C%20Actions/badge.svg?branch=master)](https://github.com/SpiNNakerManchester/MarkovChainMonteCarlo/actionpiNNFrontEndCommon?branch=master)
+
 # Markov Chain Monte Carlo Simulations On SpiNNaker
 
 This project contains code for running MCMC Simulations on SpiNNaker.  This has been made general, to allow users to add their own MCMC models by providing a few simple components.
