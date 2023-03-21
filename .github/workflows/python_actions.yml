@@ -39,15 +39,17 @@ jobs:
         path: support
     - name: Install pip, etc
       uses: ./support/actions/python-tools
+
     - name: Install Spinnaker Dependencies
-      uses: ./support/actions/checkout-spinn-deps
+      uses: ./support/actions/install-spinn-deps
       with:
         repositories: >
           SpiNNUtils SpiNNMachine SpiNNMan PACMAN DataSpecification spalloc
           SpiNNFrontEndCommon SpiNNakerGraphFrontEnd TestBase
         install: true
+
     - name: Setup
-      uses: ./support/actions/run-setup
+      uses: ./support/actions/run-install
 
 #    # Add this when tests are built
     - name: Create a configuration file
