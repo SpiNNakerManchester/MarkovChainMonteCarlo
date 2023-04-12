@@ -17,6 +17,8 @@ import os
 import unittest
 from spinn_utilities.config_holder import run_config_checks
 from spinnaker_graph_front_end.config_setup import unittest_setup
+import data_specification
+import mcmc
 
 
 class TestCfgChecker(unittest.TestCase):
@@ -27,10 +29,12 @@ class TestCfgChecker(unittest.TestCase):
     def test_cfg_check(self):
         unittests = os.path.dirname(__file__)
         parent = os.path.dirname(unittests)
-        mcmc = os.path.join(parent, "mcmc")
+        mcmc_dir = mcmc.__path__[0]
+        os.path.join(parent, "mcmc")
         integration_tests = os.path.join(parent, "mcmc_integration_tests")
         mcmc_examples = os.path.join(parent, "mcmc_examples")
         repeaters = ["placer", "router", "info_allocator", "compressor"]
         run_config_checks(
-            directories=[mcmc, integration_tests, unittests, mcmc_examples],
+            directories=[
+                mcmc_dir, integration_tests, unittests, mcmc_examples],
             repeaters=repeaters)
