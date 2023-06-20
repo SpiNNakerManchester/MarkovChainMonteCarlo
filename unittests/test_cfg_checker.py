@@ -17,7 +17,6 @@ import os
 import unittest
 from spinn_utilities.config_holder import run_config_checks
 from spinnaker_graph_front_end.config_setup import unittest_setup
-import data_specification
 import mcmc
 
 
