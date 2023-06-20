@@ -15,7 +15,7 @@
 
 from spinn_utilities.overrides import overrides
 
-from data_specification.enums.data_type import DataType
+from spinn_front_end_common.interface.ds import DataType
 
 from mcmc.mcmc_model import MCMCModel
 from mcmc.mcmc_parameter import MCMCParameter
