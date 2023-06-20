@@ -17,14 +17,13 @@ from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ConstantSDRAM
 from spinn_utilities.overrides import overrides
 
-from data_specification.enums.data_type import DataType
-
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models\
     .abstract_generates_data_specification \
     import AbstractGeneratesDataSpecification
 from spinn_front_end_common.data import FecDataView
+from spinn_front_end_common.interface.ds.data_type import DataType
 from spinn_front_end_common.utilities.utility_objs.executable_type \
     import ExecutableType
 from spinn_utilities.progress_bar import ProgressBar
