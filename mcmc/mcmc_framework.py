@@ -208,7 +208,6 @@ def run_mcmc(
     mid_computing_time = time.time()
 
     # Wait for the application to finish
-    txrx = FecDataView.get_transceiver()
     app_id = FecDataView.get_app_id()
     logger.info("Running %s worker cores", n_workers)
     if (model.root_finder):
@@ -216,18 +215,20 @@ def run_mcmc(
     if (model.cholesky):
         logger.info("Running %s Cholesky cores", n_cholesky)
     logger.info("Waiting for application to finish...")
-    running = txrx.get_core_state_count(app_id, CPUState.RUNNING)
+    running = FecDataView.read_core_state_count(app_id, CPUState.RUNNING)
     # there are now cores doing extra_monitor etc.
     non_worker_cores = n_chips_on_machine + (2 * len(boards))
     while running > non_worker_cores:
         time.sleep(0.5)
-        error = txrx.get_core_state_count(app_id, CPUState.RUN_TIME_EXCEPTION)
-        watchdog = txrx.get_core_state_count(app_id, CPUState.WATCHDOG)
+        error = FecDataView.read_core_state_count(
+            app_id, CPUState.RUN_TIME_EXCEPTION)
+        watchdog = FecDataView.read_core_state_count(
+            app_id, CPUState.WATCHDOG)
         if error > 0 or watchdog > 0:
             error_msg = "Some cores have failed ({} RTE, {} WDOG)".format(
                 error, watchdog)
             raise SpinnmanException(error_msg)
-        running = txrx.get_core_state_count(app_id, CPUState.RUNNING)
+        running = FecDataView.read_core_state_count(app_id, CPUState.RUNNING)
         print('running: ', running)
 
     finish_computing_time = time.time()
