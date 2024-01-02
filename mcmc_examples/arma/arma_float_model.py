@@ -55,7 +55,7 @@ class ARMAFloatModel(MCMCModel):
         return return_params
 
     @overrides(MCMCModel.get_state_variables)
-    def get_state_variables(self)-> List[MCMCStateVariable]:
+    def get_state_variables(self) -> List[MCMCStateVariable]:
         # Best here to convert the arrays into individual values
         return_state_vars = []
         for i in range(len(self._parameters)):

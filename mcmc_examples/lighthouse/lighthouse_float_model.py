@@ -56,7 +56,7 @@ class LightHouseFloatModel(MCMCModel):
         return "lighthouse.aplx"
 
     @overrides(MCMCModel.get_parameters)
-    def get_parameters(self)  -> List[MCMCParameter]:
+    def get_parameters(self) -> List[MCMCParameter]:
         return [
             MCMCParameter(self._alpha_jump_scale, numpy.float32),
             MCMCParameter(self._beta_jump_scale, numpy.float32),

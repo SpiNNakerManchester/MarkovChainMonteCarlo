@@ -60,7 +60,7 @@ class ARMAModel(MCMCModel):
         return return_params
 
     @overrides(MCMCModel.get_state_variables)
-    def get_state_variables(self)-> List[MCMCStateVariable]:
+    def get_state_variables(self) -> List[MCMCStateVariable]:
         # It's probably best here to convert the arrays into individual values?
         return_state_vars = []
         for i in range(len(self._parameters)):
