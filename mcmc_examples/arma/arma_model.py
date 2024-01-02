@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import List
 from spinn_utilities.overrides import overrides
 
 from mcmc.mcmc_model import MCMCModel
@@ -42,11 +43,11 @@ class ARMAModel(MCMCModel):
         self._q_jump_scale = q_jump_scale
 
     @overrides(MCMCModel.get_binary_name)
-    def get_binary_name(self):
+    def get_binary_name(self) -> str:
         return "arma.aplx"
 
     @overrides(MCMCModel.get_parameters)
-    def get_parameters(self):
+    def get_parameters(self) -> List[MCMCParameter]:
         # It's probably best here to convert the arrays into individual values?
         return_params = []
         for i in range(len(self._p_jump_scale)):
@@ -59,7 +60,7 @@ class ARMAModel(MCMCModel):
         return return_params
 
     @overrides(MCMCModel.get_state_variables)
-    def get_state_variables(self):
+    def get_state_variables(self)-> List[MCMCStateVariable]:
         # It's probably best here to convert the arrays into individual values?
         return_state_vars = []
         for i in range(len(self._parameters)):

@@ -17,6 +17,8 @@ from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ConstantSDRAM
 from spinn_utilities.overrides import overrides
 
+from pacman.model.placements import Placement
+
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models\
@@ -25,7 +27,8 @@ from spinn_front_end_common.abstract_models\
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.buffer_management.buffer_models\
     .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
-from spinn_front_end_common.interface.ds import DataType
+from spinn_front_end_common.interface.ds import (
+    DataSpecificationGenerator, DataType)
 from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.interface.buffer_management \
     import recording_utilities
@@ -195,20 +198,21 @@ class MCMCVertex(
 
     @property
     @overrides(MachineVertex.sdram_required)
-    def sdram_required(self):
+    def sdram_required(self) -> ConstantSDRAM:
         return ConstantSDRAM(self._sdram_usage)
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
-    def get_binary_file_name(self):
+    def get_binary_file_name(self) -> str:
         return self._model.get_binary_name()
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
-    def get_binary_start_type(self):
+    def get_binary_start_type(self) -> ExecutableType:
         return ExecutableType.SYNC
 
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification)
-    def generate_data_specification(self, spec, placement):
+    def generate_data_specification(
+            self, spec: DataSpecificationGenerator, placement: Placement):
 
         routing_info = FecDataView.get_routing_infos()
         # Reserve and write the recording regions
