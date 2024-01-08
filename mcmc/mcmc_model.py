@@ -28,6 +28,7 @@ class MCMCModel(object, metaclass=AbstractBase):
 
         :rtype: list of :py:class:`mcmc.mcmc_parameter.MCMCParameter`
         """
+        raise NotImplementedError
 
     @abstractmethod
     def get_state_variables(self) -> List[MCMCStateVariable]:
@@ -35,6 +36,7 @@ class MCMCModel(object, metaclass=AbstractBase):
 
         :rtype: list of :py:class:`mcmc.mcmc_state_variable.MCMCStateVariable`
         """
+        raise NotImplementedError
 
     @abstractmethod
     def get_binary_name(self) -> str:
@@ -42,3 +44,4 @@ class MCMCModel(object, metaclass=AbstractBase):
 
         :rtype: str
         """
+        raise NotImplementedError

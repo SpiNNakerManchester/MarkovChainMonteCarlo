@@ -17,6 +17,8 @@ from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ConstantSDRAM
 from spinn_utilities.overrides import overrides
 
+from spinnman.model.enums import ExecutableType
+
 from pacman.model.placements import Placement
 
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
@@ -27,8 +29,6 @@ from spinn_front_end_common.abstract_models\
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.ds import (
     DataSpecificationGenerator, DataType)
-from spinn_front_end_common.utilities.utility_objs.executable_type \
-    import ExecutableType
 from spinn_utilities.progress_bar import ProgressBar
 
 import numpy
@@ -236,16 +236,17 @@ class MCMCCoordinatorVertex(
         spec.write_value(len(keys), data_type=DataType.UINT32)
 
         # Write the key
-        routing_info = routing_info.get_routing_info_from_pre_vertex(
+        vertex_routing_info = routing_info.get_routing_info_from_pre_vertex(
             self, self._data_partition_name)
-        spec.write_value(routing_info.key, data_type=DataType.UINT32)
+        assert vertex_routing_info is not None
+        spec.write_value(vertex_routing_info.key, data_type=DataType.UINT32)
 
         # Write the window size
         spec.write_value(self._window_size, data_type=DataType.UINT32)
 
         # Write the sequence mask
         spec.write_value(
-            ~routing_info.mask & 0xFFFFFFFF, data_type=DataType.UINT32)
+            ~vertex_routing_info.mask & 0xFFFFFFFF, data_type=DataType.UINT32)
 
         # Write the timer
         spec.write_value(self._send_timer, data_type=DataType.UINT32)

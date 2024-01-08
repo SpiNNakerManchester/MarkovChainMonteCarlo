@@ -13,11 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ConstantSDRAM
+from enum import Enum
+
 from spinn_utilities.overrides import overrides
 
+from spinnman.model.enums import ExecutableType
+
+from pacman.model.graphs.machine import MachineVertex
 from pacman.model.placements import Placement
+from pacman.model.resources import ConstantSDRAM
 
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
@@ -25,10 +29,6 @@ from spinn_front_end_common.abstract_models\
     .abstract_generates_data_specification \
     import AbstractGeneratesDataSpecification
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
-from spinn_front_end_common.utilities.utility_objs.executable_type \
-    import ExecutableType
-
-from enum import Enum
 
 
 class MCMCCholeskyRegions(Enum):

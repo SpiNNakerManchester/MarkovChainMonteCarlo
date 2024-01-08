@@ -19,14 +19,14 @@ from spinn_utilities.overrides import overrides
 
 from pacman.model.placements import Placement
 
+from spinnman.model.enums import ExecutableType
+
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models\
     .abstract_generates_data_specification \
     import AbstractGeneratesDataSpecification
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
-from spinn_front_end_common.utilities.utility_objs.executable_type \
-    import ExecutableType
 
 from enum import Enum
 

@@ -17,6 +17,8 @@ from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ConstantSDRAM
 from spinn_utilities.overrides import overrides
 
+from spinnman.model.enums import ExecutableType
+
 from pacman.model.placements import Placement
 
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
@@ -32,8 +34,6 @@ from spinn_front_end_common.interface.ds import (
 from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.interface.buffer_management \
     import recording_utilities
-from spinn_front_end_common.utilities.utility_objs.executable_type \
-    import ExecutableType
 
 from enum import Enum
 import numpy
@@ -262,6 +262,7 @@ class MCMCVertex(
         if (self._model.root_finder):
             routing_info_rf = routing_info.get_routing_info_from_pre_vertex(
                 self, self._parameter_partition_name)
+            assert routing_info_rf is not None
             spec.write_value(routing_info_rf.key, data_type=DataType.UINT32)
         else:
             spec.write_value(0, data_type=DataType.UINT32)
