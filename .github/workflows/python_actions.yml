@@ -81,7 +81,7 @@ jobs:
       uses: ./support/actions/check-copyrights
 
     - name: Lint with mypy
-      run: mypy $BASE_PKG
+      run: mypy mcmc
 
 #    # Add the following as required in the future
 #    - name: Validate XML
