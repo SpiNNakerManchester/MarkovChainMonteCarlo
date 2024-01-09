@@ -270,6 +270,7 @@ class MCMCVertex(
         if (self._model.cholesky):
             routing_info_ch = routing_info.get_routing_info_from_pre_vertex(
                 self, self._cholesky_partition_name)
+            assert routing_info_ch is not None
             spec.write_value(routing_info_ch.key, data_type=DataType.UINT32)
         else:
             spec.write_value(0, data_type=DataType.UINT32)

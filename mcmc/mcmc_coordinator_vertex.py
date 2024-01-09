@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import List
+
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ConstantSDRAM
 from spinn_utilities.overrides import overrides
@@ -217,7 +219,7 @@ class MCMCCoordinatorVertex(
 
         # Get the placement of the vertices and find out how many chips
         # are needed
-        keys = list()
+        keys: List[int] = list()
         for vertex in self._mcmc_vertices:
             mcmc_placement = FecDataView.get_placement_of_vertex(vertex)
             self._mcmc_placements.append(mcmc_placement)
