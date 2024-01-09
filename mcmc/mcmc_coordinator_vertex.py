@@ -226,7 +226,8 @@ class MCMCCoordinatorVertex(
             if self._is_receiver_placement(mcmc_placement):
                 key = routing_info.get_first_key_from_pre_vertex(
                     vertex, self._acknowledge_partition_name)
-                keys.append(key)
+                if key is not None:
+                    keys.append(key)
         keys.sort()
 
         # Write the data size in words
