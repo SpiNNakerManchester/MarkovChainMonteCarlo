@@ -13,29 +13,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import List
 from spinn_utilities.abstract_base import AbstractBase
 from spinn_utilities.abstract_base import abstractmethod
+from mcmc.mcmc_parameter import MCMCParameter
+from mcmc.mcmc_state_variable import MCMCStateVariable
 
 
 class MCMCModel(object, metaclass=AbstractBase):
 
     @abstractmethod
-    def get_parameters(self):
+    def get_parameters(self) -> List[MCMCParameter]:
         """ Get the parameters of the model
 
         :rtype: list of :py:class:`mcmc.mcmc_parameter.MCMCParameter`
         """
+        raise NotImplementedError
 
     @abstractmethod
-    def get_state_variables(self):
+    def get_state_variables(self) -> List[MCMCStateVariable]:
         """ Get the state variables of the model
 
         :rtype: list of :py:class:`mcmc.mcmc_state_variable.MCMCStateVariable`
         """
+        raise NotImplementedError
 
     @abstractmethod
-    def get_binary_name(self):
+    def get_binary_name(self) -> str:
         """ Get the name of the binary compiled with this model
 
         :rtype: str
         """
+        raise NotImplementedError

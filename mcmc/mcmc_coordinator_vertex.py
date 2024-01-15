@@ -13,9 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import List
+
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ConstantSDRAM
 from spinn_utilities.overrides import overrides
+
+from spinnman.model.enums import ExecutableType
+
+from pacman.model.placements import Placement
 
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
@@ -23,9 +29,8 @@ from spinn_front_end_common.abstract_models\
     .abstract_generates_data_specification \
     import AbstractGeneratesDataSpecification
 from spinn_front_end_common.data import FecDataView
-from spinn_front_end_common.interface.ds import DataType
-from spinn_front_end_common.utilities.utility_objs.executable_type \
-    import ExecutableType
+from spinn_front_end_common.interface.ds import (
+    DataSpecificationGenerator, DataType)
 from spinn_utilities.progress_bar import ProgressBar
 
 import numpy
@@ -187,22 +192,23 @@ class MCMCCoordinatorVertex(
 
     @property
     @overrides(MachineVertex.sdram_required)
-    def sdram_required(self):
+    def sdram_required(self) -> ConstantSDRAM:
         sdram = self._N_PARAMETER_BYTES + self._data_size
         sdram += len(self._mcmc_vertices) * self._KEY_ELEMENT_TYPE.size
         return ConstantSDRAM(sdram)
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
-    def get_binary_file_name(self):
+    def get_binary_file_name(self) -> str:
         return "mcmc_coordinator.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
-    def get_binary_start_type(self):
+    def get_binary_start_type(self) -> ExecutableType:
         return ExecutableType.SYNC
 
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification)
-    def generate_data_specification(self, spec, placement):
+    def generate_data_specification(
+            self, spec: DataSpecificationGenerator, placement: Placement):
         routing_info = FecDataView.get_routing_infos()
 
         # Reserve and write the parameters region
@@ -213,14 +219,15 @@ class MCMCCoordinatorVertex(
 
         # Get the placement of the vertices and find out how many chips
         # are needed
-        keys = list()
+        keys: List[int] = list()
         for vertex in self._mcmc_vertices:
             mcmc_placement = FecDataView.get_placement_of_vertex(vertex)
             self._mcmc_placements.append(mcmc_placement)
             if self._is_receiver_placement(mcmc_placement):
                 key = routing_info.get_first_key_from_pre_vertex(
                     vertex, self._acknowledge_partition_name)
-                keys.append(key)
+                if key is not None:
+                    keys.append(key)
         keys.sort()
 
         # Write the data size in words
@@ -232,16 +239,17 @@ class MCMCCoordinatorVertex(
         spec.write_value(len(keys), data_type=DataType.UINT32)
 
         # Write the key
-        routing_info = routing_info.get_routing_info_from_pre_vertex(
+        vertex_routing_info = routing_info.get_routing_info_from_pre_vertex(
             self, self._data_partition_name)
-        spec.write_value(routing_info.key, data_type=DataType.UINT32)
+        assert vertex_routing_info is not None
+        spec.write_value(vertex_routing_info.key, data_type=DataType.UINT32)
 
         # Write the window size
         spec.write_value(self._window_size, data_type=DataType.UINT32)
 
         # Write the sequence mask
         spec.write_value(
-            ~routing_info.mask & 0xFFFFFFFF, data_type=DataType.UINT32)
+            ~vertex_routing_info.mask & 0xFFFFFFFF, data_type=DataType.UINT32)
 
         # Write the timer
         spec.write_value(self._send_timer, data_type=DataType.UINT32)
@@ -265,7 +273,7 @@ class MCMCCoordinatorVertex(
         spec.end_specification()
 
     @overrides(MachineVertex.get_n_keys_for_partition)
-    def get_n_keys_for_partition(self, partition_id):
+    def get_n_keys_for_partition(self, partition_id: str) -> int:
         return self._n_sequences
 
     def read_samples(self, buffer_manager):

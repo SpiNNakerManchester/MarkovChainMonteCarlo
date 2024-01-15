@@ -13,19 +13,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ConstantSDRAM
+from enum import Enum
+
 from spinn_utilities.overrides import overrides
+
+from spinnman.model.enums import ExecutableType
+
+from pacman.model.graphs.machine import MachineVertex
+from pacman.model.placements import Placement
+from pacman.model.resources import ConstantSDRAM
 
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models\
     .abstract_generates_data_specification \
     import AbstractGeneratesDataSpecification
-from spinn_front_end_common.utilities.utility_objs.executable_type \
-    import ExecutableType
-
-from enum import Enum
+from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 
 
 class MCMCCholeskyRegions(Enum):
@@ -61,20 +64,21 @@ class MCMCCholeskyVertex(
 
     @property
     @overrides(MachineVertex.sdram_required)
-    def sdram_required(self):
+    def sdram_required(self) -> ConstantSDRAM:
         return ConstantSDRAM(self._n_parameter_bytes)
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
-    def get_binary_file_name(self):
+    def get_binary_file_name(self) -> str:
         return "mcmc_cholesky.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
-    def get_binary_start_type(self):
+    def get_binary_start_type(self) -> ExecutableType:
         return ExecutableType.SYNC
 
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification)
-    def generate_data_specification(self, spec, placement):
+    def generate_data_specification(
+            self, spec: DataSpecificationGenerator, placement: Placement):
 
         # Reserve and write the parameters region
         spec.reserve_memory_region(

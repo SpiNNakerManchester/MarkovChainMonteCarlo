@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import List
 from spinn_utilities.overrides import overrides
 
 from spinn_front_end_common.interface.ds import DataType
@@ -41,11 +42,11 @@ class ARMAFixedPointModel(MCMCModel):
         self._q_jump_scale = q_jump_scale
 
     @overrides(MCMCModel.get_binary_name)
-    def get_binary_name(self):
+    def get_binary_name(self) -> str:
         return "arma.aplx"
 
     @overrides(MCMCModel.get_parameters)
-    def get_parameters(self):
+    def get_parameters(self) -> List[MCMCParameter]:
         return [
             MCMCParameter(self._parameters, DataType.S1615),  # array ?
             MCMCParameter(self._p_jump_scale, DataType.S1615),
@@ -53,7 +54,7 @@ class ARMAFixedPointModel(MCMCModel):
         ]
 
     @overrides(MCMCModel.get_state_variables)
-    def get_state_variables(self):
+    def get_state_variables(self) -> List[MCMCStateVariable]:
         return [
             MCMCStateVariable("order_p", 10, DataType.S1615),  # check type
             MCMCStateVariable("order_q", 10, DataType.S1615)

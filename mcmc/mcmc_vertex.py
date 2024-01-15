@@ -17,6 +17,10 @@ from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ConstantSDRAM
 from spinn_utilities.overrides import overrides
 
+from spinnman.model.enums import ExecutableType
+
+from pacman.model.placements import Placement
+
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models\
@@ -25,12 +29,11 @@ from spinn_front_end_common.abstract_models\
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.buffer_management.buffer_models\
     .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
-from spinn_front_end_common.interface.ds import DataType
+from spinn_front_end_common.interface.ds import (
+    DataSpecificationGenerator, DataType)
 from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.interface.buffer_management \
     import recording_utilities
-from spinn_front_end_common.utilities.utility_objs.executable_type \
-    import ExecutableType
 
 from enum import Enum
 import numpy
@@ -195,20 +198,21 @@ class MCMCVertex(
 
     @property
     @overrides(MachineVertex.sdram_required)
-    def sdram_required(self):
+    def sdram_required(self) -> ConstantSDRAM:
         return ConstantSDRAM(self._sdram_usage)
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
-    def get_binary_file_name(self):
+    def get_binary_file_name(self) -> str:
         return self._model.get_binary_name()
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
-    def get_binary_start_type(self):
+    def get_binary_start_type(self) -> ExecutableType:
         return ExecutableType.SYNC
 
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification)
-    def generate_data_specification(self, spec, placement):
+    def generate_data_specification(
+            self, spec: DataSpecificationGenerator, placement: Placement):
 
         routing_info = FecDataView.get_routing_infos()
         # Reserve and write the recording regions
@@ -258,6 +262,7 @@ class MCMCVertex(
         if (self._model.root_finder):
             routing_info_rf = routing_info.get_routing_info_from_pre_vertex(
                 self, self._parameter_partition_name)
+            assert routing_info_rf is not None
             spec.write_value(routing_info_rf.key, data_type=DataType.UINT32)
         else:
             spec.write_value(0, data_type=DataType.UINT32)
@@ -265,6 +270,7 @@ class MCMCVertex(
         if (self._model.cholesky):
             routing_info_ch = routing_info.get_routing_info_from_pre_vertex(
                 self, self._cholesky_partition_name)
+            assert routing_info_ch is not None
             spec.write_value(routing_info_ch.key, data_type=DataType.UINT32)
         else:
             spec.write_value(0, data_type=DataType.UINT32)
