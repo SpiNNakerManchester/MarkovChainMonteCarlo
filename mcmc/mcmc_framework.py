@@ -96,7 +96,7 @@ def run_mcmc(
 
         # Count the cores in the processor
         # (-1 if this chip also has a coordinator)
-        n_cores = len([p for p in chip.processors if not p.is_monitor])
+        n_cores = chip.n_user_processors
         if (chip.x, chip.y) in coordinators:
             n_cores -= 3  # coordinator and extra_monitor_support (2)
             if (model.root_finder):
