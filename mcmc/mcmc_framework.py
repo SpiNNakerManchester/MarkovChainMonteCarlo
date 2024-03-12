@@ -102,7 +102,7 @@ def run_mcmc(
         else:
             n_cores -= FecDataView.get_ethernet_monitor_cores()
         if (chip.x, chip.y) in coordinators:
-            n_cores -= 3  # coordinator
+            n_cores -= 1  # coordinator
             if (model.root_finder):
                 if (model.cholesky):
                     n_cores = n_cores // 3
