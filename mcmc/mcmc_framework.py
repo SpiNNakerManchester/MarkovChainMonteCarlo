@@ -97,15 +97,18 @@ def run_mcmc(
         # Count the cores in the processor
         # (-1 if this chip also has a coordinator)
         n_cores = chip.n_user_processors
+        if chip.ip_address is None:
+            n_cores -= FecDataView.get_all_monitor_cores()
+        else:
+            n_cores -= FecDataView.get_ethernet_monitor_cores()
         if (chip.x, chip.y) in coordinators:
-            n_cores -= 3  # coordinator and extra_monitor_support (2)
+            n_cores -= 1  # coordinator
             if (model.root_finder):
                 if (model.cholesky):
                     n_cores = n_cores // 3
                 else:
                     n_cores = n_cores // 2
         else:
-            n_cores -= 1  # just extra_monitor_support
             if (model.root_finder):
                 if (model.cholesky):
                     n_cores = n_cores // 3
