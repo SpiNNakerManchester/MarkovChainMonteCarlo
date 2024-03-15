@@ -96,7 +96,7 @@ def run_mcmc(
 
         # Count the cores in the processor
         # (-1 if this chip also has a coordinator)
-        n_cores = chip.n_user_processors
+        n_cores = chip.n_placable_processors
         if chip.ip_address is None:
             n_cores -= FecDataView.get_all_monitor_cores()
         else:
