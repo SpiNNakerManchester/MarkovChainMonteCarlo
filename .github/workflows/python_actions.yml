@@ -32,6 +32,7 @@ jobs:
       flake8-packages: mcmc mcmc_examples
       check_prereleases: false
       cfg_file: spiNNakerGraphFrontEnd
+      rat_config_file: rat_gpl3.xml
 
     # pylint mcmc mcmc_examples
     # mypy mypy mcmc
