@@ -36,6 +36,7 @@ jobs:
       rcfile: global_relaxed
       pylint_exitcheck: 6 # Action fails on ERROR or WARNING
       run_sphinx: false
+      run_cff-validator: false
 
     # pylint mcmc mcmc_examples
     # mypy mypy mcmc
