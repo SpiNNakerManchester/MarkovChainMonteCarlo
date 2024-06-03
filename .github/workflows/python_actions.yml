@@ -32,7 +32,7 @@ jobs:
       flake8-packages: mcmc mcmc_examples
       check_prereleases: false
       cfg_file: spiNNakerGraphFrontEnd
-      rat_config_file: rat_gpl3.xml
+      rat_config_file: rat.xml  # mix of licenses acceptable to rat
       rcfile: global_relaxed
       pylint_exitcheck: 6 # Action fails on ERROR or WARNING
 
