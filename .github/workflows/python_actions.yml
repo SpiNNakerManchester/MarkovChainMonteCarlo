@@ -23,13 +23,15 @@ jobs:
   call:
     uses: SpiNNakerManchester/SupportScripts/.github/workflows/python_checks.yml@main
     with:
-      base-package: mcmc
       dependencies: >
           SpiNNUtils SpiNNMachine SpiNNMan PACMAN spalloc
           SpiNNFrontEndCommon SpiNNakerGraphFrontEnd TestBase
       ubuntu_packages: graphviz
       test_directories: unittests
+      coverage-package: mcmc
       flake8-packages: mcmc mcmc_examples
+      pylint-packages: mcmc mcmc_examples
+      mypy-packages: mcmc mcmc_examples
       check_prereleases: false
       cfg_file: spiNNakerGraphFrontEnd
       rat_config_file: rat.xml  # mix of licenses acceptable to rat
