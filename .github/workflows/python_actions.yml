@@ -33,6 +33,8 @@ jobs:
       check_prereleases: false
       cfg_file: spiNNakerGraphFrontEnd
       rat_config_file: rat_gpl3.xml
+      rcfile: global_relaxed
+      pylint_exitcheck: 6 # Action fails on ERROR or WARNING
 
     # pylint mcmc mcmc_examples
     # mypy mypy mcmc
