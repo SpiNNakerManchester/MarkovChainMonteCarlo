@@ -35,6 +35,7 @@ jobs:
       rat_config_file: rat.xml  # mix of licenses acceptable to rat
       rcfile: global_relaxed
       pylint_exitcheck: 6 # Action fails on ERROR or WARNING
+      run_sphinx: false
 
     # pylint mcmc mcmc_examples
     # mypy mypy mcmc
