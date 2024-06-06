@@ -28,6 +28,7 @@ from spinn_front_end_common.abstract_models\
     .abstract_generates_data_specification \
     import AbstractGeneratesDataSpecification
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
+# pylint: disable=wrong-spelling-in-comment
 
 
 class MCMCCholeskyRegions(Enum):

@@ -21,6 +21,7 @@ from mcmc import mcmc_framework
 from mcmc_examples.arma.arma_float_model import ARMAFloatModel
 # from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #     import ARMAFixedPointModel
+# pylint: disable=wrong-spelling-in-comment
 
 # Data to use for 1000 data points (read from file)
 data_10000 = numpy.loadtxt("data_10000.csv", delimiter=",")

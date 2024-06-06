@@ -20,6 +20,7 @@ from spinn_front_end_common.interface.ds import DataType
 from mcmc.mcmc_model import MCMCModel
 from mcmc.mcmc_parameter import MCMCParameter
 from mcmc.mcmc_state_variable import MCMCStateVariable
+# pylint: disable=wrong-spelling-in-comment
 
 
 class ARMAFixedPointModel(MCMCModel):

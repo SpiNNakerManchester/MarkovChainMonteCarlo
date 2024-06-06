@@ -20,6 +20,7 @@ from spinn_front_end_common.interface.ds import DataType
 from mcmc.mcmc_model import MCMCModel
 from mcmc.mcmc_parameter import MCMCParameter
 from mcmc.mcmc_state_variable import MCMCStateVariable
+# pylint: disable=wrong-spelling-in-comment
 
 
 class LightHouseFixedPointModel(MCMCModel):
@@ -39,6 +40,8 @@ class LightHouseFixedPointModel(MCMCModel):
             scaling of t transition distribution for MH jumps in beta direction
         :param beta_min: The minimum value of beta
         :param beta_max: The maximum value of beta
+        :param root_finder: The root_finder value to be used
+        :param cholesky: The cholesky value to be used
         """
 
         self._alpha_jump_scale = alpha_jump_scale
@@ -74,8 +77,14 @@ class LightHouseFixedPointModel(MCMCModel):
 
     @property
     def root_finder(self):
+        """
+        The root_finder value passed into the init
+        """
         return self._root_finder
 
     @property
     def cholesky(self):
+        """
+        The cholesky value as passed into the init
+        """
         return self._cholesky
