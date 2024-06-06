@@ -119,8 +119,8 @@ def run_mcmc(
         eth_y = chip.nearest_ethernet_y
         coordinator = coordinators.get((eth_x, eth_y))
         if coordinator is None:
-            print("Warning - couldn't find {}, {} for chip {}, {}".format(
-                eth_x, eth_y, chip.x, chip.y))
+            print(f"Warning - couldn't find {eth_x}, {eth_y} "
+                  f"for chip {chip.x}, {chip.y}")
             coordinator = coordinators[0, 0]
             print("Using coordinator ", coordinator)
 
@@ -226,8 +226,8 @@ def run_mcmc(
         error = txrx.get_core_state_count(app_id, CPUState.RUN_TIME_EXCEPTION)
         watchdog = txrx.get_core_state_count(app_id, CPUState.WATCHDOG)
         if error > 0 or watchdog > 0:
-            error_msg = "Some cores have failed ({} RTE, {} WDOG)".format(
-                error, watchdog)
+            error_msg = (f"Some cores have failed ({error} RTE, "
+                         f"{watchdog} WDOG)")
             raise SpinnmanException(error_msg)
         running = txrx.get_core_state_count(app_id, CPUState.RUNNING)
         print('running: ', running)
