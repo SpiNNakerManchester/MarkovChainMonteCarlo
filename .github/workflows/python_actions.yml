@@ -30,6 +30,9 @@ jobs:
       coverage-package: mcmc
       flake8-packages: mcmc mcmc_examples
       pylint-packages: mcmc mcmc_examples
+      # invalid-name because scripts have values pylint considers constants
+      # wrong-spelling-in-docstring due to param names ect
+      pylint-disable: R, wrong-spelling-in-docstring, invalid-name
       mypy-packages: mcmc
       cfg_file: spiNNakerGraphFrontEnd
       run_sphinx: false
