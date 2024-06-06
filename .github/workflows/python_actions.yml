@@ -32,7 +32,6 @@ jobs:
       flake8-packages: mcmc mcmc_examples
       pylint-packages: mcmc mcmc_examples
       mypy-packages: mcmc
-      check_prereleases: false
       cfg_file: spiNNakerGraphFrontEnd
       rat_config_file: rat.xml  # mix of licenses acceptable to rat
       rcfile: global_relaxed
