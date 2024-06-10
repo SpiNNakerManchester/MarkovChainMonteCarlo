@@ -21,6 +21,7 @@ from mcmc.mcmc_model import MCMCModel
 from mcmc.mcmc_parameter import MCMCParameter
 from mcmc.mcmc_state_variable import MCMCStateVariable
 
+
 class LightHouseFloatModel(MCMCModel):
     """ MCMC Model for the lighthouse problem, using float(32)
     """
