@@ -33,6 +33,8 @@ class ARMAFloatModel(MCMCModel):
             array of coefficients of polynomials, plus mu and sigma
         :param jump_scale:\
             array of jump scale values for parameters
+        :param bool root_finder:
+        :param bool cholesky:
         """
         self._parameters = parameters
         self._jump_scale = jump_scale
@@ -47,9 +49,8 @@ class ARMAFloatModel(MCMCModel):
     def get_parameters(self) -> List[MCMCParameter]:
         # Best here to convert the arrays into individual values
         return_params = []
-        for i in range(len(self._jump_scale)):
-            return_params.append(
-                MCMCParameter(self._jump_scale[i], numpy.float32))
+        for jump_scale in self._jump_scale:
+            return_params.append(MCMCParameter(jump_scale, numpy.float32))
 
         return return_params
 
@@ -57,17 +58,22 @@ class ARMAFloatModel(MCMCModel):
     def get_state_variables(self) -> List[MCMCStateVariable]:
         # Best here to convert the arrays into individual values
         return_state_vars = []
-        for i in range(len(self._parameters)):
+        for i, parameter in enumerate(self._parameters):
             return_state_vars.append(
-                MCMCStateVariable("param_"+str(i),
-                                  self._parameters[i], numpy.float32))
+                MCMCStateVariable("param_"+str(i), parameter, numpy.float32))
 
         return return_state_vars
 
     @property
     def root_finder(self):
+        """
+        the root_finder value passed into the init
+        """
         return self._root_finder
 
     @property
     def cholesky(self):
+        """
+        The cholesky passed into the init
+        """
         return self._cholesky

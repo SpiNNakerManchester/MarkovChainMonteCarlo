@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy
 from typing import List
 from spinn_utilities.overrides import overrides
 
 from mcmc.mcmc_model import MCMCModel
 from mcmc.mcmc_parameter import MCMCParameter
 from mcmc.mcmc_state_variable import MCMCStateVariable
-
-import numpy
 
 
 class ARMAModel(MCMCModel):
@@ -49,12 +48,10 @@ class ARMAModel(MCMCModel):
     def get_parameters(self) -> List[MCMCParameter]:
         # It's probably best here to convert the arrays into individual values?
         return_params = []
-        for i in range(len(self._p_jump_scale)):
-            return_params.append(
-                MCMCParameter(self._p_jump_scale[i], numpy.float64))
-        for i in range(len(self._q_jump_scale)):
-            return_params.append(
-                MCMCParameter(self._q_jump_scale[i], numpy.float64))
+        for p_jump_scale in self._p_jump_scale:
+            return_params.append(MCMCParameter(p_jump_scale, numpy.float64))
+        for q_jump_scale in self._q_jump_scale:
+            return_params.append(MCMCParameter(q_jump_scale, numpy.float64))
 
         return return_params
 
@@ -62,9 +59,8 @@ class ARMAModel(MCMCModel):
     def get_state_variables(self) -> List[MCMCStateVariable]:
         # It's probably best here to convert the arrays into individual values?
         return_state_vars = []
-        for i in range(len(self._parameters)):
+        for i, parameter in enumerate(self._parameters):
             return_state_vars.append(
-                MCMCStateVariable("param_"+str(i),
-                                  self._parameters[i], numpy.float64))
+                MCMCStateVariable("param_"+str(i), parameter, numpy.float64))
 
         return return_state_vars

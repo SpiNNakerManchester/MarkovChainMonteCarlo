@@ -15,12 +15,11 @@
 from typing import List
 from spinn_utilities.overrides import overrides
 
+import numpy
+
 from mcmc.mcmc_model import MCMCModel
 from mcmc.mcmc_parameter import MCMCParameter
 from mcmc.mcmc_state_variable import MCMCStateVariable
-
-import numpy
-
 
 class LightHouseFloatModel(MCMCModel):
     """ MCMC Model for the lighthouse problem, using float(32)
@@ -39,6 +38,8 @@ class LightHouseFloatModel(MCMCModel):
             scaling of t transition distribution for MH jumps in beta direction
         :param beta_min: The minimum value of beta
         :param beta_max: The maximum value of beta
+        :param bool root_finder:
+        :param bool cholesky:
         """
 
         self._alpha_jump_scale = alpha_jump_scale
@@ -74,8 +75,14 @@ class LightHouseFloatModel(MCMCModel):
 
     @property
     def root_finder(self):
+        """
+        The root_finder value passed into the init
+        """
         return self._root_finder
 
     @property
     def cholesky(self):
+        """
+        The cholesky value as passed into the init
+        """
         return self._cholesky

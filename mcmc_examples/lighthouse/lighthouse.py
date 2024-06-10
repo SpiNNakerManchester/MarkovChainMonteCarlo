@@ -14,8 +14,8 @@
 
 import sys
 import os
-import pathos.multiprocessing
 from time import gmtime, strftime
+import pathos.multiprocessing
 import numpy
 from mcmc import mcmc_framework
 # from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
@@ -260,10 +260,10 @@ elif (len(sys.argv) == 4):
 print("Running MCMC lighthouse on ", n_boards, " boards, and collecting ",
       n_samples, " samples")
 
-# scaling of t transition distribution for MH jumps in alpha direction
+# scaling of t transition distribution for jumps in alpha direction
 alpha_jump_scale = 0.8
 
-# scaling of t transition distribution for MH jumps in beta direction
+# scaling of t transition distribution for jumps in beta direction
 beta_jump_scale = 0.25
 
 # specification of prior knowledge about lighthouse position
