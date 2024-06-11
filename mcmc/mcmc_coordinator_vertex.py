@@ -118,29 +118,50 @@ class MCMCCoordinatorVertex(
         self._data_receiver = dict()
 
     def register_processor(self, mcmc_vertex):
+        """
+        Records the vertex to its list of vertices
+        """
         self._mcmc_vertices.append(mcmc_vertex)
 
     @property
     def n_samples(self):
+        """
+        n_samples as passed into the init.
+        """
         return self._n_samples
 
     @property
     def burn_in(self):
+        """
+        burn_in as passed inot the init
+        """
         return self._burn_in
 
     @property
     def thinning(self):
+        """
+        thinning as passed into the init
+        """
         return self._thinning
 
     @property
     def degrees_of_freedom(self):
+        """
+        degrees_of_freedom as passed into the init
+        """
         return self._degrees_of_freedom
 
     @property
     def n_data_points(self):
+        """
+        The length of the data passed inot the init
+        """
         return len(self._data)
 
     def _is_receiver_placement(self, placement):
+        """
+        Checks if this is the first placement seen with this X, Y
+        """
         x = placement.x
         y = placement.y
         if (x, y) not in self._data_receiver:
@@ -149,11 +170,20 @@ class MCMCCoordinatorVertex(
         return self._data_receiver[(x, y)] == placement.p
 
     def get_data_window_size(self, placement):
+        """
+        Gets the window size passed into the init if this is the first \
+        placement seen with this X, Y otherwise 0
+        """
         if self._is_receiver_placement(placement):
             return self._window_size
         return 0
 
     def get_sequence_mask(self, placement, routing_info):
+        """
+        Gets the mask for the data_partition_name vertex
+
+        Only if this is the first placement seen with this X, Y otherwise 0
+        """
         if self._is_receiver_placement(placement):
             mask = routing_info.get_routing_info_from_pre_vertex(
                 self, self._data_partition_name).mask
@@ -161,6 +191,11 @@ class MCMCCoordinatorVertex(
         return 0
 
     def get_acknowledge_key(self, placement, routing_info):
+        """
+        Gets the key for the acknowledge_partition_name vertex
+
+        Only if this is the first placement seen with this X, Y otherwise 0
+        """
         if self._is_receiver_placement(placement):
             key = routing_info.get_first_key_from_pre_vertex(
                 placement.vertex, self._acknowledge_partition_name)
@@ -169,24 +204,41 @@ class MCMCCoordinatorVertex(
 
     @property
     def data_tag(self):
+        """
+        Gets the data_tag value passed into the init
+        """
         return self._data_tag
 
     @property
     def acknowledge_timer(self):
+        """
+        Gets the receive_timer passed inot the init
+        """
         return self._receive_timer
 
     @property
     def seed(self):
+        """
+        Get a consistent random seed
+
+        Uses the one passed into the init or creates one on the first call
+        """
         if self._seed is None:
             return [random.randint(0, 0xFFFFFFFF) for _ in range(5)]
         return self._seed
 
     @property
     def data_partition_name(self):
+        """
+        The data_partition_name passed into the init.
+        """
         return self._data_partition_name
 
     @property
     def acknowledge_partition_name(self):
+        """
+        acknowledge_partition_name passed inot the init.
+        """
         return self._acknowledge_partition_name
 
     @property

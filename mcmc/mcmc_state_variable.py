@@ -36,7 +36,7 @@ class MCMCStateVariable(object):
     @property
     def initial_value(self):
         """
-
+        The initial value as passed inot the init
         """
         return self._initial_value
 

@@ -12,23 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import spinnaker_graph_front_end as g
+import logging
+import time
 
 from spinnman.exceptions import SpinnmanException
+from spinnman.model.enums.cpu_state import CPUState
+
+from pacman.model.graphs.machine import MachineEdge
+
+from spinn_front_end_common.data import FecDataView
+
+import spinnaker_graph_front_end as g
+
 from .mcmc_vertex import MCMCVertex
 from .mcmc_coordinator_vertex import MCMCCoordinatorVertex
 from .mcmc_root_finder_vertex import MCMCRootFinderVertex
 from .mcmc_cholesky_vertex import MCMCCholeskyVertex
 from . import model_binaries
-
-from pacman.model.graphs.machine import MachineEdge
-
-from spinnman.model.enums.cpu_state import CPUState
-
-from spinn_front_end_common.data import FecDataView
-
-import logging
-import time
 
 # timing
 start_time = time.time()
@@ -246,13 +246,13 @@ def run_mcmc(
     finish_time = time.time()
 
     # Note: this timing appears to be incorrect now; needs looking at
-    print("Overhead time is %s seconds" % (start_computing_time - start_time))
-    print("Computing time is %s seconds"
-          % (finish_computing_time - start_computing_time))
-    print("run_until_complete takes %s seconds"
-          % (mid_computing_time - start_computing_time))
-    print("Data collecting time is %s seconds"
-          % (finish_time - finish_computing_time))
-    print("Overall running time is %s seconds" % (finish_time - start_time))
+    print(f"Overhead time is {start_computing_time - start_time} seconds" )
+    print(f"Computing time is {finish_computing_time - start_computing_time}"
+          f" seconds")
+    print(f"run_until_complete takes "
+          f"{mid_computing_time - start_computing_time} seconds")
+    print(f"Data collecting time is "
+          f"{finish_time - finish_computing_time} seconds")
+    print(f"Overall running time is {finish_time - start_time} seconds")
 
     return samples

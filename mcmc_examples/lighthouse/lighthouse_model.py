@@ -13,13 +13,12 @@
 # limitations under the License.
 
 from typing import List
+import numpy
 from spinn_utilities.overrides import overrides
 
 from mcmc.mcmc_model import MCMCModel
 from mcmc.mcmc_parameter import MCMCParameter
 from mcmc.mcmc_state_variable import MCMCStateVariable
-
-import numpy
 
 
 class LightHouseModel(MCMCModel):
@@ -74,8 +73,14 @@ class LightHouseModel(MCMCModel):
 
     @property
     def root_finder(self):
+        """
+        The root_finder passed inot the init.
+        """
         return self._root_finder
 
     @property
     def cholesky(self):
+        """
+        The cholesky passed into the init.
+        """
         return self._cholesky

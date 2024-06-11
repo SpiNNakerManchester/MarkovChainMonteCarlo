@@ -97,6 +97,9 @@ class MCMCVertex(
         self._cholesky_data_receiver = dict()
 
     def _get_model_parameters_array(self):
+        """
+        Convert the models parameters into a numpy array
+        """
         parameters = self._model.get_parameters()
         numpy_format = list()
         numpy_values = list()
@@ -119,6 +122,9 @@ class MCMCVertex(
             [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
     def _get_model_state_array(self):
+        """
+        Convert the models state variables into a numpy array
+        """
         state = self._model.get_state_variables()
         numpy_format = list()
         numpy_values = list()
@@ -144,6 +150,11 @@ class MCMCVertex(
             [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
     def get_result_key(self, placement):
+        """
+        Get the key for the given placement if it is the first on this X Y
+
+        param Placement placement: the placement to get the result key for
+        """
         if self._is_receiver_placement(placement):
             routing_info = FecDataView.get_routing_infos()
             key = routing_info.get_first_key_from_pre_vertex(
@@ -152,6 +163,9 @@ class MCMCVertex(
         return 0
 
     def _is_receiver_placement(self, placement):
+        """
+        Checks if this is the first placement seen with this X, Y
+        """
         x = placement.x
         y = placement.y
         if (x, y) not in self._data_receiver:
@@ -160,6 +174,11 @@ class MCMCVertex(
         return self._data_receiver[(x, y)] == placement.p
 
     def get_cholesky_result_key(self, placement):
+        """
+        Get the key for the given placement if it is the first on this X Y
+
+        param Placement placement: the placement to get the result key for
+        """
         if self._is_cholesky_receiver_placement(placement):
             routing_info = FecDataView.get_routing_infos()
             key = routing_info.get_first_key_from_pre_vertex(
@@ -168,6 +187,9 @@ class MCMCVertex(
         return 0
 
     def _is_cholesky_receiver_placement(self, placement):
+        """
+        Checks if this is the first placement seen with this X, Y
+        """
         x = placement.x
         y = placement.y
         if (x, y) not in self._cholesky_data_receiver:
@@ -177,22 +199,37 @@ class MCMCVertex(
 
     @property
     def coordinator(self):
+        """
+        Returns the coordinator vertex passed intoi the init
+        """
         return self._coordinator
 
     @property
     def parameter_partition_name(self):
+        """
+        The parameter_partition_name passed into the init
+        """
         return self._parameter_partition_name
 
     @property
     def result_partition_name(self):
+        """
+        The result_partition_name passed into the init
+        """
         return self._result_partition_name
 
     @property
     def cholesky_partition_name(self):
+        """
+        The cholesky_partition_name passed into the init
+        """
         return self._cholesky_partition_name
 
     @property
     def cholesky_result_partition_name(self):
+        """
+        The cholesky_result_partition_name passed into the init
+        """
         return self._cholesky_result_partition_name
 
     @property
@@ -343,9 +380,11 @@ class MCMCVertex(
         else:
             return numpy.array(data, dtype="uint8").view(numpy_format)
 
+    @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
     def get_recorded_region_ids(self):
         return [0]
 
+    @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)
     def get_recording_region_base_address(self, placement):
         return helpful_functions.locate_memory_region_for_placement(
             placement, MCMCRegions.RECORDING.value)
