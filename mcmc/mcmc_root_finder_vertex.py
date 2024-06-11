@@ -30,6 +30,7 @@ from spinn_front_end_common.abstract_models\
     import AbstractGeneratesDataSpecification
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 
+
 class MCMCRootFinderRegions(Enum):
     """ Regions in the MCMCRootFinder Data
     """
