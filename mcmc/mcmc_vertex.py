@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ConstantSDRAM
+from enum import Enum
+import numpy
+
 from spinn_utilities.overrides import overrides
 
 from spinnman.model.enums import ExecutableType
 
+from pacman.model.graphs.machine import MachineVertex
 from pacman.model.placements import Placement
+from pacman.model.resources import ConstantSDRAM
 
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
@@ -33,9 +36,6 @@ from spinn_front_end_common.interface.ds import (
 from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.interface.buffer_management \
     import recording_utilities
-
-from enum import Enum
-import numpy
 
 
 class MCMCRegions(Enum):

@@ -13,14 +13,17 @@
 # limitations under the License.
 
 from typing import List
+import random
+import numpy
 
-from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ConstantSDRAM
 from spinn_utilities.overrides import overrides
+from spinn_utilities.progress_bar import ProgressBar
 
 from spinnman.model.enums import ExecutableType
 
+from pacman.model.graphs.machine import MachineVertex
 from pacman.model.placements import Placement
+from pacman.model.resources import ConstantSDRAM
 
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
@@ -30,10 +33,6 @@ from spinn_front_end_common.abstract_models\
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.ds import (
     DataSpecificationGenerator, DataType)
-from spinn_utilities.progress_bar import ProgressBar
-
-import numpy
-import random
 
 
 class MCMCCoordinatorVertex(

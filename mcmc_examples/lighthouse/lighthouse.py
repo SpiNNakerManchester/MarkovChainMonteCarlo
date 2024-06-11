@@ -292,6 +292,9 @@ model = LightHouseFloatModel(
 
 def run_job(_thread_id, _model=model, _data_points=None,
             _n_samples=n_samples, _seed=seed):
+    """
+    Main method to run once or in multiple threads
+    """
     if _data_points is None:
         _data_points = list(data_points)
     samples = mcmc_framework.run_mcmc(
