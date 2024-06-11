@@ -20,6 +20,9 @@ from mcmc.mcmc_state_variable import MCMCStateVariable
 
 
 class MCMCModel(object, metaclass=AbstractBase):
+    """
+    Base class frr Markov chain Monte Carlo models
+    """
 
     @abstractmethod
     def get_parameters(self) -> List[MCMCParameter]:

@@ -28,12 +28,21 @@ class MCMCStateVariable(object):
 
     @property
     def name(self):
+        """
+        The name of the variable
+        """
         return self._name
 
     @property
     def initial_value(self):
+        """
+
+        """
         return self._initial_value
 
     @property
     def data_type(self):
+        """
+        The numpy data type of the variable.
+        """
         return self._data_type

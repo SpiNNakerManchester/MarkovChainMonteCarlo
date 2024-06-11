@@ -27,8 +27,14 @@ class MCMCParameter(object):
 
     @property
     def value(self):
+        """
+        The value of the parameter
+        """
         return self._value
 
     @property
     def data_type(self):
+        """
+        The numpy data type of the parameter
+        """
         return self._data_type
