@@ -246,7 +246,7 @@ def run_mcmc(
     finish_time = time.time()
 
     # Note: this timing appears to be incorrect now; needs looking at
-    print(f"Overhead time is {start_computing_time - start_time} seconds" )
+    print(f"Overhead time is {start_computing_time - start_time} seconds")
     print(f"Computing time is {finish_computing_time - start_computing_time}"
           f" seconds")
     print(f"run_until_complete takes "
