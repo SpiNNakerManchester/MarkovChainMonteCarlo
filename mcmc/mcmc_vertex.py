@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from enum import Enum
+from typing import Sequence
 import numpy
 
 from spinn_utilities.overrides import overrides
@@ -381,7 +382,7 @@ class MCMCVertex(
             return numpy.array(data, dtype="uint8").view(numpy_format)
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
-    def get_recorded_region_ids(self):
+    def get_recorded_region_ids(self) -> Sequence[int]:
         return [0]
 
     @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)
