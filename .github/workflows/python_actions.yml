@@ -33,10 +33,7 @@ jobs:
       # invalid-name because scripts have values pylint considers constants
       # wrong-spelling-in-docstring due to param names ect
       pylint-disable: R, wrong-spelling-in-docstring, invalid-name
-      mypy-packages: mcmc
+      mypy-packages: mcmc mcmc_examples
       cfg_file: spiNNakerGraphFrontEnd
       run_sphinx: false
       run_cff-validator: false
-
-    # pylint mcmc mcmc_examples
-    # mypy mypy mcmc
