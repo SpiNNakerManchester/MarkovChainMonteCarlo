@@ -15,7 +15,7 @@
 import sys
 import os
 from time import gmtime, strftime
-import pathos.multiprocessing # type: ignore
+import pathos.multiprocessing  # type: ignore
 import numpy
 from mcmc import mcmc_framework
 # from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
