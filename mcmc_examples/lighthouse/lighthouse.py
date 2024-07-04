@@ -12,17 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import sys
 import os
 from time import gmtime, strftime
+
 import pathos.multiprocessing  # type: ignore
 import numpy
+
+from spinn_utilities.log import FormatAdapter
+
 from mcmc import mcmc_framework
 # from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
 from mcmc_examples.lighthouse.lighthouse_float_model \
      import LightHouseFloatModel
 # from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #      import LightHouseFixedPointModel
+
+logger = FormatAdapter(logging.getLogger(__name__))
 
 # Data to use for 50 data points
 data_50 = [
@@ -247,8 +254,11 @@ n_threads = 1
 
 # get n_samples and n_boards from command line arguments if specified
 if (len(sys.argv) == 2):
-    if sys.argv[1] != 'test_scripts.py':
+    try:
         n_samples = int(sys.argv[1])
+    except ValueError:
+        # this happens if called as a unittest so can be ignored safely
+        logger.exception("Unexpected argument {sys.argv[1]}")
 elif (len(sys.argv) == 3):
     n_samples = int(sys.argv[1])
     n_boards = int(sys.argv[2])

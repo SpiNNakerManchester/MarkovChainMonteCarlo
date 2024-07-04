@@ -12,15 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import sys
 import os
 from time import gmtime, strftime
 import numpy
+
+from spinn_utilities.log import FormatAdapter
+
 from mcmc import mcmc_framework
 # from mcmc_examples.arma.arma_model import ARMAModel
 from mcmc_examples.arma.arma_float_model import ARMAFloatModel
 # from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #     import ARMAFixedPointModel
+
+logger = FormatAdapter(logging.getLogger(__name__))
 
 # Data to use for 1000 data points (read from file)
 data_10000 = numpy.loadtxt("data_10000.csv", delimiter=",")
@@ -44,8 +50,11 @@ n_boards = 1
 
 # get n_samples and n_boards from command line arguments if specified
 if (len(sys.argv) == 2):
-    if sys.argv[1] != 'test_scripts.py':
+    try:
         n_samples = int(sys.argv[1])
+    except ValueError:
+        # this happens if called as a unittest so can be ignored safely
+        logger.exception("Unexpected argument {sys.argv[1]}")
 elif (len(sys.argv) == 3):
     n_samples = int(sys.argv[1])
     n_boards = int(sys.argv[2])
