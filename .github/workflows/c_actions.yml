@@ -85,7 +85,6 @@ jobs:
   test:
     needs: build
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
     strategy:
       matrix:
         runner: [ubuntu-latest, windows-latest, macos-latest]
