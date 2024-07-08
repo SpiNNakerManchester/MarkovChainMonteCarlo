@@ -313,7 +313,7 @@ def run_job(_thread_id, _model=model, _data_points=None,
 
     print('samples: ', samples)
 
-    dirpath = (f'results_{strftime("%Y-%m-%d_%H:%M:%S", gmtime())}'
+    dirpath = (f'results_{strftime("%Y-%m-%d_%H_%M_%S", gmtime())}'
                f'_nboards{n_boards}_nsamples{_n_samples}')
     os.mkdir(dirpath)
     for coord, sample in samples.items():
