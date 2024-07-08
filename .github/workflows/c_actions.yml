@@ -138,7 +138,7 @@ jobs:
       uses: actions/setup-java@v4.2.1
       with:
         distribution: 'zulu'
-        java-version: ${{ matrix.java }}
+        java-version: 11
         java-package: jre
 
     - name: Download Fec binaries
