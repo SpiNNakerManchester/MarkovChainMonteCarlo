@@ -113,7 +113,7 @@ samples = mcmc_framework.run_mcmc(
 # print('samples: ', samples)
 
 # Save the results
-dirpath = (f'results_{strftime("%Y-%m-%d_%H:%M:%S", gmtime())}'
+dirpath = (f'results_{strftime("%Y-%m-%d_%H_%M_%S", gmtime())}'
            f'_nboards{n_boards}_nsamples{n_samples}')
 os.mkdir(dirpath)
 for coord, sample in samples.items():
