@@ -174,7 +174,7 @@ jobs:
         echo "external_binaries=$PWD/external_binaries" >> ~/.spiNNakerGraphFrontEnd.cfg
         echo '[Java]' >> ~/.spiNNakerGraphFrontEnd.cfg
         echo 'use_java = True' >> ~/.spiNNakerGraphFrontEnd.cfg
-        echo "java_jar_path=$PWD/external_binaries/spinnaker-exe.jar >> ~/.spiNNakerGraphFrontEnd.cfg
+        echo "java_jar_path=$PWD/external_binaries/spinnaker-exe.jar" >> ~/.spiNNakerGraphFrontEnd.cfg
         cat ~/.spiNNakerGraphFrontEnd.cfg
 
     - name: Test with pytest and proxy
