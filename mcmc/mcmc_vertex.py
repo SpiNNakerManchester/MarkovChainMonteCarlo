@@ -318,7 +318,7 @@ class MCMCVertex(
         """
 
         # Read the data recorded
-        data, _ = buffer_manager.get_data_by_placement(placement, 0)
+        data, _ = buffer_manager.get_recording(placement, 0)
 
         numpy_format = list()
         output_format = list()
