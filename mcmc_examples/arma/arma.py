@@ -1,27 +1,32 @@
 # Copyright (c) 2016 The University of Manchester
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
+import logging
 import sys
 import os
 from time import gmtime, strftime
 import numpy
+
+from spinn_utilities.log import FormatAdapter
+
 from mcmc import mcmc_framework
 # from mcmc_examples.arma.arma_model import ARMAModel
 from mcmc_examples.arma.arma_float_model import ARMAFloatModel
 # from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #     import ARMAFixedPointModel
+
+logger = FormatAdapter(logging.getLogger(__name__))
 
 # Data to use for 1000 data points (read from file)
 data_10000 = numpy.loadtxt("data_10000.csv", delimiter=",")
@@ -45,8 +50,11 @@ n_boards = 1
 
 # get n_samples and n_boards from command line arguments if specified
 if (len(sys.argv) == 2):
-    if sys.argv[1] != 'test_scripts.py':
+    try:
         n_samples = int(sys.argv[1])
+    except ValueError:
+        # this happens if called as a unittest so can be ignored safely
+        logger.exception("Unexpected argument {sys.argv[1]}")
 elif (len(sys.argv) == 3):
     n_samples = int(sys.argv[1])
     n_boards = int(sys.argv[2])
@@ -67,7 +75,7 @@ np = 9
 nq = 9
 
 # set up parameters array with p polynomial
-# and scaling of t transition distribution for MH jumps in p direction
+# and scaling of t transition distribution for jumps in p direction
 parameters = []
 jump_scale = []
 for i in range(0, np):
@@ -75,7 +83,7 @@ for i in range(0, np):
     jump_scale.append(0.0001)
 
 # add q polynomial to parameters array
-# scaling of t transition distribution for MH jumps in q direction
+# scaling of t transition distribution for jumps in q direction
 for i in range(0, nq):
     parameters.append(0.01)
     jump_scale.append(0.0001)
@@ -105,11 +113,11 @@ samples = mcmc_framework.run_mcmc(
 # print('samples: ', samples)
 
 # Save the results
-dirpath = "results_{}_nboards{}_nsamples{}".format(
-    strftime("%Y-%m-%d_%H:%M:%S", gmtime()), n_boards, n_samples)
+dirpath = (f'results_{strftime("%Y-%m-%d_%H_%M_%S", gmtime())}'
+           f'_nboards{n_boards}_nsamples{n_samples}')
 os.mkdir(dirpath)
 for coord, sample in samples.items():
-    fname = "{}/results_board_x{}_y{}_nboards{}_nsamples{}".format(
-        dirpath, coord[0], coord[1], n_boards, n_samples)
+    fname = (f"{dirpath}/results_board_x{coord[0]}_y{coord[1]}"
+             f"_nboards{n_boards}_nsamples{n_samples}")
     numpy.save(fname+".npy", sample)
     numpy.savetxt(fname+".csv", sample, fmt="%f", delimiter=",")

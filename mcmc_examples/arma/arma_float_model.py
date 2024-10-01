@@ -1,26 +1,25 @@
 # Copyright (c) 2016 The University of Manchester
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from typing import List
+import numpy
+
 from spinn_utilities.overrides import overrides
 
 from mcmc.mcmc_model import MCMCModel
 from mcmc.mcmc_parameter import MCMCParameter
 from mcmc.mcmc_state_variable import MCMCStateVariable
-
-import numpy
 
 
 class ARMAFloatModel(MCMCModel):
@@ -34,6 +33,8 @@ class ARMAFloatModel(MCMCModel):
             array of coefficients of polynomials, plus mu and sigma
         :param jump_scale:\
             array of jump scale values for parameters
+        :param bool root_finder:
+        :param bool cholesky:
         """
         self._parameters = parameters
         self._jump_scale = jump_scale
@@ -48,9 +49,8 @@ class ARMAFloatModel(MCMCModel):
     def get_parameters(self) -> List[MCMCParameter]:
         # Best here to convert the arrays into individual values
         return_params = []
-        for i in range(len(self._jump_scale)):
-            return_params.append(
-                MCMCParameter(self._jump_scale[i], numpy.float32))
+        for jump_scale in self._jump_scale:
+            return_params.append(MCMCParameter(jump_scale, numpy.float32))
 
         return return_params
 
@@ -58,17 +58,22 @@ class ARMAFloatModel(MCMCModel):
     def get_state_variables(self) -> List[MCMCStateVariable]:
         # Best here to convert the arrays into individual values
         return_state_vars = []
-        for i in range(len(self._parameters)):
+        for i, parameter in enumerate(self._parameters):
             return_state_vars.append(
-                MCMCStateVariable("param_"+str(i),
-                                  self._parameters[i], numpy.float32))
+                MCMCStateVariable("param_"+str(i), parameter, numpy.float32))
 
         return return_state_vars
 
     @property
     def root_finder(self):
+        """
+        the root_finder value passed into the init
+        """
         return self._root_finder
 
     @property
     def cholesky(self):
+        """
+        The cholesky passed into the init
+        """
         return self._cholesky
