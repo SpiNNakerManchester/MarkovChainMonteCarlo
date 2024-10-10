@@ -147,7 +147,7 @@ class MCMCVertex(
     def get_result_key(self, placement):
         if self._is_receiver_placement(placement):
             routing_info = FecDataView.get_routing_infos()
-            key = routing_info.get_first_key_from_pre_vertex(
+            key = routing_info.get_safe_first_key_from_pre_vertex(
                 placement.vertex, self._result_partition_name)
             return key
         return 0
@@ -163,7 +163,7 @@ class MCMCVertex(
     def get_cholesky_result_key(self, placement):
         if self._is_cholesky_receiver_placement(placement):
             routing_info = FecDataView.get_routing_infos()
-            key = routing_info.get_first_key_from_pre_vertex(
+            key = routing_info.get_safe_first_key_from_pre_vertex(
                 placement.vertex, self._cholesky_result_partition_name)
             return key
         return 0

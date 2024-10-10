@@ -163,7 +163,7 @@ class MCMCCoordinatorVertex(
 
     def get_acknowledge_key(self, placement, routing_info):
         if self._is_receiver_placement(placement):
-            key = routing_info.get_first_key_from_pre_vertex(
+            key = routing_info.get_safe_first_key_from_pre_vertex(
                 placement.vertex, self._acknowledge_partition_name)
             return key
         return 0
@@ -224,10 +224,9 @@ class MCMCCoordinatorVertex(
             mcmc_placement = FecDataView.get_placement_of_vertex(vertex)
             self._mcmc_placements.append(mcmc_placement)
             if self._is_receiver_placement(mcmc_placement):
-                key = routing_info.get_first_key_from_pre_vertex(
+                key = routing_info.get_safe_first_key_from_pre_vertex(
                     vertex, self._acknowledge_partition_name)
-                if key is not None:
-                    keys.append(key)
+                keys.append(key)
         keys.sort()
 
         # Write the data size in words
