@@ -15,3 +15,5 @@
 **/results*.npy
 c_models/Debug/
 c_models/Release/
+/.mypy_cache/
+/.pytest_cache/
