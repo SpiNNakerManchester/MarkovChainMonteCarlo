@@ -147,7 +147,7 @@ class MCMCVertex(
     def get_result_key(self, placement):
         if self._is_receiver_placement(placement):
             routing_info = FecDataView.get_routing_infos()
-            key = routing_info.get_first_key_from_pre_vertex(
+            key = routing_info.get_key_from(
                 placement.vertex, self._result_partition_name)
             return key
         return 0
@@ -163,7 +163,7 @@ class MCMCVertex(
     def get_cholesky_result_key(self, placement):
         if self._is_cholesky_receiver_placement(placement):
             routing_info = FecDataView.get_routing_infos()
-            key = routing_info.get_first_key_from_pre_vertex(
+            key = routing_info.get_key_from(
                 placement.vertex, self._cholesky_result_partition_name)
             return key
         return 0
@@ -259,19 +259,17 @@ class MCMCVertex(
         spec.write_value(self._coordinator.acknowledge_timer)
 
         # Write the (first) key for sending parameter data, if needed
-        if (self._model.root_finder):
-            routing_info_rf = routing_info.get_routing_info_from_pre_vertex(
+        if self._model.root_finder:
+            rinfo_rf = routing_info.get_info_from(
                 self, self._parameter_partition_name)
-            assert routing_info_rf is not None
-            spec.write_value(routing_info_rf.key, data_type=DataType.UINT32)
+            spec.write_value(rinfo_rf.key, data_type=DataType.UINT32)
         else:
             spec.write_value(0, data_type=DataType.UINT32)
 
-        if (self._model.cholesky):
-            routing_info_ch = routing_info.get_routing_info_from_pre_vertex(
+        if self._model.cholesky:
+            rinfo_ch = routing_info.get_info_from(
                 self, self._cholesky_partition_name)
-            assert routing_info_ch is not None
-            spec.write_value(routing_info_ch.key, data_type=DataType.UINT32)
+            spec.write_value(rinfo_ch.key, data_type=DataType.UINT32)
         else:
             spec.write_value(0, data_type=DataType.UINT32)
 

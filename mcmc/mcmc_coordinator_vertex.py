@@ -156,14 +156,14 @@ class MCMCCoordinatorVertex(
 
     def get_sequence_mask(self, placement, routing_info):
         if self._is_receiver_placement(placement):
-            mask = routing_info.get_routing_info_from_pre_vertex(
+            mask = routing_info.get_info_from(
                 self, self._data_partition_name).mask
             return ~mask & 0xFFFFFFFF
         return 0
 
     def get_acknowledge_key(self, placement, routing_info):
         if self._is_receiver_placement(placement):
-            key = routing_info.get_first_key_from_pre_vertex(
+            key = routing_info.get_key_from(
                 placement.vertex, self._acknowledge_partition_name)
             return key
         return 0
@@ -224,10 +224,9 @@ class MCMCCoordinatorVertex(
             mcmc_placement = FecDataView.get_placement_of_vertex(vertex)
             self._mcmc_placements.append(mcmc_placement)
             if self._is_receiver_placement(mcmc_placement):
-                key = routing_info.get_first_key_from_pre_vertex(
+                key = routing_info.get_key_from(
                     vertex, self._acknowledge_partition_name)
-                if key is not None:
-                    keys.append(key)
+                keys.append(key)
         keys.sort()
 
         # Write the data size in words
@@ -239,17 +238,16 @@ class MCMCCoordinatorVertex(
         spec.write_value(len(keys), data_type=DataType.UINT32)
 
         # Write the key
-        vertex_routing_info = routing_info.get_routing_info_from_pre_vertex(
+        vtx_routing_info = routing_info.get_info_from(
             self, self._data_partition_name)
-        assert vertex_routing_info is not None
-        spec.write_value(vertex_routing_info.key, data_type=DataType.UINT32)
+        spec.write_value(vtx_routing_info.key, data_type=DataType.UINT32)
 
         # Write the window size
         spec.write_value(self._window_size, data_type=DataType.UINT32)
 
         # Write the sequence mask
         spec.write_value(
-            ~vertex_routing_info.mask & 0xFFFFFFFF, data_type=DataType.UINT32)
+            ~vtx_routing_info.mask & 0xFFFFFFFF, data_type=DataType.UINT32)
 
         # Write the timer
         spec.write_value(self._send_timer, data_type=DataType.UINT32)
