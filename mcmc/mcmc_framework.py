@@ -1,35 +1,34 @@
 # Copyright (c) 2016 The University of Manchester
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import logging
+import time
+
+from spinnman.exceptions import SpinnmanException
+from spinnman.model.enums.cpu_state import CPUState
+
+from pacman.model.graphs.machine import MachineEdge
+
+from spinn_front_end_common.data import FecDataView
 
 import spinnaker_graph_front_end as g
 
-from spinnman.exceptions import SpinnmanException
 from .mcmc_vertex import MCMCVertex
 from .mcmc_coordinator_vertex import MCMCCoordinatorVertex
 from .mcmc_root_finder_vertex import MCMCRootFinderVertex
 from .mcmc_cholesky_vertex import MCMCCholeskyVertex
 from . import model_binaries
-
-from pacman.model.graphs.machine import MachineEdge
-
-from spinnman.model.enums.cpu_state import CPUState
-
-from spinn_front_end_common.data import FecDataView
-
-import logging
-import time
 
 # timing
 start_time = time.time()
@@ -120,8 +119,8 @@ def run_mcmc(
         eth_y = chip.nearest_ethernet_y
         coordinator = coordinators.get((eth_x, eth_y))
         if coordinator is None:
-            print("Warning - couldn't find {}, {} for chip {}, {}".format(
-                eth_x, eth_y, chip.x, chip.y))
+            print(f"Warning - couldn't find {eth_x}, {eth_y} "
+                  f"for chip {chip.x}, {chip.y}")
             coordinator = coordinators[0, 0]
             print("Using coordinator ", coordinator)
 
@@ -227,8 +226,8 @@ def run_mcmc(
         error = txrx.get_core_state_count(app_id, CPUState.RUN_TIME_EXCEPTION)
         watchdog = txrx.get_core_state_count(app_id, CPUState.WATCHDOG)
         if error > 0 or watchdog > 0:
-            error_msg = "Some cores have failed ({} RTE, {} WDOG)".format(
-                error, watchdog)
+            error_msg = (f"Some cores have failed ({error} RTE, "
+                         f"{watchdog} WDOG)")
             raise SpinnmanException(error_msg)
         running = txrx.get_core_state_count(app_id, CPUState.RUNNING)
         print('running: ', running)
@@ -247,13 +246,13 @@ def run_mcmc(
     finish_time = time.time()
 
     # Note: this timing appears to be incorrect now; needs looking at
-    print("Overhead time is %s seconds" % (start_computing_time - start_time))
-    print("Computing time is %s seconds"
-          % (finish_computing_time - start_computing_time))
-    print("run_until_complete takes %s seconds"
-          % (mid_computing_time - start_computing_time))
-    print("Data collecting time is %s seconds"
-          % (finish_time - finish_computing_time))
-    print("Overall running time is %s seconds" % (finish_time - start_time))
+    print(f"Overhead time is {start_computing_time - start_time} seconds")
+    print(f"Computing time is {finish_computing_time - start_computing_time}"
+          f" seconds")
+    print(f"run_until_complete takes "
+          f"{mid_computing_time - start_computing_time} seconds")
+    print(f"Data collecting time is "
+          f"{finish_time - finish_computing_time} seconds")
+    print(f"Overall running time is {finish_time - start_time} seconds")
 
     return samples

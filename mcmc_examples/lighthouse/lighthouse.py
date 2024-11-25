@@ -1,29 +1,35 @@
 # Copyright (c) 2016 The University of Manchester
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
+import logging
 import sys
 import os
-import pathos.multiprocessing
 from time import gmtime, strftime
+
+import pathos.multiprocessing  # type: ignore
 import numpy
+
+from spinn_utilities.log import FormatAdapter
+
 from mcmc import mcmc_framework
 # from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
 from mcmc_examples.lighthouse.lighthouse_float_model \
      import LightHouseFloatModel
 # from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #      import LightHouseFixedPointModel
+
+logger = FormatAdapter(logging.getLogger(__name__))
 
 # Data to use for 50 data points
 data_50 = [
@@ -248,8 +254,11 @@ n_threads = 1
 
 # get n_samples and n_boards from command line arguments if specified
 if (len(sys.argv) == 2):
-    if sys.argv[1] != 'test_scripts.py':
+    try:
         n_samples = int(sys.argv[1])
+    except ValueError:
+        # this happens if called as a unittest so can be ignored safely
+        logger.exception("Unexpected argument {sys.argv[1]}")
 elif (len(sys.argv) == 3):
     n_samples = int(sys.argv[1])
     n_boards = int(sys.argv[2])
@@ -261,10 +270,10 @@ elif (len(sys.argv) == 4):
 print("Running MCMC lighthouse on ", n_boards, " boards, and collecting ",
       n_samples, " samples")
 
-# scaling of t transition distribution for MH jumps in alpha direction
+# scaling of t transition distribution for jumps in alpha direction
 alpha_jump_scale = 0.8
 
-# scaling of t transition distribution for MH jumps in beta direction
+# scaling of t transition distribution for jumps in beta direction
 beta_jump_scale = 0.25
 
 # specification of prior knowledge about lighthouse position
@@ -293,6 +302,9 @@ model = LightHouseFloatModel(
 
 def run_job(_thread_id, _model=model, _data_points=None,
             _n_samples=n_samples, _seed=seed):
+    """
+    Main method to run once or in multiple threads
+    """
     if _data_points is None:
         _data_points = list(data_points)
     samples = mcmc_framework.run_mcmc(
@@ -301,12 +313,13 @@ def run_job(_thread_id, _model=model, _data_points=None,
 
     print('samples: ', samples)
 
-    dirpath = "results_{}_nboards{}_nsamples{}".format(
-        strftime("%Y-%m-%d_%H:%M:%S", gmtime()), n_boards, _n_samples)
+    dirpath = (f'results_{strftime("%Y-%m-%d_%H_%M_%S", gmtime())}'
+               f'_nboards{n_boards}_nsamples{_n_samples}')
     os.mkdir(dirpath)
     for coord, sample in samples.items():
-        fname = "{}/results_th{}_board_x{}_y{}_nboards{}_nsamples{}".format(
-            dirpath, _thread_id[0], coord[0], coord[1], n_boards, _n_samples)
+        fname = (f"{dirpath}/results_th{_thread_id[0]}"
+                 f"_board_x{coord[0]}_y{coord[1]}_nboards{n_boards}"
+                 f"_nsamples{_n_samples}")
         numpy.save(fname+".npy", sample)
         numpy.savetxt(fname+".csv", sample, fmt="%f", delimiter=",")
 

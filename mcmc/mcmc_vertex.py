@@ -1,25 +1,28 @@
 # Copyright (c) 2016 The University of Manchester
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ConstantSDRAM
+from enum import Enum
+from typing import Sequence
+import numpy
+
 from spinn_utilities.overrides import overrides
 
 from spinnman.model.enums import ExecutableType
 
+from pacman.model.graphs.machine import MachineVertex
 from pacman.model.placements import Placement
+from pacman.model.resources import ConstantSDRAM
 
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
@@ -34,9 +37,6 @@ from spinn_front_end_common.interface.ds import (
 from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.interface.buffer_management \
     import recording_utilities
-
-from enum import Enum
-import numpy
 
 
 class MCMCRegions(Enum):
@@ -98,18 +98,21 @@ class MCMCVertex(
         self._cholesky_data_receiver = dict()
 
     def _get_model_parameters_array(self):
+        """
+        Convert the models parameters into a numpy array
+        """
         parameters = self._model.get_parameters()
         numpy_format = list()
         numpy_values = list()
         for i, param in enumerate(parameters):
             if (param.data_type is numpy.float64):
-                numpy_format.append(('f{}'.format(i), param.data_type))
+                numpy_format.append((f"f{{{i}}}", param.data_type))
                 numpy_values.append(param.value)
             elif (param.data_type is numpy.float32):
-                numpy_format.append(('f{}'.format(i), param.data_type))
+                numpy_format.append((f"f{{{i}}}", param.data_type))
                 numpy_values.append(param.value)
             elif (param.data_type is DataType.S1615):
-                numpy_format.append(('f{}'.format(i), numpy.uint32))
+                numpy_format.append((f"f{{{i}}}", numpy.uint32))
                 numpy_values.append(
                     int(param.value * float(DataType.S1615.scale)))
             else:
@@ -120,21 +123,24 @@ class MCMCVertex(
             [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
     def _get_model_state_array(self):
+        """
+        Convert the models state variables into a numpy array
+        """
         state = self._model.get_state_variables()
         numpy_format = list()
         numpy_values = list()
         for i, param in enumerate(state):
             if (param.data_type is numpy.float64):
-                numpy_format.append(('f{}'.format(i), param.data_type))
+                numpy_format.append((f"f{{{i}}}", param.data_type))
                 numpy_values.append(param.initial_value)
             elif (param.data_type is numpy.float32):
-                numpy_format.append(('f{}'.format(i), param.data_type))
+                numpy_format.append((f"f{{{i}}}", param.data_type))
                 numpy_values.append(param.initial_value)
             elif (param.data_type is numpy.uint32):
-                numpy_format.append(('f{}'.format(i), param.data_type))
+                numpy_format.append((f"f{{{i}}}", param.data_type))
                 numpy_values.append(param.initial_value)
             elif (param.data_type is DataType.S1615):
-                numpy_format.append(('f{}'.format(i), numpy.uint32))
+                numpy_format.append((f"f{{{i}}}", numpy.uint32))
                 numpy_values.append(
                     int(param.initial_value * float(DataType.S1615.scale)))
             else:
@@ -145,6 +151,11 @@ class MCMCVertex(
             [tuple(numpy_values)], dtype=numpy_format).view("uint32")
 
     def get_result_key(self, placement):
+        """
+        Get the key for the given placement if it is the first on this X Y
+
+        param Placement placement: the placement to get the result key for
+        """
         if self._is_receiver_placement(placement):
             routing_info = FecDataView.get_routing_infos()
             key = routing_info.get_key_from(
@@ -153,6 +164,9 @@ class MCMCVertex(
         return 0
 
     def _is_receiver_placement(self, placement):
+        """
+        Checks if this is the first placement seen with this X, Y
+        """
         x = placement.x
         y = placement.y
         if (x, y) not in self._data_receiver:
@@ -161,6 +175,11 @@ class MCMCVertex(
         return self._data_receiver[(x, y)] == placement.p
 
     def get_cholesky_result_key(self, placement):
+        """
+        Get the key for the given placement if it is the first on this X Y
+
+        param Placement placement: the placement to get the result key for
+        """
         if self._is_cholesky_receiver_placement(placement):
             routing_info = FecDataView.get_routing_infos()
             key = routing_info.get_key_from(
@@ -169,6 +188,9 @@ class MCMCVertex(
         return 0
 
     def _is_cholesky_receiver_placement(self, placement):
+        """
+        Checks if this is the first placement seen with this X, Y
+        """
         x = placement.x
         y = placement.y
         if (x, y) not in self._cholesky_data_receiver:
@@ -178,22 +200,37 @@ class MCMCVertex(
 
     @property
     def coordinator(self):
+        """
+        Returns the coordinator vertex passed intoi the init
+        """
         return self._coordinator
 
     @property
     def parameter_partition_name(self):
+        """
+        The parameter_partition_name passed into the init
+        """
         return self._parameter_partition_name
 
     @property
     def result_partition_name(self):
+        """
+        The result_partition_name passed into the init
+        """
         return self._result_partition_name
 
     @property
     def cholesky_partition_name(self):
+        """
+        The cholesky_partition_name passed into the init
+        """
         return self._cholesky_partition_name
 
     @property
     def cholesky_result_partition_name(self):
+        """
+        The cholesky_result_partition_name passed into the init
+        """
         return self._cholesky_result_partition_name
 
     @property
@@ -342,9 +379,11 @@ class MCMCVertex(
         else:
             return numpy.array(data, dtype="uint8").view(numpy_format)
 
-    def get_recorded_region_ids(self):
+    @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
+    def get_recorded_region_ids(self) -> Sequence[int]:
         return [0]
 
-    def get_recording_region_base_address(self, placement):
+    @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)
+    def get_recording_region_base_address(self, placement: Placement) -> int:
         return helpful_functions.locate_memory_region_for_placement(
             placement, MCMCRegions.RECORDING.value)

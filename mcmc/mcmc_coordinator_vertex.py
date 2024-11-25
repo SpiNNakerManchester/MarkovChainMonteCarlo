@@ -1,27 +1,29 @@
 # Copyright (c) 2016 The University of Manchester
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from typing import List
+import random
+import numpy
 
-from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ConstantSDRAM
 from spinn_utilities.overrides import overrides
+from spinn_utilities.progress_bar import ProgressBar
 
 from spinnman.model.enums import ExecutableType
 
+from pacman.model.graphs.machine import MachineVertex
 from pacman.model.placements import Placement
+from pacman.model.resources import ConstantSDRAM
 
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
@@ -31,10 +33,6 @@ from spinn_front_end_common.abstract_models\
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.ds import (
     DataSpecificationGenerator, DataType)
-from spinn_utilities.progress_bar import ProgressBar
-
-import numpy
-import random
 
 
 class MCMCCoordinatorVertex(
@@ -119,29 +117,50 @@ class MCMCCoordinatorVertex(
         self._data_receiver = dict()
 
     def register_processor(self, mcmc_vertex):
+        """
+        Records the vertex to its list of vertices
+        """
         self._mcmc_vertices.append(mcmc_vertex)
 
     @property
     def n_samples(self):
+        """
+        n_samples as passed into the init.
+        """
         return self._n_samples
 
     @property
     def burn_in(self):
+        """
+        burn_in as passed inot the init
+        """
         return self._burn_in
 
     @property
     def thinning(self):
+        """
+        thinning as passed into the init
+        """
         return self._thinning
 
     @property
     def degrees_of_freedom(self):
+        """
+        degrees_of_freedom as passed into the init
+        """
         return self._degrees_of_freedom
 
     @property
     def n_data_points(self):
+        """
+        The length of the data passed inot the init
+        """
         return len(self._data)
 
     def _is_receiver_placement(self, placement):
+        """
+        Checks if this is the first placement seen with this X, Y
+        """
         x = placement.x
         y = placement.y
         if (x, y) not in self._data_receiver:
@@ -150,11 +169,20 @@ class MCMCCoordinatorVertex(
         return self._data_receiver[(x, y)] == placement.p
 
     def get_data_window_size(self, placement):
+        """
+        Gets the window size passed into the init if this is the first \
+        placement seen with this X, Y otherwise 0
+        """
         if self._is_receiver_placement(placement):
             return self._window_size
         return 0
 
     def get_sequence_mask(self, placement, routing_info):
+        """
+        Gets the mask for the data_partition_name vertex
+
+        Only if this is the first placement seen with this X, Y otherwise 0
+        """
         if self._is_receiver_placement(placement):
             mask = routing_info.get_info_from(
                 self, self._data_partition_name).mask
@@ -162,6 +190,11 @@ class MCMCCoordinatorVertex(
         return 0
 
     def get_acknowledge_key(self, placement, routing_info):
+        """
+        Gets the key for the acknowledge_partition_name vertex
+
+        Only if this is the first placement seen with this X, Y otherwise 0
+        """
         if self._is_receiver_placement(placement):
             key = routing_info.get_key_from(
                 placement.vertex, self._acknowledge_partition_name)
@@ -170,24 +203,41 @@ class MCMCCoordinatorVertex(
 
     @property
     def data_tag(self):
+        """
+        Gets the data_tag value passed into the init
+        """
         return self._data_tag
 
     @property
     def acknowledge_timer(self):
+        """
+        Gets the receive_timer passed inot the init
+        """
         return self._receive_timer
 
     @property
     def seed(self):
+        """
+        Get a consistent random seed
+
+        Uses the one passed into the init or creates one on the first call
+        """
         if self._seed is None:
             return [random.randint(0, 0xFFFFFFFF) for _ in range(5)]
         return self._seed
 
     @property
     def data_partition_name(self):
+        """
+        The data_partition_name passed into the init.
+        """
         return self._data_partition_name
 
     @property
     def acknowledge_partition_name(self):
+        """
+        acknowledge_partition_name passed inot the init.
+        """
         return self._acknowledge_partition_name
 
     @property

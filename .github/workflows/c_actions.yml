@@ -1,17 +1,16 @@
 # Copyright (c) 2020 The University of Manchester
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 # This workflow will install Python dependencies, run tests, lint and rat with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
@@ -27,7 +26,6 @@ jobs:
     - name: Prepare
       uses: SpiNNakerManchester/SupportScripts/actions/prepare@main
       with:
-        python-version: "3.12"
         checkout_dependencies: spinnaker_tools spinn_common SpiNNFrontEndCommon
         install_dependencies: SpiNNUtils
         install_module: false
@@ -40,10 +38,10 @@ jobs:
       with:
         base-dir: c_models
 
-    - name: Set SPINN_DIRS
+    - name: "Prepare: Set Environment variables"
       run: |
-        echo "Set SPINN_DIRS to $PWD/spinnaker_tools"
         echo "SPINN_DIRS=$PWD/spinnaker_tools" >> $GITHUB_ENV
+        echo "C_LOGS_DICT=$PWD/logs.sqlite3" >> $GITHUB_ENV
         
     - name: Build SpiNNaker C dependencies
       run: |
@@ -51,15 +49,138 @@ jobs:
         make -C spinn_common install
         make -C SpiNNFrontEndCommon/c_common install
 
+    - name: Build FEC C code
+      run: make
+      working-directory: SpiNNFrontEndCommon/c_common
+      env:
+        CFLAGS: -fdiagnostics-color=always
+
     - name: Build C code
       run: make
       working-directory: c_models
       env:
         CFLAGS: -fdiagnostics-color=always
 
-    # To be added: Documentation building
-#    - name: Build documentation using doxygen
-#      run: make doxysetup doxygen
-#      working-directory: c_models
+    - name: Upload Fec binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: fec_binaries
+        path: SpiNNFrontEndCommon/spinn_front_end_common/common_model_binaries/*.aplx
+        retention-days: 5
 
-    # Note: This workflow does not run the C code; that'd be an integration test
+    - name: Upload mcmc binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: mcmc_binary
+        path: mcmc/model_binaries/*.aplx
+        retention-days: 5
+
+    - name: Upload log.sqlite3s
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs.sqlite3
+        path: logs.sqlite3
+        retention-days: 5
+
+  java_compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+    - name: Prepare
+      uses: SpiNNakerManchester/SupportScripts/actions/prepare@main
+      with:
+        checkout_dependencies: JavaSpiNNaker
+        install_module: false
+        install_check_tools: false
+    - name: Set up JRE ${{ matrix.java }}
+      uses: actions/setup-java@v4.2.1
+      with:
+        distribution: 'zulu'
+        java-version: 11
+        cache: 'maven'
+    - name: "Set up node cache"
+      uses: actions/cache@v4
+      with:
+        path: '~/.m2/repository/com/github/eirslett/node'
+        key: ${{ runner.os }}-node-${{ hashFiles('SpiNNaker-allocserv/pom.xml') }}
+        restore-keys: ${{ runner.os }}-node-
+
+    - name: Compile
+      run: mvn clean install --file ./JavaSpiNNaker/pom.xml --settings ./JavaSpiNNaker/.github/settings.xml -B -DskipTests=true -Dmaven.javadoc.skip=true -P "!jsp-precompile"
+
+    - name: Upload Jar
+      uses: actions/upload-artifact@v4
+      with:
+        name: spinnaker-exe.jar
+        path: ./JavaSpiNNaker/SpiNNaker-front-end/target/spinnaker-exe.jar
+        retention-days: 5
+
+  test:
+    needs: [build, java_compile]
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - name: Prepare
+      uses: SpiNNakerManchester/SupportScripts/actions/prepare@main
+      with:
+        install_dependencies: > 
+          SpiNNUtils SpiNNMachine SpiNNMan PACMAN spalloc
+          SpiNNFrontEndCommon TestBase SpiNNakerGraphFrontEnd
+        install_module: true
+        install_check_tools: false
+        ubuntu_packages: graphviz
+        cfg_file: spiNNakerGraphFrontEnd
+
+    - name: Set up JRE ${{ matrix.java }}
+      uses: actions/setup-java@v4.2.1
+      with:
+        distribution: 'zulu'
+        java-version: 11
+        java-package: jre
+
+    - name: Download Fec binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: fec_binaries
+        # Need to go into spynnaker as FEC will have been moved by install
+        path: external_binaries
+
+    - name: Download test_extra_monitor_binary Binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: mcmc_binary
+        path: external_binaries
+
+    - name: Download logs.sqlite3
+      uses: actions/download-artifact@v4
+      with:
+        name: logs.sqlite3
+        path: external_binaries
+
+    - name: Download jar
+      uses: actions/download-artifact@v4
+      with:
+        name: spinnaker-exe.jar
+        # Need to go into spynnaker as FEC will have been moved by install
+        path: external_binaries
+
+    - name: Append cfg
+      # Doing this in the prepare action ended with a different path
+      # assumes cfg so far already has and ends with Machine section
+      run: | 
+        echo 'enable_advanced_monitor_support = False' >> ~/.spiNNakerGraphFrontEnd.cfg
+        echo '[Mapping]' >> ~/.spiNNakerGraphFrontEnd.cfg
+        echo "external_binaries=$PWD/external_binaries" >> ~/.spiNNakerGraphFrontEnd.cfg
+        echo '[Java]' >> ~/.spiNNakerGraphFrontEnd.cfg
+        echo 'use_java = False' >> ~/.spiNNakerGraphFrontEnd.cfg
+        echo "java_jar_path=$PWD/external_binaries/spinnaker-exe.jar" >> ~/.spiNNakerGraphFrontEnd.cfg
+        cat ~/.spiNNakerGraphFrontEnd.cfg
+
+    - name: Test with pytest and proxy
+      env:
+        SPALLOC_USER: ${{ secrets.SPALLOC_USER }}
+        SPALLOC_PASSWORD: ${{ secrets.SPALLOC_PASSWORD }}
+      run: pytest mcmc_integration_tests/test_scripts.py

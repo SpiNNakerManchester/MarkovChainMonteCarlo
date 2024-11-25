@@ -1,26 +1,24 @@
 # Copyright (c) 2016 The University of Manchester
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from typing import List
+import numpy
 from spinn_utilities.overrides import overrides
 
 from mcmc.mcmc_model import MCMCModel
 from mcmc.mcmc_parameter import MCMCParameter
 from mcmc.mcmc_state_variable import MCMCStateVariable
-
-import numpy
 
 
 class ARMAModel(MCMCModel):
@@ -50,12 +48,10 @@ class ARMAModel(MCMCModel):
     def get_parameters(self) -> List[MCMCParameter]:
         # It's probably best here to convert the arrays into individual values?
         return_params = []
-        for i in range(len(self._p_jump_scale)):
-            return_params.append(
-                MCMCParameter(self._p_jump_scale[i], numpy.float64))
-        for i in range(len(self._q_jump_scale)):
-            return_params.append(
-                MCMCParameter(self._q_jump_scale[i], numpy.float64))
+        for p_jump_scale in self._p_jump_scale:
+            return_params.append(MCMCParameter(p_jump_scale, numpy.float64))
+        for q_jump_scale in self._q_jump_scale:
+            return_params.append(MCMCParameter(q_jump_scale, numpy.float64))
 
         return return_params
 
@@ -63,9 +59,8 @@ class ARMAModel(MCMCModel):
     def get_state_variables(self) -> List[MCMCStateVariable]:
         # It's probably best here to convert the arrays into individual values?
         return_state_vars = []
-        for i in range(len(self._parameters)):
+        for i, parameter in enumerate(self._parameters):
             return_state_vars.append(
-                MCMCStateVariable("param_"+str(i),
-                                  self._parameters[i], numpy.float64))
+                MCMCStateVariable("param_"+str(i), parameter, numpy.float64))
 
         return return_state_vars
