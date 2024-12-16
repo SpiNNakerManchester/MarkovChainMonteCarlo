@@ -207,8 +207,8 @@ class MCMCCoordinatorVertex(
 
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification)
-    def generate_data_specification(
-            self, spec: DataSpecificationGenerator, placement: Placement):
+    def generate_data_specification(self, spec: DataSpecificationGenerator,
+                                    placement: Placement) -> None:
         routing_info = FecDataView.get_routing_infos()
 
         # Reserve and write the parameters region
