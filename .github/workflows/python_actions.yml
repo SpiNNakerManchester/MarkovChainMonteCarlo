@@ -21,14 +21,14 @@ on: [push]
 
 jobs:
   call:
-    uses: SpiNNakerManchester/SupportScripts/.github/workflows/python_checks.yml@main
+    uses: SpiNNakerManchester/SupportScripts/.github/workflows/python_checks.yml@underscore
     with:
       dependencies: >
           SpiNNUtils SpiNNMachine SpiNNMan PACMAN spalloc
           SpiNNFrontEndCommon SpiNNakerGraphFrontEnd TestBase
       ubuntu_packages: graphviz
       test_directories: unittests
-      coverage-package: mcmc
+      coverage_package: mcmc
       flake8-packages: mcmc mcmc_examples
       pylint-packages: mcmc mcmc_examples
       mypy-packages: mcmc
