@@ -29,16 +29,16 @@ jobs:
       ubuntu_packages: graphviz
       test_directories: unittests
       coverage_package: mcmc
-      flake8-packages: mcmc mcmc_examples
-      pylint-packages: mcmc mcmc_examples
-      mypy-packages: mcmc
+      flake8_packages: mcmc mcmc_examples
+      pylint_packages: mcmc mcmc_examples
+      mypy_packages: mcmc
       check_prereleases: false
       cfg_file: spiNNakerGraphFrontEnd
       rat_config_file: rat.xml  # mix of licenses acceptable to rat
       rcfile: global_relaxed
       pylint_exitcheck: 6 # Action fails on ERROR or WARNING
       run_sphinx: false
-      run_cff-validator: false
+      run_cff_validator: false
 
     # pylint mcmc mcmc_examples
     # mypy mypy mcmc
