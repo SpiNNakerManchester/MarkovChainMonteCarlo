@@ -37,7 +37,7 @@ jobs:
       rat-config-file: rat.xml  # mix of licenses acceptable to rat
       rcfile: global_relaxed
       pylint-exitcheck: 6 # Action fails on ERROR or WARNING
-      run_sphinx: false
+      run-sphinx: false
       run_cff-validator: false
 
     # pylint mcmc mcmc_examples
