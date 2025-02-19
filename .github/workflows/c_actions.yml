@@ -25,7 +25,7 @@ jobs:
 
     steps:
     - name: Prepare
-      uses: SpiNNakerManchester/SupportScripts/actions/prepare@main
+      uses: SpiNNakerManchester/SupportScripts/actions/prepare@action-dash
       with:
         python-version: "3.12"
         checkout_dependencies: spinnaker_tools spinn_common SpiNNFrontEndCommon
