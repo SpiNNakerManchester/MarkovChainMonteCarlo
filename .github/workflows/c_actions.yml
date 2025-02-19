@@ -28,7 +28,7 @@ jobs:
       uses: SpiNNakerManchester/SupportScripts/actions/prepare@action-dash
       with:
         python-version: "3.12"
-        checkout_dependencies: spinnaker_tools spinn_common SpiNNFrontEndCommon
+        checkout-dependencies: spinnaker_tools spinn_common SpiNNFrontEndCommon
         install_dependencies: SpiNNUtils
         install-module: false
         install_check_tools: false
