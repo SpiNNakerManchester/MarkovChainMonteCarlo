@@ -26,7 +26,7 @@ jobs:
       dependencies: >
           SpiNNUtils SpiNNMachine SpiNNMan PACMAN spalloc
           SpiNNFrontEndCommon SpiNNakerGraphFrontEnd TestBase
-      ubuntu_packages: graphviz
+      ubuntu-packages: graphviz
       test_directories: unittests
       coverage-package: mcmc
       flake8-packages: mcmc mcmc_examples
