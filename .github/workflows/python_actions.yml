@@ -26,19 +26,19 @@ jobs:
       dependencies: >
           SpiNNUtils SpiNNMachine SpiNNMan PACMAN spalloc
           SpiNNFrontEndCommon SpiNNakerGraphFrontEnd TestBase
-      ubuntu_packages: graphviz
-      test_directories: unittests
+      ubuntu-packages: graphviz
+      test-directories: unittests
       coverage-package: mcmc
       flake8-packages: mcmc mcmc_examples
       pylint-packages: mcmc mcmc_examples
       mypy-packages: mcmc
-      check_prereleases: false
-      cfg_file: spiNNakerGraphFrontEnd
-      rat_config_file: rat.xml  # mix of licenses acceptable to rat
+      check-prereleases: false
+      cfg-file: spiNNakerGraphFrontEnd
+      rat-config-file: rat.xml  # mix of licenses acceptable to rat
       rcfile: global_relaxed
-      pylint_exitcheck: 6 # Action fails on ERROR or WARNING
-      run_sphinx: false
-      run_cff-validator: false
+      pylint-exitcheck: 6 # Action fails on ERROR or WARNING
+      run-sphinx: false
+      run-cff-validator: false
 
     # pylint mcmc mcmc_examples
     # mypy mypy mcmc
