@@ -32,8 +32,6 @@ class TestCfgChecker(unittest.TestCase):
         os.path.join(parent, "mcmc")
         integration_tests = os.path.join(parent, "mcmc_integration_tests")
         mcmc_examples = os.path.join(parent, "mcmc_examples")
-        repeaters = ["placer", "router", "info_allocator", "compressor"]
         run_config_checks(
             directories=[
-                mcmc_dir, integration_tests, unittests, mcmc_examples],
-            repeaters=repeaters)
+                mcmc_dir, integration_tests, unittests, mcmc_examples])
