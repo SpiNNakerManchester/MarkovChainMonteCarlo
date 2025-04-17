@@ -15,7 +15,7 @@
 
 import os
 import unittest
-from spinn_utilities.config_holder import run_config_checks
+from spinn_utilities.configs.config_checker import ConfigChecker
 from spinnaker_graph_front_end.config_setup import unittest_setup
 import mcmc
 
@@ -32,6 +32,6 @@ class TestCfgChecker(unittest.TestCase):
         os.path.join(parent, "mcmc")
         integration_tests = os.path.join(parent, "mcmc_integration_tests")
         mcmc_examples = os.path.join(parent, "mcmc_examples")
-        run_config_checks(
-            directories=[
-                mcmc_dir, integration_tests, unittests, mcmc_examples])
+        checker = ConfigChecker(
+            [mcmc_dir, integration_tests, unittests, mcmc_examples])
+        checker.check(local_defaults=False)
