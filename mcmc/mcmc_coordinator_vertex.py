@@ -118,7 +118,7 @@ class MCMCCoordinatorVertex(
         self._mcmc_placements = list()
         self._data_receiver = dict()
 
-    def register_processor(self, mcmc_vertex):
+    def register_processor(self, mcmc_vertex: MachineVertex) -> None:
         self._mcmc_vertices.append(mcmc_vertex)
 
     @property
@@ -156,14 +156,14 @@ class MCMCCoordinatorVertex(
 
     def get_sequence_mask(self, placement, routing_info):
         if self._is_receiver_placement(placement):
-            mask = routing_info.get_info_from(
+            mask = routing_info.get_machine_info(
                 self, self._data_partition_name).mask
             return ~mask & 0xFFFFFFFF
         return 0
 
     def get_acknowledge_key(self, placement, routing_info):
         if self._is_receiver_placement(placement):
-            key = routing_info.get_key_from(
+            key = routing_info.get_machine_key(
                 placement.vertex, self._acknowledge_partition_name)
             return key
         return 0
@@ -224,7 +224,7 @@ class MCMCCoordinatorVertex(
             mcmc_placement = FecDataView.get_placement_of_vertex(vertex)
             self._mcmc_placements.append(mcmc_placement)
             if self._is_receiver_placement(mcmc_placement):
-                key = routing_info.get_key_from(
+                key = routing_info.get_machine_key(
                     vertex, self._acknowledge_partition_name)
                 keys.append(key)
         keys.sort()
@@ -238,7 +238,7 @@ class MCMCCoordinatorVertex(
         spec.write_value(len(keys), data_type=DataType.UINT32)
 
         # Write the key
-        vtx_routing_info = routing_info.get_info_from(
+        vtx_routing_info = routing_info.get_machine_info(
             self, self._data_partition_name)
         spec.write_value(vtx_routing_info.key, data_type=DataType.UINT32)
 
