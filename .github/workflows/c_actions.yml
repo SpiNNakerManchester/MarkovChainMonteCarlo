@@ -42,12 +42,11 @@ jobs:
 
     - name: Set SPINN_DIRS
       run: |
-        echo "Set SPINN_DIRS to $PWD/spinnaker_tools"
-        echo "SPINN_DIRS=$PWD/spinnaker_tools" >> $GITHUB_ENV
-        
+        echo "SPINN_DIRS=$PWD/spinnaker_tools_install" >> $GITHUB_ENV
+
     - name: Build SpiNNaker C dependencies
       run: |
-        make -C $SPINN_DIRS
+        make -C spinnaker_tools install
         make -C spinn_common install
         make -C SpiNNFrontEndCommon/c_common install
 
