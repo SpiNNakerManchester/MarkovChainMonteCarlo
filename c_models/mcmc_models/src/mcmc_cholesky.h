@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <arma.h>
+#include "arma/arma.h"
 #include <stdbool.h>
 
 //#define FOR( i, n ) for ( i = 0; i < (n); i++ )

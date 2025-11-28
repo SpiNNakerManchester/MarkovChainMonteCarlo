@@ -13,23 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# The name of the application to be built (binary will be this with a `.aplx`
-# extension)
-APP = arma
+FEC_INSTALL_DIR := $(strip $(if $(FEC_INSTALL_DIR), $(FEC_INSTALL_DIR), $(if $(SPINN_DIRS), $(SPINN_DIRS)/fec_install, $(error FEC_INSTALL_DIR or SPINN_DIRS is not set.  Please define FEC_INSTALL_DIR or SPINN_DIRS))))
 
-# Directory to place compilation artefacts (must include trailing slash)
-BUILD_DIR = ./build/
+LIBS += -lm
 
-# The sources to be compiled
-MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-CURRENT_DIR := $(dir $(MAKEFILE_PATH))
-SOURCE_DIR := $(abspath $(CURRENT_DIR))/src
-SOURCE_DIRS := $(SOURCE_DIR)
+APP_OUTPUT_DIR := $(abspath ../../mcmc/model_binaries/)
 
-SOURCES = arma.c
+SOURCES += mcmc.c
 
-# will editing this here work to add -std=c99? yes but it doesn't help... 
-CFLAGS += -fcx-limited-range $(OSPACE) -l m
-# OFLAGS += -fcx-limited-range 
-
-include ../../mcmc_common.mk
+# The spinnaker_tools standard makefile
+include $(FEC_INSTALL_DIR)/make/fec.mk

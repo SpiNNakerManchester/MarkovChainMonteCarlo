@@ -13,11 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-DIRS = lighthouse arma
+DIRS = mcmc_model_lighthouse mcmc_model_arma cholesky root_finder
 
 all:
-	@for d in $(DIRS); do $(MAKE) -C examples/$$d || exit $$?; done
+	@for d in $(DIRS); do $(MAKE) -f $$d.mk || exit $$?; done
 
 clean:
-	@for d in $(DIRS); do $(MAKE) -C examples/$$d GNU=$(GNU) clean || exit $$?; done
-    
+	@for d in $(DIRS); do $(MAKE) -f $$d.mk clean || exit $$?; done

@@ -18,8 +18,8 @@
 
 #include "mcmc_root_finder.h"
 
-#include <mcmc_model.h>
-#include <arma.h>
+#include "mcmc_model.h"
+#include "arma/arma.h"
 
 #include <spin1_api.h>
 #include <stdint.h>
