@@ -22,8 +22,8 @@ CURRENT_DIR := $(dir $(MAKEFILE_PATH))
 
 APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR)/../../mcmc/model_binaries/)
 
-APP = mcmc_cholesky
-SOURCES = mcmc_cholesky.c
+APP = mcmc_root_finder
+SOURCES = mcmc_root_finder.c
 
 # The spinnaker_tools standard makefile
 include $(FEC_INSTALL_DIR)/make/fec.mk
