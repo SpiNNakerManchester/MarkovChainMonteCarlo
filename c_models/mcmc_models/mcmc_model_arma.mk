@@ -17,19 +17,9 @@
 # extension)
 APP = arma
 
-# Directory to place compilation artefacts (must include trailing slash)
-BUILD_DIR = ./build/
+SOURCES = arma/arma.c
 
-# The sources to be compiled
-MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-CURRENT_DIR := $(dir $(MAKEFILE_PATH))
-SOURCE_DIR := $(abspath $(CURRENT_DIR))/src
-SOURCE_DIRS := $(SOURCE_DIR)
+# will editing this here work to add -std=c99? yes but it doesn't help...
+CFLAGS += -fcx-limited-range $(OSPACE)
 
-SOURCES = arma.c
-
-# will editing this here work to add -std=c99? yes but it doesn't help... 
-CFLAGS += -fcx-limited-range $(OSPACE) -l m
-# OFLAGS += -fcx-limited-range 
-
-include ../../mcmc_common.mk
+include mcmc_model_common.mk

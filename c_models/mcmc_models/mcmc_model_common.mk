@@ -13,18 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-LIBRARIES += -lm
+FEC_INSTALL_DIR := $(strip $(if $(FEC_INSTALL_DIR), $(FEC_INSTALL_DIR), $(if $(SPINN_DIRS), $(SPINN_DIRS)/fec_install, $(error FEC_INSTALL_DIR or SPINN_DIRS is not set.  Please define FEC_INSTALL_DIR or SPINN_DIRS))))
 
-MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-CURRENT_DIR := $(dir $(MAKEFILE_PATH))
-SOURCE_DIR := $(abspath $(CURRENT_DIR))/src
-SOURCE_DIRS += $(SOURCE_DIR)
+LIBS += -lm
 
-APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR))/../../mcmc/model_binaries/
+APP_OUTPUT_DIR := $(abspath ../../mcmc/model_binaries/)
 
 SOURCES += mcmc.c
 
 # The spinnaker_tools standard makefile
-include $(SPINN_DIRS)/make/local.mk
-
-all: $(APP_OUTPUT_DIR)$(APP).aplx
+include $(FEC_INSTALL_DIR)/make/fec.mk

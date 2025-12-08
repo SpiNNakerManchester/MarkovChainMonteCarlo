@@ -13,10 +13,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-DIRS = mcmc_models mcmc_coordinator
+FEC_INSTALL_DIR := $(strip $(if $(FEC_INSTALL_DIR), $(FEC_INSTALL_DIR), $(if $(SPINN_DIRS), $(SPINN_DIRS)/fec_install, $(error FEC_INSTALL_DIR or SPINN_DIRS is not set.  Please define FEC_INSTALL_DIR or SPINN_DIRS))))
 
-all: $(DIRS)
-	@for d in $(DIRS); do $(MAKE) -C $$d || exit $$?; done
+LIBS += -lm
 
-clean: $(DIRS)
-	@for d in $(DIRS); do $(MAKE) -C $$d GNU=$(GNU) clean || exit $$?; done
+MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+CURRENT_DIR := $(dir $(MAKEFILE_PATH))
+
+APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR)/../../mcmc/model_binaries/)
+
+APP = mcmc_cholesky
+SOURCES = mcmc_cholesky.c
+
+# The spinnaker_tools standard makefile
+include $(FEC_INSTALL_DIR)/make/fec.mk

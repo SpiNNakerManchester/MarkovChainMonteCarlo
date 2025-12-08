@@ -15,7 +15,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "mcmc_cholesky.h"
-#include <mcmc_model.h>
 
 #include <spin1_api.h>
 #include <stdint.h>
