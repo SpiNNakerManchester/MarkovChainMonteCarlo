@@ -21,6 +21,8 @@ MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURRENT_DIR := $(dir $(MAKEFILE_PATH))
 
 APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR)/../../mcmc/model_binaries/)
+# key for the database in this APP_OUTPUT_DIR
+DATABASE_KEY = M
 
 APP = mcmc_cholesky
 SOURCES = mcmc_cholesky.c

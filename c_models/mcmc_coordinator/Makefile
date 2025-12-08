@@ -21,6 +21,8 @@ APP = mcmc_coordinator
 
 # Directory to create APLX files in (must include trailing slash)
 APP_OUTPUT_DIR = ../../mcmc/model_binaries/
+# key for the database in this APP_OUTPUT_DIR
+DATABASE_KEY = M
 
 CFLAGS += ${OTIME}
 
