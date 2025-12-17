@@ -40,10 +40,6 @@ jobs:
       with:
         base-dir: c_models
 
-    - name: Set SPINN_DIRS
-      run: |
-        echo "SPINN_DIRS=$PWD/spinnaker_tools_install" >> $GITHUB_ENV
-
     - name: Build SpiNNaker C dependencies
       run: |
         make -C spinnaker_tools install
