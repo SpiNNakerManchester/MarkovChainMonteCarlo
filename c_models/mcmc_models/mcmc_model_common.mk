@@ -19,6 +19,8 @@ FEC_INSTALL_DIR := $(strip $(if $(FEC_INSTALL_DIR), $(FEC_INSTALL_DIR), $(abspat
 LIBS += -lm
 
 APP_OUTPUT_DIR := $(abspath ../../mcmc/model_binaries/)
+# key for the database in this APP_OUTPUT_DIR
+DATABASE_KEY = M
 
 SOURCES += mcmc.c
 
