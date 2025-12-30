@@ -32,3 +32,6 @@ SOURCES = mcmc_coordinator.c
 
 # The spinnaker_tools standard makefile
 include $(FEC_INSTALL_DIR)/make/fec.mk
+
+clean:
+	$(RM) -r $(CURRENT_DIR)/build

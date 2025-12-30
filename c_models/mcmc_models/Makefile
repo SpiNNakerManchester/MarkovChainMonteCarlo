@@ -19,4 +19,4 @@ all:
 	@for d in $(DIRS); do $(MAKE) -f $$d.mk || exit $$?; done
 
 clean:
-	@for d in $(DIRS); do $(MAKE) -f $$d.mk clean || exit $$?; done
+	$(RM) -r $(CURRENT_DIR)/build
