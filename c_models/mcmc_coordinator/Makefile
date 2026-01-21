@@ -13,7 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-FEC_INSTALL_DIR := $(strip $(if $(FEC_INSTALL_DIR), $(FEC_INSTALL_DIR), $(if $(SPINN_DIRS), $(SPINN_DIRS)/fec_install, $(error FEC_INSTALL_DIR or SPINN_DIRS is not set.  Please define FEC_INSTALL_DIR or SPINN_DIRS))))
+CUR_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+FEC_INSTALL_DIR := $(strip $(if $(FEC_INSTALL_DIR), $(FEC_INSTALL_DIR), $(abspath $(CUR_DIR)/../../../SpiNNFrontEndCommon/c_common/front_end_common_lib)))
 
 # The name of the application to be built (binary will be this with a `.aplx`
 # extension)
@@ -21,6 +22,8 @@ APP = mcmc_coordinator
 
 # Directory to create APLX files in (must include trailing slash)
 APP_OUTPUT_DIR = ../../mcmc/model_binaries/
+# key for the database in this APP_OUTPUT_DIR
+DATABASE_KEY = M
 
 CFLAGS += ${OTIME}
 
@@ -29,3 +32,6 @@ SOURCES = mcmc_coordinator.c
 
 # The spinnaker_tools standard makefile
 include $(FEC_INSTALL_DIR)/make/fec.mk
+
+clean:
+	$(RM) -r $(CURRENT_DIR)/build
