@@ -15,7 +15,9 @@
 
 import spinnaker_graph_front_end as g
 
+from spinn_utilities.log import FormatAdapter
 from spinnman.exceptions import SpinnmanException
+
 from .mcmc_vertex import MCMCVertex
 from .mcmc_coordinator_vertex import MCMCCoordinatorVertex
 from .mcmc_root_finder_vertex import MCMCRootFinderVertex
@@ -33,7 +35,7 @@ import time
 
 # timing
 start_time = time.time()
-logger = logging.getLogger(__name__)
+logger = FormatAdapter(logging.getLogger(__name__))
 
 
 def run_mcmc(
