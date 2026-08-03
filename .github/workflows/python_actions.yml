@@ -39,6 +39,7 @@ jobs:
       pylint-exitcheck: 6 # Action fails on ERROR or WARNING
       run-sphinx: false
       run-cff-validator: false
+      ruff-packages: mcmc mcmc_examples mcmc_integration_tests
 
     # pylint mcmc mcmc_examples
     # mypy mypy mcmc
