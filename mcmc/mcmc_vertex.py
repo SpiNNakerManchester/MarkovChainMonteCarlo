@@ -29,8 +29,8 @@ from spinn_front_end_common.abstract_models. \
     abstract_has_associated_binary import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models\
     .abstract_generates_data_specification import (
-    AbstractGeneratesDataSpecification,
-)
+        AbstractGeneratesDataSpecification,
+    )
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.buffer_management import (
     recording_utilities,
