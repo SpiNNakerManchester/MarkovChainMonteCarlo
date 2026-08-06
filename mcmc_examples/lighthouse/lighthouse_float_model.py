@@ -14,13 +14,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import List
+
+import numpy
+
 from spinn_utilities.overrides import overrides
 
 from mcmc.mcmc_model import MCMCModel
 from mcmc.mcmc_parameter import MCMCParameter
 from mcmc.mcmc_state_variable import MCMCStateVariable
-
-import numpy
 
 
 class LightHouseFloatModel(MCMCModel):

@@ -13,25 +13,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import spinnaker_graph_front_end as g
+import logging
+import time
 
 from spinn_utilities.log import FormatAdapter
-from spinnman.exceptions import SpinnmanException
 
-from .mcmc_vertex import MCMCVertex
-from .mcmc_coordinator_vertex import MCMCCoordinatorVertex
-from .mcmc_root_finder_vertex import MCMCRootFinderVertex
-from .mcmc_cholesky_vertex import MCMCCholeskyVertex
-from . import model_binaries
+from spinnman.exceptions import SpinnmanException
+from spinnman.model.enums.cpu_state import CPUState
 
 from pacman.model.graphs.machine import MachineEdge
 
-from spinnman.model.enums.cpu_state import CPUState
-
 from spinn_front_end_common.data import FecDataView
 
-import logging
-import time
+import spinnaker_graph_front_end as g
+
+from . import model_binaries
+from .mcmc_cholesky_vertex import MCMCCholeskyVertex
+from .mcmc_coordinator_vertex import MCMCCoordinatorVertex
+from .mcmc_root_finder_vertex import MCMCRootFinderVertex
+from .mcmc_vertex import MCMCVertex
 
 # timing
 start_time = time.time()

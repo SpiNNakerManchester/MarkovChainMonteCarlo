@@ -14,6 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import List
+
 from spinn_utilities.overrides import overrides
 
 from spinn_front_end_common.interface.ds import DataType
