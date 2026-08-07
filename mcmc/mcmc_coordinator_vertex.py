@@ -117,9 +117,9 @@ class MCMCCoordinatorVertex(
             self._N_PARAMETER_BYTES + self._data_size
         )
 
-        self._mcmc_vertices = list()
-        self._mcmc_placements = list()
-        self._data_receiver = dict()
+        self._mcmc_vertices = []
+        self._mcmc_placements = []
+        self._data_receiver = {}
 
     def register_processor(self, mcmc_vertex):
         self._mcmc_vertices.append(mcmc_vertex)
@@ -222,7 +222,7 @@ class MCMCCoordinatorVertex(
 
         # Get the placement of the vertices and find out how many chips
         # are needed
-        keys: List[int] = list()
+        keys: List[int] = []
         for vertex in self._mcmc_vertices:
             mcmc_placement = FecDataView.get_placement_of_vertex(vertex)
             self._mcmc_placements.append(mcmc_placement)
@@ -281,7 +281,7 @@ class MCMCCoordinatorVertex(
         """ Read back the samples
         """
         progress = ProgressBar(len(self._mcmc_placements), "Reading results")
-        samples = list()
+        samples = []
         for placement in self._mcmc_placements:
             # Read the data recorded
             sample = placement.vertex.read_samples(buffer_manager, placement)

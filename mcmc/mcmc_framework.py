@@ -72,8 +72,8 @@ def run_mcmc(
     machine = g.machine()
 
     # Create a coordinator for each board
-    coordinators = dict()
-    boards = dict()
+    coordinators = {}
+    boards = {}
     for chip in machine.ethernet_connected_chips:
 
         # Create a coordinator
@@ -238,7 +238,7 @@ def run_mcmc(
     finish_computing_time = time.time()
 
     # Get the data back
-    samples = dict()
+    samples = {}
     for coord, coordinator in coordinators.items():
         samples[coord[0], coord[1]] = coordinator.read_samples(
             g.buffer_manager())
