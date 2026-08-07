@@ -99,13 +99,13 @@ class MCMCVertex(
             (len(params) * 4)
             )
 
-        self._data_receiver = dict()
-        self._cholesky_data_receiver = dict()
+        self._data_receiver = {}
+        self._cholesky_data_receiver = {}
 
     def _get_model_parameters_array(self):
         parameters = self._model.get_parameters()
-        numpy_format = list()
-        numpy_values = list()
+        numpy_format = []
+        numpy_values = []
         for i, param in enumerate(parameters):
             if (param.data_type is numpy.float64):
                 numpy_format.append(('f{}'.format(i), param.data_type))
@@ -126,8 +126,8 @@ class MCMCVertex(
 
     def _get_model_state_array(self):
         state = self._model.get_state_variables()
-        numpy_format = list()
-        numpy_values = list()
+        numpy_format = []
+        numpy_values = []
         for i, param in enumerate(state):
             if (param.data_type is numpy.float64):
                 numpy_format.append(('f{}'.format(i), param.data_type))
@@ -323,8 +323,8 @@ class MCMCVertex(
         # Read the data recorded
         data, _ = buffer_manager.get_recording(placement, 0)
 
-        numpy_format = list()
-        output_format = list()
+        numpy_format = []
+        output_format = []
         for var in self._model.get_state_variables():
             if (var.data_type is DataType.S1615):
                 numpy_format.append((var.name, numpy.int32))
