@@ -13,15 +13,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import sys
 import os
-import pathos.multiprocessing
+import sys
 from time import gmtime, strftime
+
 import numpy
+import pathos.multiprocessing
+
 from mcmc import mcmc_framework
+
 # from mcmc_examples.lighthouse.lighthouse_model import LightHouseModel
-from mcmc_examples.lighthouse.lighthouse_float_model \
-     import LightHouseFloatModel
+from mcmc_examples.lighthouse.lighthouse_float_model import (
+    LightHouseFloatModel,
+)
+
 # from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #      import LightHouseFixedPointModel
 

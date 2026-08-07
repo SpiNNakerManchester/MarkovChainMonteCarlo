@@ -23,11 +23,12 @@ from pacman.model.graphs.machine import MachineVertex
 from pacman.model.placements import Placement
 from pacman.model.resources import ConstantSDRAM
 
-from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
-    import AbstractHasAssociatedBinary
+from spinn_front_end_common.abstract_models. \
+    abstract_has_associated_binary import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models\
-    .abstract_generates_data_specification \
-    import AbstractGeneratesDataSpecification
+    .abstract_generates_data_specification import (
+        AbstractGeneratesDataSpecification,
+    )
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 
 

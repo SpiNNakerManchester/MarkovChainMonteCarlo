@@ -13,13 +13,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import sys
 import os
+import sys
 from time import gmtime, strftime
+
 import numpy
+
 from mcmc import mcmc_framework
+
 # from mcmc_examples.arma.arma_model import ARMAModel
 from mcmc_examples.arma.arma_float_model import ARMAFloatModel
+
 # from mcmc_examples.lighthouse.lighthouse_fixed_point_model \
 #     import ARMAFixedPointModel
 
