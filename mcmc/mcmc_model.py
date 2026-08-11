@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import List
 
 from spinn_utilities.abstract_base import AbstractBase, abstractmethod
 
@@ -21,10 +20,10 @@ from mcmc.mcmc_parameter import MCMCParameter
 from mcmc.mcmc_state_variable import MCMCStateVariable
 
 
-class MCMCModel(object, metaclass=AbstractBase):
+class MCMCModel(metaclass=AbstractBase):
 
     @abstractmethod
-    def get_parameters(self) -> List[MCMCParameter]:
+    def get_parameters(self) -> list[MCMCParameter]:
         """ Get the parameters of the model
 
         :rtype: list of :py:class:`mcmc.mcmc_parameter.MCMCParameter`
@@ -32,7 +31,7 @@ class MCMCModel(object, metaclass=AbstractBase):
         raise NotImplementedError
 
     @abstractmethod
-    def get_state_variables(self) -> List[MCMCStateVariable]:
+    def get_state_variables(self) -> list[MCMCStateVariable]:
         """ Get the state variables of the model
 
         :rtype: list of :py:class:`mcmc.mcmc_state_variable.MCMCStateVariable`
