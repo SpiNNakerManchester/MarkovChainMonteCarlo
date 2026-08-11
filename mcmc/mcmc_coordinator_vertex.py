@@ -14,7 +14,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import random
-from typing import List
 
 import numpy
 
@@ -222,7 +221,7 @@ class MCMCCoordinatorVertex(
 
         # Get the placement of the vertices and find out how many chips
         # are needed
-        keys: List[int] = []
+        keys: list[int] = []
         for vertex in self._mcmc_vertices:
             mcmc_placement = FecDataView.get_placement_of_vertex(vertex)
             self._mcmc_placements.append(mcmc_placement)

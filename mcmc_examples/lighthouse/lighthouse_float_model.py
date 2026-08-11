@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import List
 
 import numpy
 
@@ -57,7 +56,7 @@ class LightHouseFloatModel(MCMCModel):
         return "lighthouse.aplx"
 
     @overrides(MCMCModel.get_parameters)
-    def get_parameters(self) -> List[MCMCParameter]:
+    def get_parameters(self) -> list[MCMCParameter]:
         return [
             MCMCParameter(self._alpha_jump_scale, numpy.float32),
             MCMCParameter(self._beta_jump_scale, numpy.float32),
@@ -68,7 +67,7 @@ class LightHouseFloatModel(MCMCModel):
         ]
 
     @overrides(MCMCModel.get_state_variables)
-    def get_state_variables(self) -> List[MCMCStateVariable]:
+    def get_state_variables(self) -> list[MCMCStateVariable]:
         return [
             MCMCStateVariable("alpha", 0.0, numpy.float32),
             MCMCStateVariable("beta", 1.0, numpy.float32)

@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import List
 
 import numpy
 
@@ -46,7 +45,7 @@ class ARMAFloatModel(MCMCModel):
         return "arma.aplx"
 
     @overrides(MCMCModel.get_parameters)
-    def get_parameters(self) -> List[MCMCParameter]:
+    def get_parameters(self) -> list[MCMCParameter]:
         # Best here to convert the arrays into individual values
         return_params = []
         for i in range(len(self._jump_scale)):
@@ -56,7 +55,7 @@ class ARMAFloatModel(MCMCModel):
         return return_params
 
     @overrides(MCMCModel.get_state_variables)
-    def get_state_variables(self) -> List[MCMCStateVariable]:
+    def get_state_variables(self) -> list[MCMCStateVariable]:
         # Best here to convert the arrays into individual values
         return_state_vars = []
         for i in range(len(self._parameters)):
