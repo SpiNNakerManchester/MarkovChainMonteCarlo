@@ -113,7 +113,7 @@ dirpath = "results_{}_nboards{}_nsamples{}".format(
     strftime("%Y-%m-%d_%H:%M:%S", gmtime()), n_boards, n_samples)
 os.mkdir(dirpath)
 for coord, sample in samples.items():
-    fname = "{}/results_board_x{}_y{}_nboards{}_nsamples{}".format(
-        dirpath, coord[0], coord[1], n_boards, n_samples)
+    fname = (f"{dirpath}/results_board_x{coord[0]}_y{coord[1]}"
+             f"_nboards{n_boards}_nsamples{n_samples}")
     numpy.save(fname+".npy", sample)
     numpy.savetxt(fname+".csv", sample, fmt="%f", delimiter=",")
