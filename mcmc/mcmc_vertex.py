@@ -107,10 +107,7 @@ class MCMCVertex(
         numpy_format = []
         numpy_values = []
         for i, param in enumerate(parameters):
-            if (param.data_type is numpy.float64):
-                numpy_format.append((f'f{i}', param.data_type))
-                numpy_values.append(param.value)
-            elif (param.data_type is numpy.float32):
+            if (param.data_type in [numpy.float64, numpy.float32]):
                 numpy_format.append((f'f{i}', param.data_type))
                 numpy_values.append(param.value)
             elif (param.data_type is DataType.S1615):
@@ -129,13 +126,8 @@ class MCMCVertex(
         numpy_format = []
         numpy_values = []
         for i, param in enumerate(state):
-            if (param.data_type is numpy.float64):
-                numpy_format.append((f'f{i}', param.data_type))
-                numpy_values.append(param.initial_value)
-            elif (param.data_type is numpy.float32):
-                numpy_format.append((f'f{i}', param.data_type))
-                numpy_values.append(param.initial_value)
-            elif (param.data_type is numpy.uint32):
+            if (param.data_type in [
+                    numpy.float64, numpy.float32, numpy.uint32]):
                 numpy_format.append((f'f{i}', param.data_type))
                 numpy_values.append(param.initial_value)
             elif (param.data_type is DataType.S1615):
