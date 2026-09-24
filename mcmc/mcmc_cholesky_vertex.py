@@ -99,4 +99,4 @@ class MCMCCholeskyVertex(
         """ Read back the samples (dummy call)
         """
 #        print 'There are no samples to read back on a Cholesky vertex'
-        return None
+        return

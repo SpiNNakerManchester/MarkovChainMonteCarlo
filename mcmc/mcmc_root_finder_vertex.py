@@ -96,4 +96,4 @@ class MCMCRootFinderVertex(
         """ Read back the samples (dummy call)
         """
 #        print 'There are no samples to read back on a root finder vertex'
-        return None
+        return
